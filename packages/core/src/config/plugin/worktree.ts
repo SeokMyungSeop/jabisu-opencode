@@ -21,13 +21,17 @@ export const Plugin = define({
     yield* worktrees.transform((editor) => {
       for (const entry of loaded.entries) {
         if (entry.type !== "document" || !entry.info.worktree) continue
-        const directory = entry.info.worktree.directory
+        const { directory, branch_prefix } = entry.info.worktree
         editor.configure({
-          directory: AbsolutePath.make(
-            directory.startsWith("~/")
-              ? path.join(global.home, directory.slice(2))
-              : path.resolve(location.project.canonical, directory),
-          ),
+          directory:
+            directory === undefined
+              ? undefined
+              : AbsolutePath.make(
+                  directory.startsWith("~/")
+                    ? path.join(global.home, directory.slice(2))
+                    : path.resolve(location.project.canonical, directory),
+                ),
+          branchPrefix: branch_prefix,
         })
       }
     })

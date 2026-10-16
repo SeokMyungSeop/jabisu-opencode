@@ -104,7 +104,7 @@ export class Info extends Schema.Class<Info>("Config.Info")({
     description: "Ordered plugin enablement directives and external package declarations",
   }),
   worktree: ConfigWorktree.Info.pipe(optional).annotate({
-    description: "Directory defaults for local worktree creation",
+    description: "Directory and branch defaults for local worktree creation",
   }),
   warming: ConfigWarming.Warming.pipe(optional).annotate({
     description: "Keep recently active sessions warm with transient model requests (default: false)",
