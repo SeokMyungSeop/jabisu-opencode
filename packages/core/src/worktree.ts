@@ -99,7 +99,30 @@ export interface Interface {
     input: { projectID: Project.ID },
     current?: WorktreeStrategies.Interface,
   ) => Effect.Effect<void, Error>
+  /**
+   * Removes a worktree nothing needs anymore, such as an archived session's, without force: only one OpenCode manages
+   * under the configured worktree directory, while `worktree.remove_on_archive` allows it, with no uncommitted changes,
+   * and whose commits a branch, tag or remote ref still holds. Says why it kept the worktree otherwise.
+   */
+  readonly release: (
+    input: { projectID: Project.ID; directory: AbsolutePath },
+    current?: WorktreeStrategies.Interface,
+  ) => Effect.Effect<Release, Error>
 }
+
+/** What `release` did with a worktree. */
+export type Release =
+  | { readonly removed: true }
+  | {
+      readonly removed: false
+      /**
+       * - `disabled`: `worktree.remove_on_archive` is false.
+       * - `unmanaged`: not a worktree OpenCode created under the worktree directory.
+       * - `unreachable`: its HEAD holds commits no branch, tag or remote ref contains.
+       * - `dirty`: it has uncommitted changes.
+       */
+      readonly reason: "disabled" | "unmanaged" | "unreachable" | "dirty"
+    }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/Worktree") {}
 
@@ -112,6 +135,7 @@ const layer = Layer.effect(
     const bus = yield* Bus.Service
     const processService = yield* AppProcess.Service
     const locations = yield* LocationServiceMap.Service
+    const git = yield* Git.Service
     const project = Effect.fnUntraced(function* (projectID: Project.ID) {
       const row = yield* db.select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get().pipe(Effect.orDie)
       if (!row) return yield* new Project.NotFoundError({ projectID })
@@ -277,6 +301,40 @@ const layer = Layer.effect(
       yield* changed(input.projectID, yield* ops.remove(input.projectID, worktreeDirectory))
     }, Effect.scoped)
 
+    const release = Effect.fn("Worktree.release")(function* (
+      input: { projectID: Project.ID; directory: AbsolutePath },
+      current?: WorktreeStrategies.Interface,
+    ) {
+      const row = yield* project(input.projectID)
+      const worktreeDirectory = yield* canonical(fs, input.directory)
+      const stored = yield* ops.find(input.projectID, worktreeDirectory)
+      const settings = yield* load(row.worktree, current)
+      if (!settings.removeOnArchive) return { removed: false, reason: "disabled" } as const
+      // Checkouts the user made elsewhere may be adopted as worktrees, so only OpenCode's own directory is removable.
+      if (
+        !stored?.strategy ||
+        worktreeDirectory === row.worktree ||
+        worktreeDirectory === settings.directory ||
+        !FSUtil.contains(settings.directory, worktreeDirectory)
+      )
+        return { removed: false, reason: "unmanaged" } as const
+      // A directory Git no longer knows holds no commits; removal clears it only when it is empty.
+      if (stored.strategy === "git") {
+        const repository = yield* git.repo.discover(worktreeDirectory)
+        if (repository && !(yield* git.history.reachable(repository)))
+          return { removed: false, reason: "unreachable" } as const
+      }
+      return yield* remove({ projectID: input.projectID, directory: worktreeDirectory, force: false }, current).pipe(
+        Effect.as({ removed: true } as const),
+        Effect.catchIf(
+          (error) =>
+            (error instanceof Git.WorktreeError || error instanceof Worktree.OperationError) &&
+            error.forceRequired === true,
+          () => Effect.succeed({ removed: false, reason: "dirty" } as const),
+        ),
+      )
+    }, Effect.scoped)
+
     const refresh = Effect.fn("Worktree.refresh")(function* (
       input: { projectID: Project.ID },
       current?: WorktreeStrategies.Interface,
@@ -341,6 +399,7 @@ const layer = Layer.effect(
       create,
       remove,
       refresh,
+      release,
     })
   }),
 )
@@ -348,7 +407,7 @@ const layer = Layer.effect(
 export const node: LayerNode.Provider<Service, never, typeof Node.tags.values.global> = Node.makeGlobalNode({
   service: Service,
   layer,
-  deps: [FSUtil.node, Bus.node, Database.node, AppProcess.node, LocationServiceMap.node],
+  deps: [FSUtil.node, Bus.node, Database.node, AppProcess.node, LocationServiceMap.node, Git.node],
 })
 
 function operationError(strategy: StrategyID, operation: string, error: unknown) {

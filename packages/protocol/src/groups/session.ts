@@ -898,6 +898,34 @@ export const makeSessionGroup = <I extends HttpApiMiddleware.AnyId, S, FormI ext
         }),
       ),
     )
+    // Without the session's Location: archiving must not start the services a worktree removal then waits on.
+    .add(
+      HttpApiEndpoint.post("session.archive", "/api/session/:sessionID/archive", {
+        params: { sessionID: Session.ID },
+        success: HttpApiSchema.NoContent,
+        error: SessionNotFoundError,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "session.archive",
+          summary: "Archive session",
+          description:
+            "Remove the session from session lists. Once it is idle, this also removes the worktree it ran in when nothing else needs it; see the `worktree.remove_on_archive` config.",
+        }),
+      ),
+    )
+    .add(
+      HttpApiEndpoint.post("session.unarchive", "/api/session/:sessionID/unarchive", {
+        params: { sessionID: Session.ID },
+        success: HttpApiSchema.NoContent,
+        error: SessionNotFoundError,
+      }).annotateMerge(
+        OpenApi.annotations({
+          identifier: "session.unarchive",
+          summary: "Unarchive session",
+          description: "Return an archived session to session lists.",
+        }),
+      ),
+    )
     .annotateMerge(
       OpenApi.annotations({
         title: "session",

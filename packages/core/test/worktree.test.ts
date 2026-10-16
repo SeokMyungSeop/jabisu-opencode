@@ -106,6 +106,7 @@ const fixtureWorktree = Effect.fnUntraced(function* () {
     remove: (options: Omit<Worktree.RemoveInput, "projectID">) =>
       service.remove({ projectID: input.projectID, ...options }, strategies),
     refresh: () => service.refresh({ projectID: input.projectID }, strategies),
+    release: (directory: AbsolutePath) => service.release({ projectID: input.projectID, directory }, strategies),
   }
 })
 
@@ -558,6 +559,70 @@ describe("Worktree", () => {
       expect(yield* exists("build/out.js")).toBe(false)
       expect(yield* exists("notes.txt")).toBe(false)
       yield* worktrees.remove({ directory: created.directory, force: true })
+    }),
+  )
+
+  it.live("releases only a clean OpenCode worktree whose commits a ref still holds", () =>
+    Effect.gen(function* () {
+      const input = yield* setup()
+      const worktrees = yield* fixtureWorktree()
+      const exists = (directory: string) =>
+        Effect.promise(() =>
+          fs.stat(directory).then(
+            () => true,
+            () => false,
+          ),
+        )
+      const clean = yield* worktrees.create({ name: "clean" })
+      const dirty = yield* worktrees.create({ name: "dirty" })
+      const ahead = yield* worktrees.create({ name: "ahead" })
+      const external = abs(path.join(input.root.path, "external"))
+      yield* Effect.promise(async () => {
+        await Bun.write(path.join(dirty.directory, "notes.txt"), "draft")
+        await $`git -c user.name=Test -c user.email=test@opencode.test -c commit.gpgsign=false commit --allow-empty -m local`
+          .cwd(ahead.directory)
+          .quiet()
+        await $`git worktree add --detach ${external} HEAD`.cwd(input.root.path).quiet()
+      })
+      yield* worktrees.refresh()
+
+      expect(yield* worktrees.release(dirty.directory)).toEqual({ removed: false, reason: "dirty" })
+      expect(yield* worktrees.release(ahead.directory)).toEqual({ removed: false, reason: "unreachable" })
+      // A checkout the user made outside the worktree directory, and the project's own checkout, are never removed.
+      expect(yield* worktrees.release(external)).toEqual({ removed: false, reason: "unmanaged" })
+      expect(yield* worktrees.release(input.sourceDirectory)).toEqual({ removed: false, reason: "unmanaged" })
+      const disabled = yield* worktrees.transform((editor) => editor.configure({ removeOnArchive: false }))
+      expect(yield* worktrees.release(clean.directory)).toEqual({ removed: false, reason: "disabled" })
+      yield* disabled.dispose
+      expect(yield* worktrees.release(clean.directory)).toEqual({ removed: true })
+
+      expect(yield* exists(clean.directory)).toBe(false)
+      expect(yield* stored(input.projectID)).not.toContainEqual({ directory: clean.directory, strategy: "git" })
+      for (const kept of [dirty.directory, ahead.directory, external]) expect(yield* exists(kept)).toBe(true)
+    }),
+  )
+
+  it.live("finishes removing a worktree Git dropped while Windows kept its empty directory", () =>
+    Effect.gen(function* () {
+      const input = yield* setup()
+      const worktrees = yield* fixtureWorktree()
+      const emptied = yield* worktrees.create({ name: "emptied" })
+      const kept = yield* worktrees.create({ name: "kept" })
+      // Git's half of each removal is done; one directory came back empty, the other still holds a file.
+      yield* Effect.promise(async () => {
+        for (const directory of [emptied.directory, kept.directory])
+          await $`git worktree remove --force ${directory}`.cwd(input.sourceDirectory).quiet()
+        await fs.mkdir(emptied.directory)
+        await Bun.write(path.join(kept.directory, "notes.txt"), "keep")
+      })
+
+      yield* worktrees.remove({ directory: emptied.directory, force: false })
+      const error = yield* worktrees.remove({ directory: kept.directory, force: false }).pipe(Effect.flip)
+
+      expect(yield* Effect.promise(() => fs.readdir(path.dirname(emptied.directory)))).not.toContain("emptied")
+      expect(yield* stored(input.projectID)).not.toContainEqual({ directory: emptied.directory, strategy: "git" })
+      expect(error).toBeInstanceOf(Git.WorktreeError)
+      expect(yield* Effect.promise(() => Bun.file(path.join(kept.directory, "notes.txt")).text())).toBe("keep")
     }),
   )
 

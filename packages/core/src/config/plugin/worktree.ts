@@ -21,7 +21,7 @@ export const Plugin = define({
     yield* worktrees.transform((editor) => {
       for (const entry of loaded.entries) {
         if (entry.type !== "document" || !entry.info.worktree) continue
-        const { directory, branch_prefix } = entry.info.worktree
+        const { directory, branch_prefix, remove_on_archive } = entry.info.worktree
         editor.configure({
           directory:
             directory === undefined
@@ -32,6 +32,7 @@ export const Plugin = define({
                     : path.resolve(location.project.canonical, directory),
                 ),
           branchPrefix: branch_prefix,
+          removeOnArchive: remove_on_archive,
         })
       }
     })

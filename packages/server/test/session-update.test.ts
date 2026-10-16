@@ -6,7 +6,7 @@ import { ServerFetch } from "../src/fetch"
 
 const SessionResponse = Schema.Struct({ data: Schema.toEncoded(Session.Info) })
 
-it.live("updates session metadata through PATCH", () =>
+it.live("updates session metadata through PATCH and archives the session", () =>
   Effect.gen(function* () {
     const handler = yield* ServerFetch.make({
       app: { version: "test" },
@@ -14,7 +14,7 @@ it.live("updates session metadata through PATCH", () =>
       fs: { filewatcher: false },
       models: { fetch: false },
     })
-    const request = (path: string, method: string, body?: unknown) =>
+    const request = (path: string, method: string, body?: unknown, status = method === "PATCH" ? 204 : 200) =>
       Effect.promise(async () => {
         const response = await handler(
           new Request(`http://opencode.local${path}`, {
@@ -23,7 +23,7 @@ it.live("updates session metadata through PATCH", () =>
             body: body === undefined ? undefined : JSON.stringify(body),
           }),
         )
-        expect(response.status).toBe(method === "PATCH" ? 204 : 200)
+        expect(response.status).toBe(status)
         return response.status === 204 ? undefined : response.json()
       })
 
@@ -34,5 +34,12 @@ it.live("updates session metadata through PATCH", () =>
     const updated = Schema.decodeUnknownSync(SessionResponse)(yield* request(`/api/session/${created.data.id}`, "GET"))
 
     expect(updated.data.metadata).toEqual({ source: "patch" })
+
+    yield* request(`/api/session/${created.data.id}/archive`, "POST", undefined, 204)
+    const archived = Schema.decodeUnknownSync(SessionResponse)(yield* request(`/api/session/${created.data.id}`, "GET"))
+    expect(archived.data.time.archived).toBeNumber()
+    yield* request(`/api/session/${created.data.id}/unarchive`, "POST", undefined, 204)
+    const restored = Schema.decodeUnknownSync(SessionResponse)(yield* request(`/api/session/${created.data.id}`, "GET"))
+    expect(restored.data.time.archived).toBeUndefined()
   }).pipe(Effect.scoped),
 )

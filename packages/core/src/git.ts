@@ -116,6 +116,11 @@ export interface Interface {
     readonly branch: (repository: Repository) => Effect.Effect<string | undefined>
     readonly defaultRemoteBranch: (repository: Repository, remote?: string) => Effect.Effect<string | undefined>
     readonly rootCommits: (repository: Repository) => Effect.Effect<readonly string[]>
+    /**
+     * Whether a branch, tag or remote-tracking ref contains HEAD, so removing the checkout loses no commits. False when
+     * Git cannot tell.
+     */
+    readonly reachable: (repository: Repository) => Effect.Effect<boolean>
   }
   readonly sync: {
     readonly fetchRemotes: (repository: Repository, input?: { prune?: boolean }) => Effect.Effect<void, OperationError>
@@ -248,6 +253,19 @@ const layer = Layer.effect(
       const result = yield* run(repository.worktree, proc, ["symbolic-ref", "--quiet", "--short", "HEAD"])
       if (result.exitCode !== 0) return undefined
       return result.text.trim() || undefined
+    })
+
+    const reachable = Effect.fn("Git.history.reachable")(function* (repository: Repository) {
+      const result = yield* run(repository.worktree, proc, [
+        "for-each-ref",
+        "--count=1",
+        "--contains=HEAD",
+        "--format=%(refname)",
+        "refs/heads",
+        "refs/tags",
+        "refs/remotes",
+      ])
+      return result.exitCode === 0 && result.text.trim().length > 0
     })
 
     const remoteHead = Effect.fn("Git.history.defaultRemoteBranch")(function* (
@@ -1302,7 +1320,7 @@ const layer = Layer.effect(
     return Service.of({
       repo: { discover, clone, create },
       remote: { get: remote },
-      history: { head, branch, defaultRemoteBranch: remoteHead, rootCommits: roots },
+      history: { head, branch, defaultRemoteBranch: remoteHead, rootCommits: roots, reachable },
       sync: { fetchRemotes: fetch, fetchBranch, checkoutRemoteBranch: checkout, resetHard: reset },
       worktree: { create: worktreeCreate, remove: worktreeRemove, list: worktreeList },
       index: { refresh, ignored, untracked },

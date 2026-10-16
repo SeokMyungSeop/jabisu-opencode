@@ -68,6 +68,16 @@ export const make = Effect.fn("Session.make")(function* () {
       return
     yield* bus.publish(SessionEvent.Viewed, { sessionID, idle: input.idle })
   })
+  const archive = Effect.fn("Session.archive")(function* (sessionID: SessionSchema.ID) {
+    const session = yield* get(sessionID)
+    if (session.time.archived !== undefined) return
+    yield* bus.publish(SessionEvent.Archived, { sessionID })
+  })
+  const unarchive = Effect.fn("Session.unarchive")(function* (sessionID: SessionSchema.ID) {
+    const session = yield* get(sessionID)
+    if (session.time.archived === undefined) return
+    yield* bus.publish(SessionEvent.Unarchived, { sessionID })
+  })
   const rename = Effect.fn("Session.rename")(function* (sessionID: SessionSchema.ID, input: { title: string }) {
     yield* get(sessionID)
     yield* bus.publish(SessionEvent.Renamed, { sessionID, title: input.title })
@@ -347,6 +357,8 @@ export const make = Effect.fn("Session.make")(function* () {
     get,
     message,
     view,
+    archive,
+    unarchive,
     rename,
     setMetadata,
     setPermissions,
@@ -371,6 +383,8 @@ export const make = Effect.fn("Session.make")(function* () {
     const get = operations.get.bind(undefined, sessionID)
     const message = operations.message.bind(undefined, sessionID)
     const view = operations.view.bind(undefined, sessionID)
+    const archive = operations.archive.bind(undefined, sessionID)
+    const unarchive = operations.unarchive.bind(undefined, sessionID)
     const rename = operations.rename.bind(undefined, sessionID)
     const setMetadata = operations.setMetadata.bind(undefined, sessionID)
     const setPermissions = operations.setPermissions.bind(undefined, sessionID)
@@ -398,6 +412,8 @@ export const make = Effect.fn("Session.make")(function* () {
       get,
       message,
       view,
+      archive,
+      unarchive,
       rename,
       setMetadata,
       setPermissions,

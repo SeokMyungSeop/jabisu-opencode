@@ -101,6 +101,10 @@ import type {
   SessionEnvironmentOutput,
   SessionViewInput,
   SessionViewOutput,
+  SessionArchiveInput,
+  SessionArchiveOutput,
+  SessionUnarchiveInput,
+  SessionUnarchiveOutput,
   MessageListInput,
   MessageListOutput,
   ModelListInput,
@@ -1090,6 +1094,28 @@ export function make(options: ClientOptions) {
             method: "POST",
             path: `/api/session/${encodeURIComponent(input.sessionID)}/view`,
             body: { idle: input["idle"] },
+            successStatus: 204,
+            declaredStatuses: [400, 401, 404],
+            empty: true,
+          },
+          requestOptions,
+        ),
+      archive: (input: SessionArchiveInput, requestOptions?: RequestOptions) =>
+        request<SessionArchiveOutput>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/archive`,
+            successStatus: 204,
+            declaredStatuses: [400, 401, 404],
+            empty: true,
+          },
+          requestOptions,
+        ),
+      unarchive: (input: SessionUnarchiveInput, requestOptions?: RequestOptions) =>
+        request<SessionUnarchiveOutput>(
+          {
+            method: "POST",
+            path: `/api/session/${encodeURIComponent(input.sessionID)}/unarchive`,
             successStatus: 204,
             declaredStatuses: [400, 401, 404],
             empty: true,

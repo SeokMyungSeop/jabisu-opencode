@@ -531,6 +531,19 @@ config/secrets/
 Removing a worktree first stops the language servers, file watchers and shells running inside it, so Windows can
 delete its directory.
 
+Archiving a session also removes the worktree it ran in, once the session is idle and no other unarchived session runs
+there. OpenCode keeps the worktree, and logs why, when it is not one OpenCode created under the worktree directory,
+when it has uncommitted changes, or when it holds commits that no branch, tag or remote ref contains. Set
+`remove_on_archive` to `false` to keep every worktree:
+
+```jsonc
+{
+  "worktree": {
+    "remove_on_archive": false,
+  },
+}
+```
+
 Git is the built-in default. A [plugin](/build/plugins#worktrees) that registers a strategy automatically becomes the
 default in that plugin runtime. Project operations use the canonical checkout's runtime. Strategy-specific options
 belong to that plugin, not the `worktree` config object.

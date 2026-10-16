@@ -1106,6 +1106,8 @@ export function createData(config: CreateDataInput) {
         refresh(() => result.session.sync(event.data.sessionID))
         return
       case "session.viewed":
+      case "session.archived":
+      case "session.unarchived":
         if (!store.session.info[event.data.sessionID] && !sync.has(`session:${event.data.sessionID}`)) return
         result.session.invalidate(event.data.sessionID)
         refresh(() => result.session.sync(event.data.sessionID))
