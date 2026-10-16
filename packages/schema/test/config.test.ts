@@ -29,14 +29,14 @@ describe("Config.Entry", () => {
       ).toThrow()
   })
 
-  test("accepts directory-only worktree config and omits it when absent", () => {
+  test("round-trips each worktree setting alone and omits worktree config when absent", () => {
     const decode = Schema.decodeUnknownSync(Config.Info)
-    const input = { worktree: { directory: "../worktrees" } }
-    expect(Schema.encodeSync(Config.Info)(decode(input))).toEqual(input)
+    for (const input of [{ worktree: { directory: "../worktrees" } }, { worktree: { branch_prefix: "opencode/" } }])
+      expect(Schema.encodeSync(Config.Info)(decode(input))).toEqual(input)
     expect(Schema.encodeSync(Config.Info)(new Config.Info({ worktree: undefined }))).not.toHaveProperty("worktree")
-    expect(() => decode({ worktree: {} })).toThrow()
     expect(() => decode({ worktree: { directory: " " } })).toThrow()
     expect(() => decode({ worktree: { directory: false } })).toThrow()
+    expect(() => decode({ worktree: { branch_prefix: " " } })).toThrow()
   })
   test("round-trips canonical provider IDs without changing config keys", () => {
     const input = { providers: { "console-anthropic": { canonical: "anthropic" } } }
