@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import { ContextUsage } from "../context/contract"
 import { Changes } from "../review/contract"
 import { Extension, Store } from "../sdk"
 import en from "./i18n/en"
@@ -8,7 +9,7 @@ const Prefs = Schema.Struct({ projectExpanded: Schema.Boolean, serverExpanded: S
 export default Extension.define({
   id: "details",
   legacy: ["summary"],
-  uses: { changes: Changes },
+  uses: { changes: Changes, usage: ContextUsage },
   stores: {
     // Stored under the extension's earlier id `summary`, and before extensions in the app settings.
     prefs: Store.global(Prefs, { projectExpanded: true, serverExpanded: true }, [

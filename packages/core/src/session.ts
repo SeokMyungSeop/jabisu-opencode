@@ -20,6 +20,7 @@ import { SessionSchema } from "./session/schema.js"
 import { RelativePath } from "./schema.js"
 import { Agent } from "@opencode/schema/agent"
 import type { Permission } from "@opencode/schema/permission"
+import type { SessionContextUsage as SessionContextUsageSchema } from "@opencode/schema/session-context-usage"
 import { App } from "./app.js"
 import { Slug } from "./util/slug.js"
 import path from "path"
@@ -45,6 +46,7 @@ import { SessionEvent } from "./session/event.js"
 import { SessionInbox } from "./session/inbox.js"
 import { InstructionState } from "./session/instruction-state.js"
 import { SessionGenerate } from "./session/generate.js"
+import { SessionContextUsage } from "./session/context-usage.js"
 import { SessionCommand } from "./session/command.js"
 import {
   SessionMove,
@@ -191,6 +193,10 @@ export interface Interface {
     sessionID: SessionSchema.ID
     prompt: string
   }) => Effect.Effect<string, NotFoundError | SessionGenerate.Error>
+  /** Estimates how the session's next request divides among its parts; see `SessionContextUsage.estimate`. */
+  readonly contextUsage: (
+    sessionID: SessionSchema.ID,
+  ) => Effect.Effect<SessionContextUsageSchema.Info, NotFoundError | SessionContextUsage.Error>
   readonly command: (input: {
     sessionID: SessionSchema.ID
     command: string
@@ -420,6 +426,13 @@ const layer = Layer.effect(
           Effect.provideService(Instance.Service, instances),
           Effect.provideService(Database.Service, database),
           Effect.provideService(LLMClient.Service, llm),
+        )
+      }),
+      contextUsage: Effect.fn("Session.contextUsage")(function* (sessionID) {
+        const session = yield* result.get(sessionID)
+        return yield* SessionContextUsage.estimate({ session }).pipe(
+          Effect.provideService(Instance.Service, instances),
+          Effect.provideService(Database.Service, database),
         )
       }),
       command: Effect.fn("Session.command")(function* (input) {

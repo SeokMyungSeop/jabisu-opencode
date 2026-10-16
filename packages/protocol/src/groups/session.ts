@@ -2,6 +2,7 @@ import { SessionMessage } from "@opencode/schema/session-message"
 import { SessionInbox } from "@opencode/schema/session-inbox"
 import { PromptInput } from "@opencode/schema/prompt-input"
 import { Session } from "@opencode/schema/session"
+import { SessionContextUsage } from "@opencode/schema/session-context-usage"
 import { SessionStats } from "@opencode/schema/session-stats"
 import { InstructionEntry } from "@opencode/schema/instruction-entry"
 import { Project } from "@opencode/schema/project"
@@ -577,6 +578,22 @@ export const makeSessionGroup = <I extends HttpApiMiddleware.AnyId, S, FormI ext
           description: "Retrieve the active context messages for a session (all messages after the last compaction).",
         }),
       ),
+    )
+    .add(
+      HttpApiEndpoint.get("session.contextUsage", "/api/session/:sessionID/context/usage", {
+        params: { sessionID: Session.ID },
+        success: Schema.Struct({ data: SessionContextUsage.Info }),
+        error: [SessionNotFoundError, ServiceUnavailableError],
+      })
+        .middleware(sessionLocationMiddleware)
+        .annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.contextUsage",
+            summary: "Estimate session context usage",
+            description:
+              "Estimate how the session's next request divides among the system prompt, tools, MCP servers, skills, instructions and messages, without mutating the session.",
+          }),
+        ),
     )
     .add(
       HttpApiEndpoint.get("session.diff", "/api/session/:sessionID/diff", {

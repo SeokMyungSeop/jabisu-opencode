@@ -1,7 +1,9 @@
 import { lazy, onCleanup, Show, Suspense } from "solid-js"
-import { onIdle, Panel, Slot, usePanel, type PanelTab, type Setup } from "../sdk"
+import { bindExtension, onIdle, Panel, Slot, usePanel, type PanelTab, type Setup } from "../sdk"
+import { ContextUsage } from "./contract"
 import type definition from "./index"
 import { SessionContextUsage } from "./indicator"
+import { ContextSummary } from "./summary"
 
 const setup: Setup<typeof definition> = (ctx) => {
   const SessionContextTab = lazy(() => import("./tab"))
@@ -32,6 +34,8 @@ const setup: Setup<typeof definition> = (ctx) => {
     order: 10,
     render: (input) => <SessionContextUsage session={input.session} placement="bottom" />,
   })
+
+  ctx.provide(ContextUsage, { Summary: bindExtension((props) => <ContextSummary session={props.session} />) })
 
   ctx.add(
     Panel,

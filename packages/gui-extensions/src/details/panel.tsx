@@ -1,8 +1,11 @@
 import { DiffChanges } from "@opencode/ui/diff-changes"
 import { Icon } from "@opencode/ui/icon"
+import { ScrollView } from "@opencode/ui/scroll-view"
 import { containsDirectory, getFilename } from "@opencode/util/path"
 import { createMemo, Show } from "solid-js"
+import { Dynamic } from "solid-js/web"
 import { useExtension, type Project, type MountedSession } from "../sdk"
+import type Details from "./index"
 import { workspaceDirectories } from "./paths"
 import { ProjectDetailsCard } from "./project-card"
 import { SessionServerPanel } from "./server-panel"
@@ -20,18 +23,29 @@ export type DetailsPanelProps = {
   project: Project
   shown?: boolean
   mobile?: boolean
+  /** Fills the side region instead of the popover's fixed width. */
+  side?: boolean
   diffs?: readonly { additions: number; deletions: number }[]
   moveDismissed: boolean
   onMoveDismiss: () => void
   /** Absent while the review extension is disabled, which also leaves `diffs` undefined. */
   onReview?: () => void
+  /** Moves the details into the side region; absent where they already show there or cannot. */
+  onPin?: () => void
   disclosure: Disclosure
 }
 
 export default function SessionDetailsPanel(props: DetailsPanelProps) {
-  const ctx = useExtension()
+  const ctx = useExtension<typeof Details>()
   const locale = ctx.locale
   const data = () => props.session.server.data
+
+  // The context card shows while the context extension is active.
+  const usage = () => {
+    const live = ctx.uses.usage()
+
+    return live.status === "active" ? live.value : undefined
+  }
 
   const placement = createMemo(() =>
     props.mobile ? "top-end" : locale.direction() === "rtl" ? "right-start" : "left-start",
@@ -62,8 +76,12 @@ export default function SessionDetailsPanel(props: DetailsPanelProps) {
   const branch = () => data().location.vcs.info({ directory: props.session.directory })?.branch.current
   const baseBranch = () => data().location.vcs.info({ directory: props.project.worktree })?.branch.current
 
-  return (
-    <div data-component="session-summary-panel" data-mobile={props.mobile || undefined}>
+  const content = (
+    <div
+      data-component="session-summary-panel"
+      data-mobile={props.mobile || undefined}
+      data-side={props.side || undefined}
+    >
       <div>
         <ProjectDetailsCard
           project={props.project}
@@ -159,6 +177,17 @@ export default function SessionDetailsPanel(props: DetailsPanelProps) {
           </div>
         </Show>
       </div>
+      <Show when={usage()}>
+        {(usage) => (
+          <section class="session-summary-card" data-section="context">
+            <div class="session-summary-row session-summary-heading">
+              <Icon name="status" class="shrink-0 text-v2-icon-icon-muted" />
+              <span class="session-summary-label">{ctx.t("context")}</span>
+            </div>
+            <Dynamic component={usage().Summary} session={props.session} />
+          </section>
+        )}
+      </Show>
       <SessionServerPanel
         session={props.session}
         directory={props.session.directory}
@@ -167,6 +196,25 @@ export default function SessionDetailsPanel(props: DetailsPanelProps) {
         expanded={props.disclosure.server()}
         onExpandedChange={props.disclosure.setServer}
       />
+      <Show when={props.onPin}>
+        {(pin) => (
+          <section class="session-summary-card">
+            <button type="button" class="session-summary-row" onClick={() => pin()()}>
+              <Icon name="sidebar-right" class="shrink-0 text-v2-icon-icon-muted" />
+              <span class="session-summary-label">{ctx.t("panel.open")}</span>
+            </button>
+          </section>
+        )}
+      </Show>
     </div>
+  )
+
+  // The popover and the drawer scroll themselves; the side tab fills the region and scrolls its own content.
+  return (
+    <Show when={props.side} fallback={content}>
+      <ScrollView class="h-full">
+        <div class="p-3">{content}</div>
+      </ScrollView>
+    </Show>
   )
 }

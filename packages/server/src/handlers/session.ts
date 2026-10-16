@@ -522,6 +522,22 @@ export const SessionHandler = HttpApiBuilder.group(Api, "server.session", (handl
         }),
       )
       .handle(
+        "session.contextUsage",
+        Effect.fn(function* (ctx) {
+          return {
+            data: yield* session
+              .contextUsage(ctx.params.sessionID)
+              .pipe(
+                Effect.mapError((error) =>
+                  error._tag === "Session.NotFoundError"
+                    ? missingSession(error)
+                    : new ServiceUnavailableError({ message: error.message, service: "session context usage" }),
+                ),
+              ),
+          }
+        }),
+      )
+      .handle(
         "session.diff",
         Effect.fn(function* (ctx) {
           return {

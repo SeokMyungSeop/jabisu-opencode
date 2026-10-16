@@ -1,6 +1,6 @@
 import { createMemo, lazy, onCleanup, Show, Suspense } from "solid-js"
 import { createStore } from "solid-js/store"
-import { createKeyed, onIdle, Panel, Slot, Style, useDrawer, usePanel, type Setup } from "../sdk"
+import { createKeyed, onIdle, Panel, Slot, Style, useDrawer, usePanel, type PanelTab, type Setup } from "../sdk"
 import type Details from "./index"
 import type { Disclosure } from "./panel"
 import { DetailsHeader } from "./popover"
@@ -48,7 +48,17 @@ const setup: Setup<typeof Details> = (ctx) => {
     ),
   })
 
-  // The narrow-screen details drawer, offered for sessions of a project, subagents included.
+  // One tab object for every session, so a session switch does not remount its trigger.
+  const tab: PanelTab = {
+    id: "main",
+    get title() {
+      return ctx.t("title")
+    },
+    closable: "compact",
+  }
+
+  // The details as a side tab once pinned from the header, and the narrow-screen drawer, offered for sessions of a
+  // project, subagents included.
   const panel: Panel = {
     id: "main",
     region: "side",
@@ -60,11 +70,12 @@ const setup: Setup<typeof Details> = (ctx) => {
       kind: "drawer",
       icon: "info",
     },
-    list: () => [],
+    list: (input) => (input.open.includes("main") ? [tab] : []),
     render: (props) => {
       const frame = usePanel()
       const drawer = useDrawer()
       const [store, setStore] = createStore({ dismissed: false })
+      const mobile = () => frame.placement() === "mobile"
 
       // Review is optional: the changes row offers it only while the review extension is active.
       const review = createMemo(() => {
@@ -81,7 +92,7 @@ const setup: Setup<typeof Details> = (ctx) => {
         }
       })
 
-      // The changes row loads the session directory's changes only while the drawer shows.
+      // The changes row loads the session directory's changes only while the details show.
       createKeyed(changes, (service) =>
         createKeyed(frame.visible, () => onCleanup(service.watch(props.screen, "details"))),
       )
@@ -91,7 +102,8 @@ const setup: Setup<typeof Details> = (ctx) => {
           {(project) => (
             <Suspense>
               <DetailsPanel
-                mobile
+                mobile={mobile()}
+                side={!mobile()}
                 shown={frame.visible()}
                 session={props.session}
                 project={project()}

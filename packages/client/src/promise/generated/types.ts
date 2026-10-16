@@ -118,6 +118,8 @@ export type SessionInboxSyntheticPayload = { text: string; description?: string;
 
 export type SessionInboxCompactionPayload = {}
 
+export type SessionContextUsageCategory = "system" | "tools" | "mcp" | "skills" | "instructions" | "messages"
+
 export type InstructionEntryKey = string
 
 export type SessionGenerateResponse = { data: { text: string } }
@@ -537,6 +539,8 @@ export type SessionInboxCompaction = {
   payload: SessionInboxCompactionPayload
   delivery: SessionInboxDelivery
 }
+
+export type SessionContextUsageEntry = { category: SessionContextUsageCategory; tokens: number }
 
 export type InstructionEntryInfo = { key: InstructionEntryKey; value: JsonValue }
 
@@ -959,6 +963,8 @@ export type SessionMessageToolStateError = {
   content?: [ToolContent, ...Array<ToolContent>]
   metadata?: { [x: string]: JsonValue }
 }
+
+export type SessionContextUsage = { categories: Array<SessionContextUsageEntry> }
 
 export type SessionAgentSelected = {
   id: EventID
@@ -4695,6 +4701,10 @@ export type SessionRevertCommitOutput = void
 export type SessionContextInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
 
 export type SessionContextOutput = { data: Array<SessionMessageInfo> }["data"]
+
+export type SessionContextUsageInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionContextUsageOutput = { data: SessionContextUsage }["data"]
 
 export type SessionDiffInput = {
   readonly sessionID: { readonly sessionID: string }["sessionID"]
