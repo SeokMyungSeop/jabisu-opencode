@@ -63,6 +63,8 @@ export type ElectronAPI = {
   onZoomFactorChanged(cb: (factor: number) => void): () => void
   setTitlebar(theme: TitlebarTheme): Promise<void>
   runDesktopMenuAction(action: DesktopMenuAction): Promise<void>
+  /** Opens a new app window that starts at `route`, such as a session's. */
+  openWindow(route: string): Promise<void>
   setBackgroundColor(color: string): Promise<void>
   exportDebugLogs(): Promise<string>
   setForceFocus(enabled: boolean): Promise<void>

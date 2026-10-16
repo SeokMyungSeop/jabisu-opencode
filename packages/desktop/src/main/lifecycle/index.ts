@@ -18,7 +18,8 @@ export interface Interface {
   readonly relaunch: () => void
   readonly prepareToRestart: Effect.Effect<void>
   readonly consumeInitialDeepLinks: () => string[]
-  readonly createWindow: () => BrowserWindow
+  /** Opens a new main window, at `route` (such as a session's) until it has a route of its own. */
+  readonly createWindow: (route?: string) => BrowserWindow
   readonly restoreWindows: () => BrowserWindow[]
 }
 
@@ -30,7 +31,7 @@ const runtime = Layer.effect(
     const shutdown = yield* Shutdown.Service
     const runFork = Effect.runForkWith(yield* Effect.context())
     const windows = yield* makeMainWindows()
-    const createWindow = windows.create
+    const createWindow = (route?: string) => windows.create(undefined, undefined, route)
     const restoreWindows = windows.restore
     const pendingDeepLinks: string[] = []
     let shutdownReady = false

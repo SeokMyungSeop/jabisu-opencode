@@ -609,6 +609,7 @@ export const dict = {
   "titlebar.channel.local": "Local",
   "titlebar.channel.dev": "Dev",
   "titlebar.channel.beta": "Beta",
+  "titlebar.tab.openInNewWindow": "Open in new window",
 
   "common.closeTab": "Close tab",
   "common.dismiss": "Dismiss",

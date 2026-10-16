@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { acceptedLastActiveUrl } from "./route-storage"
+import { acceptedLastActiveUrl, getLastActiveUrl } from "./route-storage"
 
 describe("desktop last active route", () => {
   test("restores current desktop routes and falls back for invalid saved routes", () => {
@@ -15,5 +15,11 @@ describe("desktop last active route", () => {
     expect(acceptedLastActiveUrl("/settings/extra")).toBe("/")
     expect(acceptedLastActiveUrl("/new-session/extra")).toBe("/")
     expect(acceptedLastActiveUrl("/server/sidecar/session/abc/extra")).toBe("/")
+  })
+
+  test("starts a window opened at a session route there, and only at routes it would restore", () => {
+    expect(getLastActiveUrl("opened-window", "/server/c2lkZWNhcg/session/abc")).toBe("/server/c2lkZWNhcg/session/abc")
+    expect(getLastActiveUrl("opened-window", "https://example.com/")).toBe("/")
+    expect(getLastActiveUrl("opened-window")).toBe("/")
   })
 })

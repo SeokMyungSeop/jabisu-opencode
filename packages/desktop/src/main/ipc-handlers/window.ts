@@ -2,14 +2,17 @@ import { BrowserWindow } from "electron"
 import { Effect } from "effect"
 import { WindowRpcs } from "../../shared/ipc-rpc"
 import { IpcPortHandoff } from "../ipc-transport"
+import { ApplicationLifecycle } from "../lifecycle"
 import { getPinchZoomEnabled, setPinchZoomEnabled, setTitlebar, setWindowThemeReady, updateTitlebar } from "../windows"
 import { sender } from "./context"
 
 export const windowHandlers = WindowRpcs.toLayer(
   Effect.gen(function* () {
     const handoff = yield* IpcPortHandoff
+    const lifecycle = yield* ApplicationLifecycle.Service
 
     return WindowRpcs.of({
+      WindowOpen: ({ route }) => Effect.sync(() => void lifecycle.createWindow(route)),
       WindowThemeReady: (_args, context) =>
         Effect.sync(() => {
           const win = BrowserWindow.fromWebContents(sender(handoff, context))

@@ -33,7 +33,10 @@ const MigrationStatus = lazy(() => import("./migration-status").then((module) =>
 
 export function DesktopApp(props: { api: ElectronAPI; version: string }) {
   const windowState = { id: props.api.getWindowID(), version: props.version }
-  const initialUrl = getLastActiveUrl(windowState.id)
+  // The window was created with the answers the shell gate needs; only a fresh install, which has no
+  // onboarding decision yet, asks over IPC and waits for the port.
+  const bootstrap = props.api.getWindowBootstrap()
+  const initialUrl = getLastActiveUrl(windowState.id, bootstrap.route)
   const url = new URL(initialUrl, "http://localhost")
   const route = currentRoute(url.pathname, url.search)
 
@@ -45,10 +48,6 @@ export function DesktopApp(props: { api: ElectronAPI; version: string }) {
     drawingReady: false,
     route,
   })
-
-  // The window was created with the answers the shell gate needs; only a fresh install, which has no
-  // onboarding decision yet, asks over IPC and waits for the port.
-  const bootstrap = props.api.getWindowBootstrap()
 
   const [firstLaunch] = createResource(() =>
     bootstrap.firstLaunchPending !== undefined
@@ -70,7 +69,9 @@ export function DesktopApp(props: { api: ElectronAPI; version: string }) {
     preloadRoute,
   )
 
-  const router = (routerProps: BaseRouterProps) => <DesktopMemoryRouter {...routerProps} windowID={windowState.id} />
+  const router = (routerProps: BaseRouterProps) => (
+    <DesktopMemoryRouter {...routerProps} windowID={windowState.id} initialUrl={initialUrl} />
+  )
 
   const readyToReveal = () =>
     startup.ready &&

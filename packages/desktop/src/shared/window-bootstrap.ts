@@ -5,6 +5,8 @@ export type WindowBootstrap = {
   firstLaunchPending?: boolean
   /** The app runs packaged (`app.isPackaged`), as extensions' `Build.packaged` reports in both processes. */
   packaged?: boolean
+  /** Where a window opened for a session starts, until it has a route of its own; the renderer validates it. */
+  route?: string
 }
 
 const prefix = "--opencode-window="

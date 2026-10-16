@@ -135,7 +135,7 @@ export const makeMainWindows = Effect.fn("Window.make")(function* () {
     return list.map((id) => create(id, usable?.id === id ? usable : undefined))
   }
 
-  const create = (id: string = randomUUID(), early?: EarlyWindow) => {
+  const create = (id: string = randomUUID(), early?: EarlyWindow, route?: string) => {
     const stateFile = path.join(app.getPath("userData"), windowStateFile(id))
     const state = early?.state ?? resolveWindowState(readWindowState(stateFile), { width: 1280, height: 800 }, displays)
     const appearance = windowAppearance(path, paths)
@@ -152,7 +152,7 @@ export const makeMainWindows = Effect.fn("Window.make")(function* () {
         ...appearance,
         webPreferences: {
           ...appearance.webPreferences,
-          additionalArguments: windowArguments(id),
+          additionalArguments: windowArguments(id, route),
         },
       })
 
