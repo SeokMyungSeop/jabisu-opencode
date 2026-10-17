@@ -34,7 +34,13 @@ export const WindowSetTitlebar = Rpc.make("WindowSetTitlebar", {
   },
 })
 
+/** Opens a new app window that starts at `route`, such as a session's, which the new window's renderer validates. */
+export const WindowOpen = Rpc.make("WindowOpen", {
+  payload: { route: Schema.String.check(Schema.isMaxLength(2048)) },
+})
+
 export const WindowRpcs = RpcGroup.make(
+  WindowOpen,
   WindowThemeReady,
   WindowGetFocused,
   WindowGetFullscreen,

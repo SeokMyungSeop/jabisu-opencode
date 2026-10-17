@@ -34,6 +34,7 @@ import { Persist, persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
 import { createSizing } from "@/session/helpers"
 import { useSessionLayout } from "@/session/session-layout"
+import { useSessionPane } from "@/session/pane"
 import { useExtensionHost } from "./host"
 import { Contribution } from "./render"
 import { useExtensionAttachment } from "./attachment"
@@ -86,7 +87,8 @@ export function createPanelSidebar(): PanelSidebar {
     toggle: () => setStore("sidebarOpened", (opened) => !opened),
   }
 
-  onCleanup(useExtensionAttachment().sidebar(sidebar))
+  // A split's second pane shares the preference without becoming the one `Layout.sidebar` reads.
+  if (!useSessionPane().secondary) onCleanup(useExtensionAttachment().sidebar(sidebar))
 
   return sidebar
 }

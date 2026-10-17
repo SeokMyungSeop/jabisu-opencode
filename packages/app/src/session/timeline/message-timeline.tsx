@@ -28,6 +28,7 @@ import { useCommand } from "@/shell/commands/command"
 import { SessionAncestorTrail, SessionProjectMenu, SessionTitleHeader } from "../session-identity-header"
 import { SessionHeaderSpacer } from "@/session/header/session-header"
 import { SessionRunningMenu } from "@/session/header/session-running-menu"
+import { useSessionPane } from "@/session/pane"
 
 type BlockingTask = { type: "shell" | "subagent"; partID: string; id?: string; label?: string }
 
@@ -125,6 +126,7 @@ function MessageTimelineView(
 ) {
   const language = useLanguage()
   const server = useServer()
+  const pane = useSessionPane()
   const data = server.ctx.data
   const sdk = useWorkspaceLocation()
   const sessionID = props.data.sessionID
@@ -601,8 +603,9 @@ function MessageTimelineView(
                         get screen() {
                           return props.screen
                         },
+                        // A split's second pane is on screen too, but window-wide actions stay with the routed one.
                         get active() {
-                          return props.active !== false
+                          return props.active !== false && !pane.secondary
                         },
                       }}
                     />

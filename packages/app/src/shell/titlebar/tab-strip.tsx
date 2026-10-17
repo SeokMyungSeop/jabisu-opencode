@@ -18,6 +18,7 @@ import { createTabComposerState } from "@/composer/persistence"
 import { base64Encode } from "@opencode/util/encode"
 import { showToast } from "@/shell/notifications/toast"
 import { adjacentTabKey, mergeVisibleTabOrder } from "./tab-order"
+import { useSplit } from "@/shell/split/split"
 import type { SessionInfo } from "@opencode/client/promise"
 
 function SessionTabSlot(props: {
@@ -45,6 +46,7 @@ function SessionTabSlot(props: {
   })
 
   let ref!: HTMLDivElement
+  const split = useSplit()
 
   return (
     <div
@@ -73,6 +75,10 @@ function SessionTabSlot(props: {
         onRename={props.onRename}
         onNavigate={() => props.onNavigate(ref)}
         onClose={props.onClose}
+        // The routed tab already fills the main pane.
+        onSplit={
+          props.active ? undefined : () => split.open(props.tab.server, props.tab.routeSessionId ?? props.tab.sessionId)
+        }
         active={props.active}
         dragging={sortable.isDragSource()}
         orientation={props.orientation}

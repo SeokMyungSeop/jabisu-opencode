@@ -1,16 +1,14 @@
-export function getLastActiveUrl(windowID: string) {
-  if (typeof localStorage !== "object") return "/"
-
+/** The window's last route. A window opened at a route (`opened`) starts there until it stores a route of its own. */
+export function getLastActiveUrl(windowID: string, opened?: string) {
   try {
-    return acceptedLastActiveUrl(localStorage.getItem(windowLastActiveUrlKey(windowID)))
+    return acceptedLastActiveUrl(localStorage.getItem(windowLastActiveUrlKey(windowID)) ?? opened)
   } catch {
-    return "/"
+    // Storage is missing outside a window or refused access; the window still starts where it was opened.
+    return acceptedLastActiveUrl(opened)
   }
 }
 
 export function setLastActiveUrl(windowID: string, value: string) {
-  if (typeof localStorage !== "object") return
-
   try {
     localStorage.setItem(windowLastActiveUrlKey(windowID), value)
   } catch {}

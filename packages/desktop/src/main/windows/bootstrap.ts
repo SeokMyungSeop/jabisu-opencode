@@ -7,16 +7,17 @@ import { getStore } from "../storage/store"
 // The settings store is already in memory when a window is created, so the renderer gets the
 // answers its shell gate would otherwise ask for over IPC. A fresh install has no onboarding
 // decision yet; the renderer asks once the layers have made one.
-export function windowBootstrap(id: string): WindowBootstrap {
+export function windowBootstrap(id: string, route?: string): WindowBootstrap {
   const complete = getStore().get(FIRST_LAUNCH_ONBOARDING_COMPLETE_KEY)
 
   return {
     id,
     firstLaunchPending: Predicate.isBoolean(complete) ? !complete : undefined,
     packaged: app.isPackaged,
+    route,
   }
 }
 
-export function windowArguments(id: string) {
-  return [windowBootstrapArgument(windowBootstrap(id))]
+export function windowArguments(id: string, route?: string) {
+  return [windowBootstrapArgument(windowBootstrap(id, route))]
 }

@@ -9,6 +9,7 @@ import { Icon } from "@opencode/ui/icon"
 import { Menu } from "@opencode/ui/menu"
 import { useServerCtx } from "@/runtime/server/runtime"
 import { useLanguage } from "@/runtime/i18n/language"
+import { usePlatform } from "@/runtime/platform/platform"
 import { ServerConnection, serverName, useServers } from "@/runtime/server/registry"
 import { displayName } from "@opencode/ui/project-avatar"
 import { SessionTabAvatarView } from "@/shell/layout/session-tab-avatar"
@@ -33,6 +34,8 @@ export function TabNavItem(props: {
   onRename: (title: string) => Promise<void>
   onClose: () => void
   onNavigate: () => void
+  /** Shows the tab's session in the window's split view; absent where the tab cannot open there. */
+  onSplit?: () => void
   active?: boolean
   suppressNavigation?: boolean
   dragging?: boolean
@@ -41,6 +44,7 @@ export function TabNavItem(props: {
   orientation?: "horizontal" | "vertical"
 }) {
   const language = useLanguage()
+  const platform = usePlatform()
   const [menu, setMenu] = createStore({ open: false, rename: false })
   const [editing, setEditing] = createSignal(false)
   const [titleOverflowing, setTitleOverflowing] = createSignal(false)
@@ -415,6 +419,16 @@ export function TabNavItem(props: {
           <Menu.Item disabled={!props.session || rename.isPending} onSelect={() => setMenu("rename", true)}>
             {language.t("common.rename")}
           </Menu.Item>
+          <Show when={platform.openWindow}>
+            {(openWindow) => (
+              <Menu.Item onSelect={() => void openWindow()(props.href)}>
+                {language.t("titlebar.tab.openInNewWindow")}
+              </Menu.Item>
+            )}
+          </Show>
+          <Show when={props.onSplit}>
+            {(split) => <Menu.Item onSelect={() => split()()}>{language.t("titlebar.tab.openInSplit")}</Menu.Item>}
+          </Show>
           <Menu.Item onSelect={props.onClose}>{language.t("common.closeTab")}</Menu.Item>
         </Menu.Context.Content>
       </Menu.Context.Portal>
