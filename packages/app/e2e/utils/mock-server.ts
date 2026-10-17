@@ -1272,6 +1272,8 @@ function mockHandlers(
               },
             }
           }),
+        // No breakdown: the details' Context card shows the measured usage alone.
+        sessionContextUsage: () => Effect.succeed({ data: { categories: [] } }),
         sessionGenerate: (ctx) =>
           Effect.promise(async () => ({
             data: (await config.generate?.({ sessionID: ctx.params.sessionID, prompt: ctx.payload.prompt })) ?? {
