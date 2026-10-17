@@ -47,7 +47,7 @@ export function createNotificationCoordinator() {
     })
   }
 
-  const once = async (kind: "sound" | "system", eventID: string, run: () => Promise<unknown> | void) => {
+  const once = async (kind: Kind, eventID: string, run: () => Promise<unknown> | void) => {
     const key = `${kind}:${eventID}`
 
     const execute = async () => {
@@ -74,10 +74,19 @@ export function createNotificationCoordinator() {
         })
       })
     },
+    /** The focused window's counterpart to `system`, which stays quiet while any window has focus. */
+    async toast(eventID: string, run: () => void) {
+      // Claims are shared across windows, so only the focused window may claim; a background window claiming
+      // first would suppress the one toast that can be seen.
+      if (typeof document === "undefined" || !document.hasFocus()) return
+      await once("toast", eventID, run)
+    },
   }
 }
 
-function claim(kind: "sound" | "system", eventID: string, claimed: Set<string>) {
+type Kind = "sound" | "system" | "toast"
+
+function claim(kind: Kind, eventID: string, claimed: Set<string>) {
   if (claimed.has(eventID)) return false
 
   if (typeof localStorage !== "undefined") {

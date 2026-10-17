@@ -4,6 +4,8 @@ import { createStore } from "solid-js/store"
 import type { OpenCodeEvent } from "@opencode/client/promise"
 import type { ServerConnection } from "@/runtime/server/registry"
 import { ServerScope } from "@/runtime/server/scope"
+import { createNotificationCoordinator } from "@/shell/notifications/coordinator"
+import type { LayoutRoute } from "@/shell/state/layout"
 import type { Tab } from "@/shell/tabs/tabs"
 
 // SAFETY: this is the key format `ServerConnection.key` produces for a local server.
@@ -13,7 +15,13 @@ const session = { id: "session-1", title: "Test session", location: { directory:
 
 const alerts: string[] = []
 
+const toasts: string[] = []
+
 const tabs = { store: new Array<Tab>() }
+
+let route: LayoutRoute = { type: "home" }
+
+let autoApprove = false
 
 let createServerNotificationState: typeof import("@/shell/notifications/notification").createServerNotificationState
 
@@ -30,6 +38,8 @@ beforeAll(async () => {
     settings: await import("@/settings/model"),
     language: await import("@/runtime/i18n/language"),
     tabs: await import("@/shell/tabs/tabs"),
+    layout: await import("@/shell/state/layout"),
+    toast: await import("@/shell/notifications/toast"),
   }
 
   mock.module("@/runtime/platform/platform", () => ({
@@ -44,8 +54,9 @@ beforeAll(async () => {
   mock.module("@/settings/model", () => ({
     ...real.settings,
     useSettings: () => ({
-      sounds: { agentEnabled: () => false, errorsEnabled: () => false },
-      notifications: { agent: () => true, errors: () => true },
+      sounds: { agentEnabled: () => false, errorsEnabled: () => false, permissionsEnabled: () => false },
+      notifications: { agent: () => true, errors: () => true, permissions: () => true },
+      permissions: { autoApproves: () => autoApprove },
     }),
   }))
   mock.module("@/runtime/i18n/language", () => ({
@@ -53,21 +64,92 @@ beforeAll(async () => {
     useLanguage: () => ({ t: (key: string) => key }),
   }))
   mock.module("@/shell/tabs/tabs", () => ({ ...real.tabs, useTabs: () => tabs }))
+  mock.module("@/shell/state/layout", () => ({ ...real.layout, useCurrentRoute: () => () => route }))
+  mock.module("@/shell/notifications/toast", () => ({
+    ...real.toast,
+    showToast: (options: { title: string }) => {
+      toasts.push(options.title)
+
+      return 0
+    },
+  }))
   createServerNotificationState = (await import("@/shell/notifications/notification")).createServerNotificationState
 })
 
 test.each([
   ["session.execution.succeeded", "notification.session.responseReady.title"],
   ["session.execution.failed", "notification.session.error.title"],
-] as const)("system alert for %s requires an open session tab", async (type, title) => {
+] as const)(
+  "alerts for %s require an open session tab and skip the toast for the session on screen",
+  async (type, title) => {
+    alerts.length = 0
+    toasts.length = 0
+    route = { type: "home" }
+    tabs.store = [{ type: "session", server, sessionId: "another-session" }]
+    const listeners = new Array<(event: OpenCodeEvent) => void>()
+
+    const emit = (id: string) =>
+      listeners.forEach((listener) =>
+        // SAFETY: the notification state reads only the type, id and session of execution events.
+        listener({ type, id, data: { sessionID: session.id, error: { type: "api", message: "failed" } } } as never),
+      )
+
+    const dispose = createRoot((dispose) => {
+      createState({
+        sdk: {
+          scope: ServerScope.local,
+          event: {
+            listen: (listener: (event: OpenCodeEvent) => void) => {
+              listeners.push(listener)
+
+              return () => {}
+            },
+          },
+        },
+        data: { session: { get: () => session, root: (id: string) => id } },
+        coordinator: {
+          system: async (_id: string, fn: () => Promise<void>) => fn(),
+          toast: async (_id: string, fn: () => void) => fn(),
+        },
+      })
+
+      return dispose
+    })
+
+    emit("event-1")
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(alerts).toEqual([])
+    expect(toasts).toEqual([])
+
+    // The coordinator picks the surface by window focus; the toast is skipped only for the session on screen.
+    tabs.store = [{ type: "session", server, sessionId: session.id }]
+    emit("event-2")
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(alerts).toEqual([title])
+    expect(toasts).toEqual([title])
+
+    route = { type: "session", server, sessionId: session.id }
+    emit("event-3")
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(alerts).toEqual([title, title])
+    expect(toasts).toEqual([title])
+    dispose()
+  },
+)
+
+test("permission requests alert for the root session tab unless they are auto-approved", async () => {
   alerts.length = 0
-  tabs.store = [{ type: "session", server, sessionId: "another-session" }]
+  toasts.length = 0
+  route = { type: "home" }
+  autoApprove = false
+  tabs.store = [{ type: "session", server, sessionId: session.id }]
   const listeners = new Array<(event: OpenCodeEvent) => void>()
+  const child = { id: "child-1", parentID: session.id, title: "Subagent", projectID: "project" }
 
   const emit = (id: string) =>
     listeners.forEach((listener) =>
-      // SAFETY: the notification state reads only the type, id and session of execution events.
-      listener({ type, id, data: { sessionID: session.id, error: { type: "api", message: "failed" } } } as never),
+      // SAFETY: the notification state reads only the type, id and session of permission events.
+      listener({ type: "permission.asked", id, data: { sessionID: child.id } } as never),
     )
 
   const dispose = createRoot((dispose) => {
@@ -82,22 +164,51 @@ test.each([
           },
         },
       },
-      data: { session: { get: () => session } },
-      coordinator: { system: async (_id: string, fn: () => Promise<void>) => fn() },
+      data: {
+        session: {
+          get: (id: string) => (id === child.id ? child : session),
+          root: (id: string) => (id === child.id ? session.id : id),
+        },
+      },
+      coordinator: {
+        system: async (_id: string, fn: () => Promise<void>) => fn(),
+        toast: async (_id: string, fn: () => void) => fn(),
+      },
     })
 
     return dispose
   })
 
-  emit("event-1")
+  emit("permission-1")
   await new Promise((resolve) => setTimeout(resolve, 0))
-  expect(alerts).toEqual([])
+  expect(alerts).toEqual(["notification.permission.title"])
+  expect(toasts).toEqual(["notification.permission.title"])
 
-  tabs.store = [{ type: "session", server, sessionId: session.id }]
-  emit("event-2")
+  autoApprove = true
+  emit("permission-2")
   await new Promise((resolve) => setTimeout(resolve, 0))
-  expect(alerts).toEqual([title])
+  expect(alerts).toHaveLength(1)
+  autoApprove = false
   dispose()
+})
+
+test("only the focused window claims an in-app toast", async () => {
+  const shown: string[] = []
+  const focus = vi.spyOn(document, "hasFocus")
+
+  const [background, focused] = [
+    createRoot(() => createNotificationCoordinator()),
+    createRoot(() => createNotificationCoordinator()),
+  ]
+
+  // Claims are shared through storage, so a background window must not take the claim the focused one needs.
+  focus.mockReturnValue(false)
+  await background.toast("server\0event-toast", () => void shown.push("background"))
+  focus.mockReturnValue(true)
+  await focused.toast("server\0event-toast", () => void shown.push("focused"))
+  await focused.toast("server\0event-toast", () => void shown.push("again"))
+  expect(shown).toEqual(["focused"])
+  focus.mockRestore()
 })
 
 test("unread state and viewing follow the server's idle and viewed watermarks", async () => {
