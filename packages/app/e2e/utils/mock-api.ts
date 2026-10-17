@@ -370,6 +370,12 @@ const Group = HttpApiGroup.make("mock")
     }),
   )
   .add(
+    HttpApiEndpoint.get("sessionContextUsage", "/api/session/:sessionID/context/usage", {
+      params: SessionParams,
+      success: Json,
+    }),
+  )
+  .add(
     HttpApiEndpoint.post("sessionGenerate", "/api/session/:sessionID/generate", {
       params: SessionParams,
       payload: Schema.Struct({ prompt: Schema.String }),
