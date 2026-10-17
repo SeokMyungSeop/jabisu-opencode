@@ -300,7 +300,7 @@ export type WebSearchResult = { url: string; title?: string; content?: string; t
 
 export type McpProtocol = "legacy" | "auto" | "2026-07-28"
 
-export type ConfigWorktree = { directory: string }
+export type ConfigWorktree = { directory?: string; branch_prefix?: string }
 
 export type ConfigModelReasoning =
   | { supported: false }

@@ -504,6 +504,33 @@ Without this setting, creation uses the server's data directory under `worktree/
 Worktree creation and refresh load configuration from the project's saved canonical checkout, including when other
 clones share its project ID. Changing it does not move existing worktrees.
 
+New worktrees are checked out detached. Set `branch_prefix` to create a branch for each one instead, named with the
+prefix followed by the worktree's name:
+
+```jsonc
+{
+  "worktree": {
+    "branch_prefix": "opencode/",
+  },
+}
+```
+
+Removing the worktree keeps its branch.
+
+To copy local files that Git ignores, such as `.env`, into each new Git worktree, list them in a `.worktreeinclude` file
+at the root of the source checkout. It uses `.gitignore` syntax, and only files that both match it and are ignored by
+Git are copied; everything else is already checked out. Patterns without a slash match at any depth, so Git also
+searches ignored directories such as `node_modules`, which can take a few seconds in large projects.
+
+```gitignore
+.env
+.env.local
+config/secrets/
+```
+
+Removing a worktree first stops the language servers, file watchers and shells running inside it, so Windows can
+delete its directory.
+
 Git is the built-in default. A [plugin](/build/plugins#worktrees) that registers a strategy automatically becomes the
 default in that plugin runtime. Project operations use the canonical checkout's runtime. Strategy-specific options
 belong to that plugin, not the `worktree` config object.

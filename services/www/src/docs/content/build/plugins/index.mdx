@@ -1222,11 +1222,14 @@ inventory, startup commands, and the API result. The returned directory must exi
 Strategies choosing another destination handle naming collisions there. OpenCode still creates the suggested parent
 directory before calling the strategy. `list` must report only directories the strategy owns, plus any repository roots.
 
+`branch` is the starting ref. `newBranch` is set when the [`worktree.branch_prefix`](/config#worktrees) config asks for
+a branch per worktree; create it at the starting ref, or reject the request when the backend has no branches.
+
 ```ts
 interface WorktreeDefinition {
   readonly id: string
   create(
-    input: { sourceDirectory: string; directory: string; branch?: string },
+    input: { sourceDirectory: string; directory: string; branch?: string; newBranch?: string },
     context: { signal: AbortSignal },
   ): Promise<{ directory: string }>
   remove(input: { directory: string; force: boolean }, context: { signal: AbortSignal }): Promise<void>

@@ -18,6 +18,7 @@ export interface Strategy {
     sourceDirectory: AbsolutePath
     directory: AbsolutePath
     branch?: string
+    newBranch?: string
   }) => Effect.Effect<Worktree.Info, unknown>
   readonly remove: (input: { directory: AbsolutePath; force: boolean }) => Effect.Effect<void, unknown>
   readonly list: (directory: AbsolutePath) => Effect.Effect<readonly Worktree.ListEntry[], unknown>
@@ -25,13 +26,14 @@ export interface Strategy {
 
 export interface Editor {
   readonly add: (strategy: Strategy) => void
-  readonly configure: (settings: { readonly directory: AbsolutePath }) => void
+  readonly configure: (settings: { readonly directory?: AbsolutePath; readonly branchPrefix?: string }) => void
 }
 
 export interface Interface extends State.Transformable<Editor> {
   readonly directory: AbsolutePath
   readonly get: () => {
     readonly directory: AbsolutePath
+    readonly branchPrefix?: string
     readonly strategies: ReadonlyMap<Worktree.StrategyID, Strategy>
     readonly selected: Worktree.StrategyID
   }
@@ -49,12 +51,14 @@ const layer = Layer.effect(
       name: "worktree",
       initial: () => ({
         directory: AbsolutePath.make(path.join(global.data, "worktree", location.project.id.slice(0, 6))),
+        branchPrefix: undefined as string | undefined,
         strategies: new Map<Worktree.StrategyID, Strategy>([[git.id, git]]),
         selected: git.id,
       }),
       editor: (value): Editor => ({
         configure: (settings) => {
-          value.directory = settings.directory
+          if (settings.directory !== undefined) value.directory = settings.directory
+          if (settings.branchPrefix !== undefined) value.branchPrefix = settings.branchPrefix
         },
         add: (strategy) => {
           value.strategies.delete(strategy.id)

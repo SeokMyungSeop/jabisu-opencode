@@ -1,6 +1,6 @@
 export * as Worktree from "./worktree.js"
 
-import { Context, Effect, Layer, Schema } from "effect"
+import { Context, Effect, Layer, RcMap, Schema } from "effect"
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm"
 import path from "path"
 import { AbsolutePath } from "./schema.js"
@@ -222,6 +222,7 @@ const layer = Layer.effect(
           directory: worktreeDirectory,
           sourceDirectory,
           branch: input.branch,
+          newBranch: settings.branchPrefix && `${settings.branchPrefix}${path.basename(worktreeDirectory)}`,
         })
         .pipe(Effect.mapError((error) => operationError(selected.id, "create", error)))
       const result = { directory: yield* canonical(fs, created.directory) }
@@ -261,6 +262,12 @@ const layer = Layer.effect(
       if (!stored?.strategy) return yield* new InvalidDirectoryError({ directory: worktreeDirectory })
       const settings = yield* load(row.worktree, current)
       const strategy = yield* getStrategy(StrategyID.make(stored.strategy), settings.strategies)
+      // Watchers, language servers and shells started for the worktree hold it open, and Windows can't delete open
+      // directories. Stopping its location services releases them; the next request there boots them again.
+      const open = Array.from(yield* RcMap.keys(locations.rcMap)).filter((ref) =>
+        FSUtil.contains(worktreeDirectory, ref.directory),
+      )
+      yield* Effect.forEach(open, (ref) => locations.invalidate(ref), { concurrency: "unbounded", discard: true })
       yield* strategy
         .remove({
           directory: worktreeDirectory,

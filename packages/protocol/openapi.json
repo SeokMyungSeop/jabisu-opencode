@@ -14659,9 +14659,11 @@
         "properties": {
           "directory": {
             "type": "string"
+          },
+          "branch_prefix": {
+            "type": "string"
           }
         },
-        "required": ["directory"],
         "additionalProperties": false
       },
       "ConfigShell.Option": {

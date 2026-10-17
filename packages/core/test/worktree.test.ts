@@ -3,7 +3,7 @@ import { $ } from "bun"
 import fs from "fs/promises"
 import path from "path"
 import { and, eq, isNull } from "drizzle-orm"
-import { Context, Effect, Exit, Fiber, Layer, Queue, Scope, Stream } from "effect"
+import { Context, Duration, Effect, Exit, Fiber, Layer, LayerMap, Queue, RcMap, Scope, Stream } from "effect"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { AbsolutePath } from "@opencode/core/schema"
@@ -18,6 +18,7 @@ import { WorktreeDirectory } from "@opencode/core/worktree/directory"
 import { WorktreeTable } from "@opencode/core/worktree/sql"
 import { WorktreeGit } from "@opencode/core/worktree/git"
 import { Location } from "@opencode/core/location"
+import { LocationServiceMap } from "@opencode/core/location-services"
 import { Global } from "@opencode/util/global"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Config } from "@opencode/core/config"
@@ -32,6 +33,9 @@ import { tmpdir } from "./fixture/tmpdir"
 import { testEffect } from "./lib/effect"
 
 class Fixture extends Context.Service<Fixture, Effect.Success<ReturnType<typeof makeFixture>>>()("WorktreeFixture") {}
+
+// Stands in for a location's services where a test only opens and closes locations.
+class OpenLocation extends Context.Service<OpenLocation, { readonly directory: string }>()("WorktreeOpenLocation") {}
 
 const infrastructure = AppNodeBuilder.build(LayerNode.group([Project.node, Database.node, Bus.node]))
 const it = testEffect(
@@ -57,6 +61,7 @@ function worktreeLayer(
   bus: Bus.Interface,
   data: string,
   workspaceID?: Workspace.ID,
+  replacements: LayerNode.Replacements = [],
 ) {
   return AppNodeBuilder.build(
     LayerNode.group([Worktree.node, WorktreeStrategies.node, Git.node, FSUtil.node, Location.node, Global.node]),
@@ -74,6 +79,7 @@ function worktreeLayer(
           }),
         ),
       ),
+      ...replacements,
     ],
   ).pipe(Layer.fresh)
 }
@@ -492,6 +498,104 @@ describe("Worktree", () => {
 
       yield* worktree.remove({ directory: created.directory, force: true })
       expect(yield* Effect.promise(() => Bun.file(created.directory).exists())).toBe(false)
+    }),
+  )
+
+  it.live("creates a branch named by the configured prefix and keeps it after removal", () =>
+    Effect.gen(function* () {
+      const input = yield* setup()
+      const config = yield* Config.Test
+      const global = yield* Global.Service
+      const worktrees = yield* fixtureWorktree()
+      const branch = (directory: string) =>
+        Effect.promise(() => $`git branch --show-current`.cwd(directory).quiet().text()).pipe(
+          Effect.map((text) => text.trim()),
+        )
+      const detached = yield* worktrees.create({ name: "detached" })
+      yield* config.setEntries([
+        new Document({
+          type: "document",
+          path: abs(path.join(input.root.path, "opencode.json")),
+          info: new Info({ worktree: { branch_prefix: "opencode/" } }),
+        }),
+      ])
+      yield* ConfigWorktreePlugin.Plugin.effect(host())
+
+      const created = yield* worktrees.create({ name: "task" })
+
+      // A prefix alone keeps the default directory.
+      expect(created.directory).toBe(abs(path.join(global.data, "worktree", input.projectID.slice(0, 6), "task")))
+      expect(yield* branch(detached.directory)).toBe("")
+      expect(yield* branch(created.directory)).toBe("opencode/task")
+      yield* worktrees.remove({ directory: created.directory, force: false })
+      expect(
+        yield* Effect.promise(() => $`git branch --list opencode/task`.cwd(input.sourceDirectory).quiet().text()),
+      ).toContain("opencode/task")
+    }),
+  )
+
+  it.live("copies the ignored files .worktreeinclude names into a new worktree", () =>
+    Effect.gen(function* () {
+      const input = yield* setup()
+      const worktrees = yield* fixtureWorktree()
+      const source = (name: string) => path.join(input.sourceDirectory, name)
+      yield* Effect.promise(async () => {
+        await Bun.write(source(".gitignore"), ".env\nsecrets/\nbuild/\n")
+        await Bun.write(source(".worktreeinclude"), ".env\nsecrets/\nnotes.txt\n")
+        await Bun.write(source(".env"), "TOKEN=local")
+        await Bun.write(source("secrets/key.txt"), "key")
+        await Bun.write(source("build/out.js"), "built")
+        await Bun.write(source("notes.txt"), "notes")
+      })
+
+      const created = yield* worktrees.create({ name: "included" })
+
+      const read = (name: string) => Effect.promise(() => Bun.file(path.join(created.directory, name)).text())
+      const exists = (name: string) => Effect.promise(() => Bun.file(path.join(created.directory, name)).exists())
+      expect(yield* read(".env")).toBe("TOKEN=local")
+      expect(yield* read("secrets/key.txt")).toBe("key")
+      // Ignored files it doesn't name stay behind, and so do named files Git doesn't ignore.
+      expect(yield* exists("build/out.js")).toBe(false)
+      expect(yield* exists("notes.txt")).toBe(false)
+      yield* worktrees.remove({ directory: created.directory, force: true })
+    }),
+  )
+
+  it.live("stops location services inside a worktree before removing it", () =>
+    Effect.gen(function* () {
+      const input = yield* setup()
+      const database = yield* Database.Service
+      const bus = yield* Bus.Service
+      const closed: string[] = []
+      const locations = LocationServiceMap.Service.of(
+        // SAFETY: removal only lists, opens and invalidates entries; it never reads their services.
+        (yield* LayerMap.make(
+          (ref: Location.Ref) =>
+            Layer.effect(
+              OpenLocation,
+              Effect.acquireRelease(Effect.succeed({ directory: ref.directory }), () =>
+                Effect.sync(() => closed.push(ref.directory)),
+              ),
+            ),
+          { idleTimeToLive: Duration.infinity },
+        )) as never,
+      )
+      const context = yield* Layer.build(
+        worktreeLayer(input.sourceDirectory, input.projectID, database, bus, input.root.path, undefined, [
+          LocationServiceMap.node.replace(Layer.succeed(LocationServiceMap.Service, locations)),
+        ]),
+      )
+      const worktrees = Context.get(context, Worktree.Service)
+      const strategies = Context.get(context, WorktreeStrategies.Service)
+      const created = yield* worktrees.create({ projectID: input.projectID, name: "open" }, strategies)
+      const inside = Location.Ref.make({ directory: abs(path.join(created.directory, "src")) })
+      const outside = Location.Ref.make({ directory: input.sourceDirectory })
+      yield* Effect.forEach([inside, outside], (ref) => Effect.scoped(locations.contextEffect(ref)), { discard: true })
+
+      yield* worktrees.remove({ projectID: input.projectID, directory: created.directory, force: false }, strategies)
+
+      expect(closed).toEqual([inside.directory])
+      expect(Array.from(yield* RcMap.keys(locations.rcMap))).toEqual([outside])
     }),
   )
 
@@ -980,12 +1084,14 @@ describe("Worktree", () => {
 
   it.effect("normalization retains worktree directory and rejects invalid configuration", () =>
     Effect.sync(() => {
-      expect(ConfigNormalize.normalize({ worktree: { directory: "./copies" } })).toMatchObject({
+      expect(
+        ConfigNormalize.normalize({ worktree: { directory: "./copies", branch_prefix: "opencode/" } }),
+      ).toMatchObject({
         type: "normalized",
-        encoded: { worktree: { directory: "./copies" } },
+        encoded: { worktree: { directory: "./copies", branch_prefix: "opencode/" } },
         diagnostics: [],
       })
-      for (const worktree of [{ directory: " " }, { directory: 12 }, {}]) {
+      for (const worktree of [{ directory: " " }, { directory: 12 }, { branch_prefix: " " }]) {
         const result = ConfigNormalize.normalize({ worktree })
         expect(result.diagnostics.length).toBeGreaterThan(0)
         if (result.type === "normalized") expect(result.encoded).not.toHaveProperty("worktree")

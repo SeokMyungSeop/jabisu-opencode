@@ -130,10 +130,12 @@ export interface Interface {
     readonly resetHard: (repository: Repository, revision: string) => Effect.Effect<void, OperationError>
   }
   readonly worktree: {
+    /** Checks out `ref` detached, or on a new `branch` started from it. */
     readonly create: (input: {
       repository: Repository
       directory: AbsolutePath
       ref?: string
+      branch?: string
     }) => Effect.Effect<Repository, WorktreeError>
     readonly remove: (input: {
       repository: Repository
@@ -154,6 +156,11 @@ export interface Interface {
       repository: Repository
       paths: readonly RelativePath[]
     }) => Effect.Effect<ReadonlySet<RelativePath>, OperationError>
+    /** Untracked files matching the gitignore-syntax patterns in `patterns`, which are read relative to the root. */
+    readonly untracked: (input: {
+      repository: Repository
+      patterns: AbsolutePath
+    }) => Effect.Effect<readonly RelativePath[], OperationError>
   }
   readonly tree: {
     readonly capture: (input: CaptureInput) => Effect.Effect<TreeID, OperationError>
@@ -576,6 +583,20 @@ const layer = Layer.effect(
           message: result.stderr.toString("utf8").trim() || "Failed to check ignored paths",
         })
       return new Set(nuls(result.stdout.toString("utf8")).map((file) => RelativePath.make(file)))
+    })
+
+    const untracked = Effect.fn("Git.index.untracked")(function* (input: {
+      repository: Repository
+      patterns: AbsolutePath
+    }) {
+      const result = yield* repositoryOperation("list_files", input.repository, [
+        "ls-files",
+        "--others",
+        "--ignored",
+        `--exclude-from=${input.patterns}`,
+        "-z",
+      ])
+      return nuls(result.text).map((file) => RelativePath.make(file))
     })
 
     const writeTree = Effect.fn("Git.tree.write")(function* (repository: Repository, index?: string) {
@@ -1247,11 +1268,19 @@ const layer = Layer.effect(
       repository: Repository
       directory: AbsolutePath
       ref?: string
+      branch?: string
     }) {
       yield* worktreeRun(
         "create",
         input.repository,
-        ["worktree", "add", "--detach", "--", input.directory, input.ref ?? "HEAD"],
+        [
+          "worktree",
+          "add",
+          ...(input.branch ? ["-b", input.branch] : ["--detach"]),
+          "--",
+          input.directory,
+          input.ref ?? "HEAD",
+        ],
         input.directory,
       )
       const repository = yield* discover(input.directory)
@@ -1296,7 +1325,7 @@ const layer = Layer.effect(
       history: { head, branch, defaultRemoteBranch: remoteHead, rootCommits: roots },
       sync: { fetchRemotes: fetch, fetchBranch, checkoutRemoteBranch: checkout, resetHard: reset },
       worktree: { create: worktreeCreate, remove: worktreeRemove, list: worktreeList },
-      index: { refresh, ignored },
+      index: { refresh, ignored, untracked },
       tree: {
         capture: captureTree,
         write: (repository) => writeTree(repository),
