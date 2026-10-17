@@ -26,6 +26,7 @@ import { useComposerState } from "@/composer/persistence"
 import { useServer } from "@/runtime/server/current"
 import { ServerConnection, serverName } from "@/runtime/server/registry"
 import { sessionInWorkspace, sessionProject, type SessionModel } from "@/session/model"
+import { useSessionPane } from "@/session/pane"
 import { useFile } from "@/workspaces/files/model"
 import { useWorkspaceLocation } from "@/workspaces/location"
 import { pathKey } from "@/workspaces/path-key"
@@ -47,6 +48,7 @@ export function createMountedSession(session: SessionModel) {
   const server = useServer()
   const location = useWorkspaceLocation()
   const attachment = useExtensionAttachment()
+  const pane = useSessionPane()
   // The composer region owns background tasks and is created after the view.
   const [background, setBackground] = createSignal<Accessor<readonly BackgroundTask[]>>()
 
@@ -244,14 +246,17 @@ export function createMountedSession(session: SessionModel) {
 
   // The session's declared stores start loading now, before its regions read them.
   createRenderEffect(on(mounted, (view) => attachment.preload(view)))
+
   // Publish both after render, with the original session-mount timing. Renders receive their own screen directly;
-  // only global observers need this attachment. One batch prevents exposing a view on another screen.
-  createEffect(() =>
-    batch(() => {
-      onCleanup(attachment.screen(screen))
-      onCleanup(attachment.mount(mounted))
-    }),
-  )
+  // only global observers need this attachment. One batch prevents exposing a view on another screen. A split's
+  // second pane stays unpublished: extensions follow the routed session.
+  if (!pane.secondary)
+    createEffect(() =>
+      batch(() => {
+        onCleanup(attachment.screen(screen))
+        onCleanup(attachment.mount(mounted))
+      }),
+    )
 
   return {
     screen,

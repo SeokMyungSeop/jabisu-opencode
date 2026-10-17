@@ -552,7 +552,10 @@ export interface SlotMap {
     readonly screen: SessionScreen
     /** The timeline's session: its latest object, kept while the timeline is hidden. */
     readonly session: MountedSession
-    /** The timeline is the one on screen. */
+    /**
+     * The timeline is the routed session's one on screen. A split view's second pane shows its session too, with
+     * `active` false, so window-wide actions such as commands stay with the routed session.
+     */
     readonly active: boolean
   }
   /** The actions at the end of the side region's tab strip. */

@@ -5,6 +5,7 @@ import { useLayout } from "@/shell/state/layout"
 import { useSettings } from "@/settings/model"
 import { createSizing } from "./helpers"
 import type { SessionModel } from "./model"
+import { useSessionPane } from "./pane"
 import { clampSessionPanelWidth, sessionPanelWidthMax } from "./session-panel-width"
 
 /** wide asks for the wider session minimum; sidebar is whether any extension fills the side panel sidebar. */
@@ -14,16 +15,23 @@ export function createSessionScreenLayout(
 ) {
   const layout = useLayout()
   const settings = useSettings()
+  // A split's second pane has no side panels, dock or file tree; they stay with the routed session.
+  const primary = !useSessionPane().secondary
   const size = createSizing()
   const view = session.layout.view
-  const tabsOpen = createMemo(() => session.isDesktop() && view().side.opened() && !!session.identity.params.id)
-  const dockOpen = createMemo(() => view().dock.opened())
+
+  const tabsOpen = createMemo(
+    () => primary && session.isDesktop() && view().side.opened() && !!session.identity.params.id,
+  )
+
+  const dockOpen = createMemo(() => primary && view().dock.opened())
   const dockSide = createMemo(() => session.isDesktop() && settings.general.terminalPlacement() === "side")
   const dockBottom = createMemo(() => session.isDesktop() && settings.general.terminalPlacement() === "bottom")
   const dockSideOpen = createMemo(() => dockOpen() && dockSide())
 
   const fileTreeOpen = createMemo(
-    () => session.isDesktop() && input.sidebar() && settings.visibility.fileTree() && layout.fileTree.opened(),
+    () =>
+      primary && session.isDesktop() && input.sidebar() && settings.visibility.fileTree() && layout.fileTree.opened(),
   )
 
   const resizable = createMemo(() => tabsOpen() || dockSideOpen())

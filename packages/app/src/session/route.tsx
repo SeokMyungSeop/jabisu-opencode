@@ -28,6 +28,7 @@ import { SessionErrorFallback } from "./route-error"
 import { createSessionResolution } from "./session-resolution"
 import { SessionScreenView } from "./screen"
 import { PreparingComposer } from "./preparing-composer"
+import { useSessionPane } from "./pane"
 
 export function TargetSessionRouteContent() {
   const params = useParams<{ serverKey: string; id: string }>()
@@ -95,7 +96,8 @@ function PreparingSession(props: { sessionID: string; pending: PendingSession })
 }
 
 function TargetSessionSettingsCommand() {
-  useSettingsCommand()
+  // A split's second pane leaves the command to the routed session.
+  if (!useSessionPane().secondary) useSettingsCommand()
 
   return null
 }

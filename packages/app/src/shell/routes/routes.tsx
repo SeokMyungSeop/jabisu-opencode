@@ -10,6 +10,7 @@ import { SettingsSurfaceProvider } from "@/settings/surface"
 import Shell from "@/shell/shell"
 import { requireServerKey } from "./session"
 import { ExtensionAttachment } from "@/runtime/extension/root"
+import { SplitLayout, SplitPaneRouter, SplitProvider } from "@/shell/split/split"
 
 export const File = lazy(() => import("@opencode/session-ui/file").then((module) => ({ default: module.File })))
 
@@ -49,23 +50,36 @@ export function AppRoutes() {
         path="/server/:serverKey/session/:id"
         component={() => (
           <SessionRouteFrame>
-            <Suspense
-              fallback={
-                <div class="flex min-h-0 flex-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
-                  <SessionPanelFrame raised />
-                </div>
-              }
-            >
-              <TargetServerRoute>
-                <TargetSessionRouteContent />
-              </TargetServerRoute>
-            </Suspense>
+            <SplitLayout pane={SplitPane}>
+              <SessionRouteContent />
+            </SplitLayout>
           </SessionRouteFrame>
         )}
       />
       <Route path="/new-session" component={DraftRoute} />
     </Route>
   )
+}
+
+/** A session route's screen, for the window's route and for the split's second pane. */
+function SessionRouteContent() {
+  return (
+    <Suspense
+      fallback={
+        <div class="flex min-h-0 flex-1 px-[var(--shell-inline-inset,8px)] pb-[var(--shell-bottom-inset,8px)] pt-[var(--shell-top-inset,8px)]">
+          <SessionPanelFrame raised />
+        </div>
+      }
+    >
+      <TargetServerRoute>
+        <TargetSessionRouteContent />
+      </TargetServerRoute>
+    </Suspense>
+  )
+}
+
+function SplitPane() {
+  return <SplitPaneRouter route={SessionRouteContent} />
 }
 
 function TargetServerRoute(props: ParentProps) {
@@ -99,11 +113,13 @@ function AppLayout(props: ParentProps) {
   return (
     <Show when={servers.list.length > 0 && !signedOut()} fallback={<ConnectServerScreen url={signedOut()?.http.url} />}>
       <LayoutProvider>
-        <SettingsSurfaceProvider>
-          <ExtensionAttachment>
-            <Shell>{props.children}</Shell>
-          </ExtensionAttachment>
-        </SettingsSurfaceProvider>
+        <SplitProvider>
+          <SettingsSurfaceProvider>
+            <ExtensionAttachment>
+              <Shell>{props.children}</Shell>
+            </ExtensionAttachment>
+          </SettingsSurfaceProvider>
+        </SplitProvider>
       </LayoutProvider>
     </Show>
   )

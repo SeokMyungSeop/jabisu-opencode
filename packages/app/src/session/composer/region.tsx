@@ -33,6 +33,7 @@ import { resolveSessionComposerSelection } from "./selection"
 import { createSessionRequestModel } from "../requests/model"
 import type { Region } from "@/runtime/extension/panels"
 import { SessionLocationMissing } from "./location-missing"
+import { useSessionPane } from "../pane"
 
 export function createActiveSessionRegion(input: {
   session: SessionModel
@@ -208,32 +209,35 @@ export function createActiveSessionRegion(input: {
       server.api.session.inbox.cancel({ sessionID, inboxID: messageID }).then(() => undefined, notifyFailed),
   }
 
-  useComposerCommands()
-  useSessionCommands({
-    session: input.session,
-    region: input.region,
-    background: {
-      blocking: () => state.background.blocking().length > 0,
-      move: state.background.move,
-    },
-    navigateMessageByOffset: input.timeline.actions.navigateMessage,
-    revert,
-    focusInput: focus,
-    model: () => {
-      const selection = controls().model.selection
-      const model = selection.current()
+  // Commands and their keybinds act on the routed session; a split's second pane registers none.
+  if (!useSessionPane().secondary) {
+    useComposerCommands()
+    useSessionCommands({
+      session: input.session,
+      region: input.region,
+      background: {
+        blocking: () => state.background.blocking().length > 0,
+        move: state.background.move,
+      },
+      navigateMessageByOffset: input.timeline.actions.navigateMessage,
+      revert,
+      focusInput: focus,
+      model: () => {
+        const selection = controls().model.selection
+        const model = selection.current()
 
-      return model ? { id: model.id, providerID: model.provider.id, variant: selection.variant.current() } : undefined
-    },
-  })
-  command.register("session-palette", () => [
-    {
-      id: "command.palette",
-      title: language.t("command.palette"),
-      hidden: true,
-      onSelect: () => command.trigger("file.open", "palette"),
-    },
-  ])
+        return model ? { id: model.id, providerID: model.provider.id, variant: selection.variant.current() } : undefined
+      },
+    })
+    command.register("session-palette", () => [
+      {
+        id: "command.palette",
+        title: language.t("command.palette"),
+        hidden: true,
+        onSelect: () => command.trigger("file.open", "palette"),
+      },
+    ])
+  }
 
   const dock = {
     state,

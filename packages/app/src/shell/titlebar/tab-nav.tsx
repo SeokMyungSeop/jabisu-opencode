@@ -34,6 +34,8 @@ export function TabNavItem(props: {
   onRename: (title: string) => Promise<void>
   onClose: () => void
   onNavigate: () => void
+  /** Shows the tab's session in the window's split view; absent where the tab cannot open there. */
+  onSplit?: () => void
   active?: boolean
   suppressNavigation?: boolean
   dragging?: boolean
@@ -423,6 +425,9 @@ export function TabNavItem(props: {
                 {language.t("titlebar.tab.openInNewWindow")}
               </Menu.Item>
             )}
+          </Show>
+          <Show when={props.onSplit}>
+            {(split) => <Menu.Item onSelect={() => split()()}>{language.t("titlebar.tab.openInSplit")}</Menu.Item>}
           </Show>
           <Menu.Item onSelect={props.onClose}>{language.t("common.closeTab")}</Menu.Item>
         </Menu.Context.Content>
