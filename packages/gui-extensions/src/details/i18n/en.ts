@@ -2,6 +2,8 @@ export default {
   title: "Session details",
   tooltip: "Summary",
   "command.toggle": "Toggle summary",
+  context: "Context",
+  "panel.open": "Open in side panel",
   noBranch: "No branch",
   "move.title": "Move to worktree",
   "move.menu": "Move session to",

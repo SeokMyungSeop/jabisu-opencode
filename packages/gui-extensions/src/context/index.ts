@@ -1,9 +1,11 @@
 import { Extension } from "../sdk"
+import { ContextUsage } from "./contract"
 import en from "./i18n/en"
 
 export default Extension.define({
   id: "context",
   legacy: ["usage"],
+  provides: { usage: ContextUsage },
   i18n: {
     en,
     am: () => import("./i18n/am"),

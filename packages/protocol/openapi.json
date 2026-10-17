@@ -3207,6 +3207,91 @@
         "summary": "Get session context"
       }
     },
+    "/api/session/{sessionID}/context/usage": {
+      "get": {
+        "tags": ["session"],
+        "operationId": "session.contextUsage",
+        "parameters": [
+          {
+            "name": "sessionID",
+            "in": "path",
+            "schema": {
+              "$ref": "#/components/schemas/Session.ID"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SessionContextUsage"
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "SessionNotFoundError | LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionNotFoundErrorEncoded"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ServiceUnavailableError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Estimate how the session's next request divides among the system prompt, tools, MCP servers, skills, instructions and messages, without mutating the session.",
+        "summary": "Estimate session context usage"
+      }
+    },
     "/api/session/{sessionID}/diff": {
       "get": {
         "tags": ["session"],
@@ -19835,6 +19920,40 @@
           }
         },
         "required": ["_tag", "sessionID", "message"],
+        "additionalProperties": false
+      },
+      "SessionContextUsage": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionContextUsage.Entry"
+            },
+            "description": "Estimated size of each part of the session's next request, from the current instructions, tools and history; the provider's count of the last request can differ"
+          }
+        },
+        "required": ["categories"],
+        "additionalProperties": false
+      },
+      "SessionContextUsage.Category": {
+        "type": "string",
+        "enum": ["system", "tools", "mcp", "skills", "instructions", "messages"],
+        "description": "What part of the context the tokens hold: `system` the agent prompt, date and environment; `tools` tool definitions and the Code Mode catalog; `mcp` MCP server guidance and their Code Mode tools; `skills` the skill catalog and loaded skills; `instructions` instruction files such as AGENTS.md, references and plugin instructions; `messages` the conversation"
+      },
+      "SessionContextUsage.Entry": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/SessionContextUsage.Category"
+          },
+          "tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Estimated tokens, at about four characters each"
+          }
+        },
+        "required": ["category", "tokens"],
         "additionalProperties": false
       },
       "SessionGenerateResponse": {

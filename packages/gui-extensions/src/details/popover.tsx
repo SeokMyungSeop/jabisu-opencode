@@ -17,8 +17,10 @@ export function DetailsHeader(props: {
   panel: Component<DetailsPanelProps>
   disclosure: Disclosure
 }) {
-  const changes = useExtension<typeof Details>().uses.changes
+  const ctx = useExtension<typeof Details>()
+  const changes = ctx.uses.changes
   const Panel = props.panel
+  const key = `${ctx.id}:main`
   // Cached timelines stay mounted while hidden; routing away from the session closes its details.
   const [open, setOpen] = createVisitState(false)
   const [store, setStore] = createStore({ dismissed: false })
@@ -47,6 +49,16 @@ export function DetailsHeader(props: {
     ),
   )
 
+  // Wide screens can keep the details open beside the timeline, unless they already show there.
+  const pin = () => {
+    if (ctx.layout.narrow() || ctx.layout.state(key, props.session) === "visible") return
+
+    return () => {
+      setOpen(false)
+      ctx.layout.open(key, props.session)
+    }
+  }
+
   return (
     <Show when={project()}>
       {(project) => (
@@ -60,6 +72,7 @@ export function DetailsHeader(props: {
               moveDismissed={store.dismissed}
               onMoveDismiss={() => setStore("dismissed", true)}
               onReview={review()?.open}
+              onPin={pin()}
               disclosure={props.disclosure}
             />
           </Suspense>

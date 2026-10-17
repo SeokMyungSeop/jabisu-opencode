@@ -953,7 +953,7 @@ const estimateRequest = (request: Pick<LLMRequest, "system" | "tools" | "message
   request.messages.reduce((sum, message) => sum + estimateMessage(message), 0)
 
 /** Only what providers receive; `metadata` and `native` stay local. */
-const estimateTool = (tool: ToolEntry): number => {
+export const estimateTool = (tool: ToolEntry): number => {
   if (tool.type === "tool") return Token.estimate(tool.name + tool.description + JSON.stringify(tool.inputSchema))
   return (
     Token.estimate(tool.name + (tool.description ?? "")) +
@@ -961,7 +961,7 @@ const estimateTool = (tool: ToolEntry): number => {
   )
 }
 
-const estimateMessage = (message: Message) => message.content.reduce((sum, part) => sum + estimatePart(part), 0)
+export const estimateMessage = (message: Message) => message.content.reduce((sum, part) => sum + estimatePart(part), 0)
 
 const estimatePart = (part: ContentPart): number => {
   // An encrypted native compaction has no locally measurable size.

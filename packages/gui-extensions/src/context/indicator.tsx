@@ -3,9 +3,8 @@ import { ProgressCircle } from "@opencode/ui/progress-circle"
 import { Button } from "@opencode/ui/button"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { useI18n } from "@opencode/ui/context/i18n"
-import { lastAssistantWithUsage } from "@opencode/client/solid"
 import { useExtension, type MountedSession } from "../sdk"
-import { catalogModel, syncCatalog } from "./catalog"
+import { createSessionUsage } from "./usage"
 
 function ContextTooltipRow(props: { name: JSX.Element; value: JSX.Element }) {
   return (
@@ -24,13 +23,9 @@ export function SessionContextUsage(props: {
   const ctx = useExtension()
   const layout = ctx.layout
   const i18n = useI18n()
-  syncCatalog(() => props.session)
+  const { context, spent, showCost } = createSessionUsage(() => props.session)
 
   const variant = createMemo(() => props.variant ?? "button")
-
-  const messages = createMemo(() =>
-    props.session.id ? props.session.server.data.session.message.list(props.session.id) : [],
-  )
 
   const usd = createMemo(
     () =>
@@ -40,51 +35,13 @@ export function SessionContextUsage(props: {
       }),
   )
 
-  const info = createMemo(() =>
-    props.session.id ? props.session.server.data.session.get(props.session.id) : undefined,
-  )
-
-  // Same step as the TUI: after the last completed compaction and before an undo boundary.
-  const context = createMemo(() => {
-    const message = lastAssistantWithUsage(messages(), info()?.revert?.messageID)
-
-    if (!message) return
-    const model = catalogModel(props.session, message.model)?.model
-
-    const total =
-      message.tokens.input +
-      message.tokens.output +
-      message.tokens.reasoning +
-      message.tokens.cache.read +
-      message.tokens.cache.write
-
-    return {
-      total,
-      usage: model?.limit.context ? Math.round((total / model.limit.context) * 100) : null,
-    }
-  })
-
   const tokens = createMemo(() =>
     new Intl.NumberFormat(i18n.locale(), { notation: "compact", maximumFractionDigits: 0 })
       .format(context()?.total ?? 0)
       .toLocaleLowerCase(i18n.locale()),
   )
 
-  // A root session's cost includes its subagent sessions, as in the TUI.
-  const spent = createMemo(() => (props.session.id ? props.session.server.data.session.cost(props.session.id) : 0))
-
   const cost = createMemo(() => usd().format(spent()))
-
-  // Spend anywhere in the family keeps the cost visible, even when this session's model is free.
-  const showCost = createMemo(() => {
-    if (spent() > 0) return true
-    const ref = info()?.model ?? messages().findLast((item) => item.type === "assistant")?.model
-    const model = ref ? catalogModel(props.session, ref)?.model : undefined
-
-    if (!model) return true
-
-    return model.cost.some((cost) => cost.input > 0 || cost.output > 0 || cost.cache.read > 0 || cost.cache.write > 0)
-  })
 
   const openContext = () => {
     if (!props.session.id) return
