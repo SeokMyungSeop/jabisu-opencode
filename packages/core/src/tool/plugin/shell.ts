@@ -100,59 +100,68 @@ const backgroundResult = (shellID: string, file: string) => ({
   status: "running" as const,
 })
 
+/**
+ * Captures the services that authorize a shell spawn and returns the `Shell.create` before-hook check: it resolves the
+ * working directory, asks for external-directory and per-command `shell` permission, and validates the directory.
+ * Other built-ins that spawn commands share it so saved shell approvals apply to them unchanged.
+ */
+export const authorizer = Effect.fn("ShellTool.authorizer")(function* (channel: Context["app"]["channel"]) {
+  const environment = yield* Environment.Service
+  const access = yield* FileAccess.Service
+  const permission = yield* Permission.Service
+  const config = yield* Config.Service
+
+  return Effect.fn("ShellTool.authorize")(function* (invocation: ShellCreateBefore, context: Tool.Context) {
+    const source = {
+      type: "tool" as const,
+      messageID: context.messageID,
+      id: context.id,
+    }
+    const target = yield* access.resolve({ path: invocation.cwd, kind: "directory" })
+    invocation.cwd = target.absolute
+    const timeout = invocation.timeout
+    const portable =
+      Config.latest(yield* config.entries(), "experimental")?.portable_shell_scanner ??
+      (shellParserWasm.bash === "" || channel === "local" || channel === "dev")
+    const parsed = yield* ShellParse.scan(invocation.command, invocation.shell, target.absolute, { portable })
+    const directories = yield* Effect.forEach(parsed.directories, (directory) =>
+      access.resolve({
+        path: FileAccess.resolvePath(target.absolute, directory),
+        kind: "directory",
+      }),
+    )
+    yield* access.authorizeExternal([target, ...directories], context)
+    if (parsed.commands.length > 0)
+      yield* permission.assert({
+        action: name,
+        resources: parsed.commands.map((command) => command.resource),
+        save: parsed.commands.map((command) => command.save),
+        sessionID: context.sessionID,
+        agent: context.agent,
+        source,
+      })
+    // Approval can outlive the directory, so validate immediately before spawning.
+    const workdir = yield* Environment.typeFollowing(environment.files, target.absolute).pipe(
+      Effect.catchTag("Environment.NotFound", () =>
+        Effect.fail(new Error(`Working directory does not exist: ${target.absolute}`)),
+      ),
+    )
+    if (workdir !== "directory")
+      return yield* Effect.fail(new Error(`Working directory is not a directory: ${target.absolute}`))
+    return timeout
+  })
+})
+
 export const Plugin = {
   id: "opencode.tool.shell",
   effect: Effect.fn("ShellTool.Plugin")(function* (ctx: Context) {
     const sessions = yield* Session.Service
     const jobs = yield* Job.Service
     const scope = yield* Scope.Scope
-    const environment = yield* Environment.Service
-    const access = yield* FileAccess.Service
     const shell = yield* Shell.Service
     const shellSelect = yield* ShellSelect.Service
     const compatibleShell = shellSelect.resolve({ priority: "compat" })
-    const permission = yield* Permission.Service
-    const config = yield* Config.Service
-
-    const prepare = Effect.fn("ShellTool.prepare")(function* (invocation: ShellCreateBefore, context: Tool.Context) {
-      const source = {
-        type: "tool" as const,
-        messageID: context.messageID,
-        id: context.id,
-      }
-      const target = yield* access.resolve({ path: invocation.cwd, kind: "directory" })
-      invocation.cwd = target.absolute
-      const timeout = invocation.timeout
-      const portable =
-        Config.latest(yield* config.entries(), "experimental")?.portable_shell_scanner ??
-        (shellParserWasm.bash === "" || ctx.app.channel === "local" || ctx.app.channel === "dev")
-      const parsed = yield* ShellParse.scan(invocation.command, invocation.shell, target.absolute, { portable })
-      const directories = yield* Effect.forEach(parsed.directories, (directory) =>
-        access.resolve({
-          path: FileAccess.resolvePath(target.absolute, directory),
-          kind: "directory",
-        }),
-      )
-      yield* access.authorizeExternal([target, ...directories], context)
-      if (parsed.commands.length > 0)
-        yield* permission.assert({
-          action: name,
-          resources: parsed.commands.map((command) => command.resource),
-          save: parsed.commands.map((command) => command.save),
-          sessionID: context.sessionID,
-          agent: context.agent,
-          source,
-        })
-      // Approval can outlive the directory, so validate immediately before spawning.
-      const workdir = yield* Environment.typeFollowing(environment.files, target.absolute).pipe(
-        Effect.catchTag("Environment.NotFound", () =>
-          Effect.fail(new Error(`Working directory does not exist: ${target.absolute}`)),
-        ),
-      )
-      if (workdir !== "directory")
-        return yield* Effect.fail(new Error(`Working directory is not a directory: ${target.absolute}`))
-      return timeout
-    })
+    const prepare = yield* authorizer(ctx.app.channel)
 
     const notifyWhenDone = Effect.fn("ShellTool.notifyWhenDone")(
       function* (
