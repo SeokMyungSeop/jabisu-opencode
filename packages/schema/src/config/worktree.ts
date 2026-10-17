@@ -11,5 +11,9 @@ export const Info = Schema.Struct({
     description:
       "Create a branch named with this prefix followed by the worktree's name for each new worktree. Without it, worktrees are created detached.",
   }),
+  remove_on_archive: optional(Schema.Boolean).annotate({
+    description:
+      "Remove the worktree a session ran in when the session is archived (default: true). Only worktrees under the worktree directory with no uncommitted changes, no commits missing from every branch, and no other unarchived session are removed.",
+  }),
 }).annotate({ identifier: "Config.Worktree" })
 export interface Info extends Schema.Schema.Type<typeof Info> {}

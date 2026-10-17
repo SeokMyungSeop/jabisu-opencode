@@ -1,6 +1,6 @@
 export * as WorktreeGit from "./git.js"
 
-import { Effect } from "effect"
+import { Effect, Schedule } from "effect"
 import path from "path"
 import { Worktree } from "@opencode/schema/worktree"
 import { FSUtil } from "@opencode/util/fs-util"
@@ -34,6 +34,24 @@ export const make = Effect.gen(function* () {
     )
   })
 
+  /**
+   * Windows can keep a worktree's emptied directory open after Git dropped the worktree, briefly or while a process
+   * still runs in it, and Git then reports the removal as failed. Only an empty directory counts, so nothing a user
+   * keeps there is ever deleted.
+   */
+  const emptied = (directory: AbsolutePath) =>
+    fs.readDirectoryEntries(directory).pipe(
+      Effect.map((entries) => entries.length === 0),
+      Effect.orElseSucceed(() => false),
+    )
+
+  /** Deletes an emptied worktree directory, waiting a few seconds for Windows to let it go; the worktree is gone either way. */
+  const clear = (directory: AbsolutePath) =>
+    fs.remove(directory, { recursive: true }).pipe(
+      Effect.retry({ times: 20, schedule: Schedule.spaced("250 millis") }),
+      Effect.catch(() => Effect.logWarning("left the empty directory of a removed worktree", { directory })),
+    )
+
   return {
     id: Worktree.StrategyID.make("git"),
     create: Effect.fn("Worktree.Git.create")(function* (input) {
@@ -55,8 +73,20 @@ export const make = Effect.gen(function* () {
     }),
     remove: Effect.fn("Worktree.Git.remove")(function* (input) {
       const repository = yield* git.repo.discover(input.directory)
-      if (!repository) return yield* new DirectoryUnavailableError({ directory: input.directory })
-      yield* git.worktree.remove({ repository, directory: input.directory, force: input.force })
+      if (!repository) {
+        if (yield* emptied(input.directory)) return yield* clear(input.directory)
+        return yield* new DirectoryUnavailableError({ directory: input.directory })
+      }
+      yield* git.worktree.remove({ repository, directory: input.directory, force: input.force }).pipe(
+        Effect.catchIf(
+          (error) => error.forceRequired !== true,
+          (error) =>
+            Effect.gen(function* () {
+              if (!(yield* emptied(input.directory))) return yield* error
+              yield* clear(input.directory)
+            }),
+        ),
+      )
     }),
     list: Effect.fn("Worktree.Git.list")(function* (directory) {
       const repository = yield* git.repo.discover(directory)

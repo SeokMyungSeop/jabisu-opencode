@@ -25,8 +25,6 @@ import {
   type OpenSessionOptions,
 } from "./controller"
 
-const SHOW_HOME_SESSION_ARCHIVE = false
-
 const HOME_SECTION_LABEL = "text-v2-text-text-muted [font-weight:440]"
 
 const HOME_SESSION_SEARCH_RESULTS_ID = "home-session-search-results"
@@ -38,7 +36,7 @@ const HOME_SESSION_LONG_PRESS_MS = 500
 function isBackgroundOpen(event: MouseEvent) {
   return shouldOpenSessionInBackground({
     button: event.button,
-    mac: typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform),
+    mac: /(Mac|iPod|iPhone|iPad)/.test(navigator.platform),
     meta: event.metaKey,
     ctrl: event.ctrlKey,
     shift: event.shiftKey,
@@ -790,29 +788,27 @@ function HomeSessionRow(
           </Menu.Content>
         </Menu.Portal>
       </Menu>
-      <Show when={SHOW_HOME_SESSION_ARCHIVE}>
-        <div
-          class={`
-            hover-reveal absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1
-            group-hover/session:opacity-100 focus-within:opacity-100
-          `}
-        >
-          <Tooltip class="flex shrink-0 items-center" placement="bottom" value={props.language.t("common.archive")}>
-            <IconButton
-              data-action="home-session-archive"
-              variant="ghost-muted"
-              size="large"
-              icon={<Icon name="archive" />}
-              aria-label={props.language.t("common.archive")}
-              onClick={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-                void props.onArchiveSession(props.record.session)
-              }}
-            />
-          </Tooltip>
-        </div>
-      </Show>
+      <div
+        class={`
+          hover-reveal absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1
+          group-hover/session:opacity-100 focus-within:opacity-100
+        `}
+      >
+        <Tooltip class="flex shrink-0 items-center" placement="bottom" value={props.language.t("common.archive")}>
+          <IconButton
+            data-action="home-session-archive"
+            variant="ghost-muted"
+            size="large"
+            icon={<Icon name="archive" />}
+            aria-label={props.language.t("common.archive")}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              void props.onArchiveSession(props.record.session)
+            }}
+          />
+        </Tooltip>
+      </div>
     </div>
   )
 }

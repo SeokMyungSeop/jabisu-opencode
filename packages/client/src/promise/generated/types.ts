@@ -300,7 +300,7 @@ export type WebSearchResult = { url: string; title?: string; content?: string; t
 
 export type McpProtocol = "legacy" | "auto" | "2026-07-28"
 
-export type ConfigWorktree = { directory?: string; branch_prefix?: string }
+export type ConfigWorktree = { directory?: string; branch_prefix?: string; remove_on_archive?: boolean }
 
 export type ConfigModelReasoning =
   | { supported: false }
@@ -1024,6 +1024,26 @@ export type SessionViewed = {
   durable: { aggregateID: string; seq: EventSeq; version: 1 }
   location?: LocationRef
   data: { sessionID: SessionID; idle: number }
+}
+
+export type SessionArchived = {
+  id: EventID
+  created: number
+  metadata?: { [x: string]: any }
+  type: "session.archived"
+  durable: { aggregateID: string; seq: EventSeq; version: 1 }
+  location?: LocationRef
+  data: { sessionID: SessionID }
+}
+
+export type SessionUnarchived = {
+  id: EventID
+  created: number
+  metadata?: { [x: string]: any }
+  type: "session.unarchived"
+  durable: { aggregateID: string; seq: EventSeq; version: 1 }
+  location?: LocationRef
+  data: { sessionID: SessionID }
 }
 
 export type SessionDeleted = {
@@ -2515,6 +2535,8 @@ export type SessionEventDurable =
   | SessionMetadataUpdated
   | SessionPermissions
   | SessionViewed
+  | SessionArchived
+  | SessionUnarchived
   | SessionDeleted
   | SessionForked
   | SessionInboxDelivered
@@ -2578,6 +2600,8 @@ export type V2Event =
   | SessionMetadataUpdated
   | SessionPermissions
   | SessionViewed
+  | SessionArchived
+  | SessionUnarchived
   | SessionUsageUpdated
   | SessionDeleted
   | SessionForked
@@ -5688,6 +5712,14 @@ export type SessionViewInput = {
 }
 
 export type SessionViewOutput = void
+
+export type SessionArchiveInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionArchiveOutput = void
+
+export type SessionUnarchiveInput = { readonly sessionID: { readonly sessionID: string }["sessionID"] }
+
+export type SessionUnarchiveOutput = void
 
 export type MessageListInput = {
   readonly sessionID: { readonly sessionID: string }["sessionID"]

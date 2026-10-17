@@ -139,6 +139,14 @@ export const Viewed = Event.durable({
 })
 export type Viewed = typeof Viewed.Type
 
+/** The session leaves the session lists at the event's time; its history and location stay. */
+export const Archived = Event.durable({ type: "session.archived", ...options, schema: Base })
+export type Archived = typeof Archived.Type
+
+/** An archived session returns to the session lists. */
+export const Unarchived = Event.durable({ type: "session.unarchived", ...options, schema: Base })
+export type Unarchived = typeof Unarchived.Type
+
 // Replay-only: older releases allowed replacing completed assistant content.
 export const MessageContentUpdated = Event.durable({
   type: "session.message.content.updated",
@@ -658,6 +666,8 @@ export const Definitions = Event.inventory(
   MetadataUpdated,
   Permissions,
   Viewed,
+  Archived,
+  Unarchived,
   UsageUpdated,
   Deleted,
   Forked,

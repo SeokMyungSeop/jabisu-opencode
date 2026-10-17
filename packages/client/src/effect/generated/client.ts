@@ -107,6 +107,10 @@ import type {
   SessionEnvironmentOutput,
   SessionViewInput,
   SessionViewOutput,
+  SessionArchiveInput,
+  SessionArchiveOutput,
+  SessionUnarchiveInput,
+  SessionUnarchiveOutput,
   MessageListInput,
   MessageListOutput,
   ModelListInput,
@@ -774,6 +778,16 @@ const EndpointSessionView = (raw: RawClient["server.session"]) => (input: Sessio
     ),
   )
 
+const EndpointSessionArchive = (raw: RawClient["server.session"]) => (input: SessionArchiveInput) =>
+  preserveEffect<SessionArchiveOutput>()(
+    raw["session.archive"]({ params: { sessionID: input["sessionID"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointSessionUnarchive = (raw: RawClient["server.session"]) => (input: SessionUnarchiveInput) =>
+  preserveEffect<SessionUnarchiveOutput>()(
+    raw["session.unarchive"]({ params: { sessionID: input["sessionID"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const adaptGroupSession = (raw: RawClient["server.session"]) => ({
   list: EndpointSessionList(raw),
   stats: EndpointSessionStats(raw),
@@ -828,6 +842,8 @@ const adaptGroupSession = (raw: RawClient["server.session"]) => ({
   },
   environment: EndpointSessionEnvironment(raw),
   view: EndpointSessionView(raw),
+  archive: EndpointSessionArchive(raw),
+  unarchive: EndpointSessionUnarchive(raw),
 })
 
 const EndpointMessageList = (raw: RawClient["server.message"]) => (input: MessageListInput) =>

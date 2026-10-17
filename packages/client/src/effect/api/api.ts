@@ -547,6 +547,28 @@ export type SessionLogOutput =
           readonly id: Event.ID
           readonly created: number
           readonly metadata?: { readonly [x: string]: unknown } | undefined
+          readonly type: "session.archived"
+          readonly durable: { readonly aggregateID: string; readonly seq: Event.Seq; readonly version: Event.Version }
+          readonly location?:
+            | { readonly directory: AbsolutePath; readonly workspaceID?: Workspace.ID | undefined }
+            | undefined
+          readonly data: { readonly sessionID: Session.ID }
+        }
+      | {
+          readonly id: Event.ID
+          readonly created: number
+          readonly metadata?: { readonly [x: string]: unknown } | undefined
+          readonly type: "session.unarchived"
+          readonly durable: { readonly aggregateID: string; readonly seq: Event.Seq; readonly version: Event.Version }
+          readonly location?:
+            | { readonly directory: AbsolutePath; readonly workspaceID?: Workspace.ID | undefined }
+            | undefined
+          readonly data: { readonly sessionID: Session.ID }
+        }
+      | {
+          readonly id: Event.ID
+          readonly created: number
+          readonly metadata?: { readonly [x: string]: unknown } | undefined
           readonly type: "session.deleted"
           readonly durable: { readonly aggregateID: string; readonly seq: Event.Seq; readonly version: Event.Version }
           readonly location?:
@@ -1299,6 +1321,16 @@ export type SessionViewInput = { readonly sessionID: Session.ID; readonly idle: 
 export type SessionViewOutput = void
 export type SessionViewOperation<E = never> = (input: SessionViewInput) => Effect.Effect<SessionViewOutput, E>
 
+export type SessionArchiveInput = { readonly sessionID: Session.ID }
+export type SessionArchiveOutput = void
+export type SessionArchiveOperation<E = never> = (input: SessionArchiveInput) => Effect.Effect<SessionArchiveOutput, E>
+
+export type SessionUnarchiveInput = { readonly sessionID: Session.ID }
+export type SessionUnarchiveOutput = void
+export type SessionUnarchiveOperation<E = never> = (
+  input: SessionUnarchiveInput,
+) => Effect.Effect<SessionUnarchiveOutput, E>
+
 export interface SessionApi<E = never> {
   readonly list: SessionListOperation<E>
   readonly stats: SessionStatsOperation<E>
@@ -1353,6 +1385,8 @@ export interface SessionApi<E = never> {
   }
   readonly environment: SessionEnvironmentOperation<E>
   readonly view: SessionViewOperation<E>
+  readonly archive: SessionArchiveOperation<E>
+  readonly unarchive: SessionUnarchiveOperation<E>
 }
 
 export type MessageListInput = {
