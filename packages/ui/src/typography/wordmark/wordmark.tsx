@@ -1,8 +1,11 @@
 import { createUniqueId, type ComponentProps } from "solid-js"
+import { JABISU, JabisuWordmark } from "../../components/jabisu-wordmark"
 
 export function Wordmark(
   props: Pick<ComponentProps<"svg">, "class"> & { fade?: boolean; muted?: boolean; outline?: boolean },
 ) {
+  if (JABISU) return <JabisuWordmark {...props} />
+
   const mask = createUniqueId()
   const maskGradient = createUniqueId()
 

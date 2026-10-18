@@ -1,11 +1,15 @@
 import { createEffect, For, on, onCleanup } from "solid-js"
 import { createStore } from "solid-js/store"
+import { JABISU, Logo } from "@opencode/ui/logo"
 
 const target = ["o", "p", "e", "n", "c", "o", "d", "e"] as const
 
 const choices = ["o", "p", "e", "n", "c", "d"] as const
 
 export function AnimatedWordmark(props: { active: boolean }) {
+  // 자비수 shows its name still: the shuffle draws from OpenCode's letters.
+  if (JABISU) return <Logo class="settings-about-wordmark" />
+
   const [state, setState] = createStore({ letters: [...target] })
   const timers = new Set<ReturnType<typeof setTimeout>>()
 

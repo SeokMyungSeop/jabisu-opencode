@@ -75,7 +75,7 @@ const bundleNestedWorkerDeps = {
 export const channel = (() => {
   const raw = process.env.OPENCODE_CHANNEL
 
-  if (raw === "local" || raw === "dev" || raw === "beta" || raw === "prod") return raw
+  if (raw === "local" || raw === "dev" || raw === "beta" || raw === "prod" || raw === "jabisu") return raw
 
   if (process.env.OPENCODE_CHANNEL === "latest") return "prod"
 

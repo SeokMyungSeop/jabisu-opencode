@@ -1,4 +1,7 @@
 import { type ComponentProps } from "solid-js"
+import { JABISU, JabisuLogo } from "./jabisu-wordmark"
+
+export { JABISU }
 
 export const Mark = (props: { class?: string }) => {
   return (
@@ -32,6 +35,8 @@ export const Splash = (props: Pick<ComponentProps<"svg">, "ref" | "class">) => {
 }
 
 export const Logo = (props: { class?: string }) => {
+  if (JABISU) return <JabisuLogo class={props.class} />
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
