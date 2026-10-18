@@ -15,6 +15,8 @@ const session = { id: "session-1", title: "Test session", location: { directory:
 
 const alerts: string[] = []
 
+const bodies: (string | undefined)[] = []
+
 const toasts: string[] = []
 
 const tabs = { store: new Array<Tab>() }
@@ -46,8 +48,9 @@ beforeAll(async () => {
     ...real.platform,
     usePlatform: () => ({
       platform: "web",
-      notify: async (title: string) => {
+      notify: async (title: string, description?: string) => {
         alerts.push(title)
+        bodies.push(description)
       },
     }),
   }))
@@ -105,8 +108,9 @@ test.each([
               return () => {}
             },
           },
+          api: { message: { list: async () => ({ data: [] }) } },
         },
-        data: { session: { get: () => session, root: (id: string) => id } },
+        data: { session: { get: () => session, root: (id: string) => id, message: { list: () => [] } } },
         coordinator: {
           system: async (_id: string, fn: () => Promise<void>) => fn(),
           toast: async (_id: string, fn: () => void) => fn(),
@@ -136,6 +140,89 @@ test.each([
     dispose()
   },
 )
+
+test("response-ready alerts preview the first prose line of the latest turn's reply", async () => {
+  alerts.length = 0
+  bodies.length = 0
+  route = { type: "home" }
+  tabs.store = [{ type: "session", server, sessionId: session.id }]
+  const listeners = new Array<(event: OpenCodeEvent) => void>()
+  const pages: { sessionID: string; limit: number; order: string }[] = []
+  const transcript = { loaded: new Array<object>(), page: new Array<object>() }
+
+  const assistant = (...texts: string[]) => ({
+    type: "assistant",
+    content: texts.map((text) => ({ type: "text", text })),
+  })
+
+  const emit = async (id: string) => {
+    listeners.forEach((listener) =>
+      // SAFETY: the notification state reads only the type, id and session of execution events.
+      listener({ type: "session.execution.succeeded", id, data: { sessionID: session.id } } as never),
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+
+  const dispose = createRoot((dispose) => {
+    createState({
+      sdk: {
+        scope: ServerScope.local,
+        event: {
+          listen: (listener: (event: OpenCodeEvent) => void) => {
+            listeners.push(listener)
+
+            return () => {}
+          },
+        },
+        api: {
+          message: {
+            list: async (input: { sessionID: string; limit: number; order: string }) => {
+              pages.push(input)
+
+              return { data: transcript.page }
+            },
+          },
+        },
+      },
+      data: {
+        session: { get: () => session, root: (id: string) => id, message: { list: () => transcript.loaded } },
+      },
+      coordinator: {
+        system: async (_id: string, fn: () => Promise<void>) => fn(),
+        toast: async (_id: string, fn: () => void) => fn(),
+      },
+    })
+
+    return dispose
+  })
+
+  // The reply's last message with prose wins; code blocks and Markdown markers stay out of the body.
+  transcript.loaded = [
+    assistant("Earlier reply"),
+    { type: "idle" },
+    { type: "user" },
+    assistant("Checking the build."),
+    assistant("```ts\nconst x = 1\n```", "## **Fixed** the [build](https://example.com) in `ci.yml`\nDetails follow."),
+    { type: "assistant", content: [{ type: "reasoning", text: "Done thinking" }] },
+    { type: "idle" },
+  ]
+  await emit("event-1")
+  expect(bodies).toEqual(["Fixed the build in ci.yml"])
+
+  // A turn without prose falls back to the session title, never to the previous turn's reply.
+  transcript.loaded = [assistant("Earlier reply"), { type: "idle" }, { type: "user" }, assistant("   ")]
+  await emit("event-2")
+  expect(bodies.at(-1)).toBe(session.title)
+
+  // Without a transcript the latest page is read newest first, and a long line is cut to a preview.
+  transcript.loaded = []
+  transcript.page = [{ type: "idle" }, assistant("가".repeat(150)), { type: "user" }]
+  await emit("event-3")
+  expect(pages).toEqual([{ sessionID: session.id, limit: 20, order: "desc" }])
+  expect(bodies.at(-1)).toBe(`${"가".repeat(99)}…`)
+  expect(alerts).toEqual(Array.from({ length: 3 }, () => "notification.session.responseReady.title"))
+  dispose()
+})
 
 test("permission requests alert for the root session tab unless they are auto-approved", async () => {
   alerts.length = 0
