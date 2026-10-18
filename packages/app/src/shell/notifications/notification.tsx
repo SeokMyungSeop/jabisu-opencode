@@ -1,7 +1,7 @@
 import { createEffect, createMemo, onCleanup, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Schema } from "effect"
-import type { SessionInfo } from "@opencode/client/promise"
+import type { SessionInfo, SessionMessageInfo } from "@opencode/client/promise"
 import type { ServerSDK } from "@/runtime/server/client"
 import type { Data } from "@opencode/client/solid"
 import { usePlatform } from "@/runtime/platform/platform"
@@ -54,6 +54,12 @@ const LEGACY_MIGRATION_CONCURRENCY = 4
 const VIEW_RETRY_DELAY = 250
 
 const VIEW_RETRY_MAX_DELAY = 5_000
+
+// Messages read to find the reply of a session whose transcript this client doesn't hold.
+const REPLY_PAGE = 20
+
+// Longer reply lines are cut so the notification body stays a short preview.
+const REPLY_PREVIEW_LENGTH = 100
 
 export function createServerNotificationState(input: {
   sdk: ServerSDK
@@ -237,8 +243,20 @@ export function createServerNotificationState(input: {
     })
   }
 
+  // The finished turn's reply comes from the transcript when this client holds it; events keep that copy current.
+  const latestReply = async (sessionID: string) => {
+    const loaded = input.data.session.message.list(sessionID)
+
+    if (loaded.length > 0) return replyPreview(loaded)
+
+    return input.sdk.api.message
+      .list({ sessionID, limit: REPLY_PAGE, order: "desc" })
+      .then((page) => replyPreview(page.data.toReversed()))
+      .catch(() => undefined)
+  }
+
   const handleSessionIdle = (sessionID: string, eventID: string) => {
-    void lookup(sessionID).then((session) => {
+    void lookup(sessionID).then(async (session) => {
       if (disposed.value) return
 
       if (!session) return
@@ -251,9 +269,16 @@ export function createServerNotificationState(input: {
         void input.coordinator.sound(`${input.key}\0${eventID}`, () => playSoundById(settings.sounds.agent()))
       }
 
-      if (hasOpenTab && settings.notifications.agent()) {
-        alert(eventID, language.t("notification.session.responseReady.title"), session.title ?? sessionID, sessionID)
-      }
+      if (!hasOpenTab || !settings.notifications.agent()) return
+      const reply = await latestReply(sessionID)
+
+      if (disposed.value) return
+      alert(
+        eventID,
+        language.t("notification.session.responseReady.title"),
+        reply ?? session.title ?? sessionID,
+        sessionID,
+      )
     })
   }
 
@@ -348,4 +373,48 @@ export const useNotification = () => {
   const server = useServer()
 
   return server.ctx.notification
+}
+
+/** The first prose line of the latest turn's reply. Only that turn counts, so a turn without text never shows an older reply. */
+function replyPreview(messages: readonly SessionMessageInfo[]) {
+  // Each turn ends with an idle record: the latest turn runs from after the previous one to the last other message.
+  const end = messages.findLastIndex((message) => message.type !== "idle")
+  const start = messages.findLastIndex((message, index) => index < end && message.type === "idle") + 1
+
+  return messages
+    .slice(start, end + 1)
+    .flatMap((message) =>
+      message.type === "assistant"
+        ? [firstProseLine(message.content.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n"))]
+        : [],
+    )
+    .findLast((line) => line !== undefined)
+}
+
+/** Notifications show plain text, so code blocks and rules are skipped and Markdown markers are dropped. */
+function firstProseLine(text: string) {
+  let fenced = false
+
+  for (const raw of text.split("\n")) {
+    const line = raw.trim()
+
+    if (/^(```|~~~)/.test(line)) {
+      fenced = !fenced
+      continue
+    }
+
+    if (fenced || /^([-*_])(\s*\1){2,}$/.test(line)) continue
+
+    const plain = line
+      .replace(/^(#{1,6}|>+|[-*+]|\d+[.)])\s+/, "")
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\*\*|__|~~|`/g, "")
+      .trim()
+
+    if (!plain) continue
+    // Cut by code point so an emoji at the limit stays whole.
+    const chars = Array.from(plain)
+
+    return chars.length > REPLY_PREVIEW_LENGTH ? `${chars.slice(0, REPLY_PREVIEW_LENGTH - 1).join("").trimEnd()}…` : plain
+  }
 }
