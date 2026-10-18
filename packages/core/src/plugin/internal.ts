@@ -94,6 +94,7 @@ import { IdentityPlugin } from "./identity.js"
 import { PlanPlugin } from "./plan.js"
 import { ModelsDevPlugin } from "./models-dev.js"
 import { McpCodeModeDefaultsPlugin } from "./mcp-codemode-defaults.js"
+import { JabisuPlugin } from "./jabisu.js"
 import { ProviderPlugins } from "./provider.js"
 import { OpencodePlugin } from "./provider/opencode.js"
 import { WebSearchPlugins } from "./websearch/index.js"
@@ -225,6 +226,8 @@ const pre = [
   PlanPlugin.Plugin,
   CommandPlugin.Plugin,
   SkillPlugin.Plugin,
+  // After configured MCP servers and the built-in skills, before configured skills.
+  JabisuPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,
