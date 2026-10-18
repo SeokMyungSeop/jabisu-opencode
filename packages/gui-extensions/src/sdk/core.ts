@@ -62,8 +62,9 @@ export interface Build {
    * - `dev`: the development channel.
    * - `beta`: the beta channel.
    * - `prod`: the stable release.
+   * - `jabisu`: 자비수(諮備秀), a renamed redistribution with no update feed.
    */
-  readonly channel: "local" | "dev" | "beta" | "prod"
+  readonly channel: "local" | "dev" | "beta" | "prod" | "jabisu"
   /**
    * Where the code runs. Main is always `desktop`.
    * - `web`: a browser tab.

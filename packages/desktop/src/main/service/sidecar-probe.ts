@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 import path from "node:path"
 import { app } from "electron"
 import type { Endpoint } from "@opencode/client/service"
+import { redistributionServiceFile } from "../constants"
 
 // The main thread idles between showing the first window and evaluating the main bundle, waiting
 // for the renderer's asset requests. That slot is long enough to find out whether a compatible
@@ -16,7 +17,7 @@ export function startSidecarProbe() {
 
   if (!version) return
   probe = import("@opencode/client/service")
-    .then(({ Service }) => Service.discover({ version }))
+    .then(({ Service }) => Service.discover({ file: redistributionServiceFile(), version }))
     .catch(() => undefined)
 }
 

@@ -56,7 +56,7 @@ function macSignOptions(options: CustomMacSignOptions): CustomMacSignOptions {
 function resolveChannel() {
   const raw = process.env.OPENCODE_CHANNEL
 
-  if (raw === "dev" || raw === "beta" || raw === "prod") return raw
+  if (raw === "dev" || raw === "beta" || raw === "prod" || raw === "jabisu") return raw
 
   if (raw === "latest") return "prod"
 
@@ -67,6 +67,7 @@ const APP_IDS = {
   dev: "ai.opencode.desktop.dev",
   beta: "ai.opencode.desktop.beta",
   prod: "ai.opencode.desktop",
+  jabisu: "io.github.seokmyungseop.jabisu",
 } as const
 
 const getBase = (appId: string): Configuration => {
@@ -256,6 +257,28 @@ export function getConfig() {
         },
         deb: { fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
         rpm: { packageName: "opencode", fpm: [metainfoFpm(appId), legacyDesktopEntryFpm] },
+      }
+    }
+
+    // 자비수(諮備秀), 명상(明想)'s redistribution, installs beside OpenCode: its own identity and folder, an ASCII
+    // file name with the Korean name on shortcuts, no update feed, and no `opencode://` scheme, which stays OpenCode's.
+    case "jabisu": {
+      return {
+        ...base,
+        appId,
+        productName: "Jabisu",
+        artifactName: "Jabisu-Setup-${arch}.${ext}",
+        copyright: "© 2026 명상(明想). Based on OpenCode, MIT License.",
+        protocols: [],
+        extraMetadata: {
+          ...base.extraMetadata,
+          // A per-user install folder is named after the package, so OpenCode's name would share its folder.
+          name: "jabisu",
+          author: { name: "명상(明想)" },
+          description: "자비수(諮備秀) · 수석 AI 참모 · 만든이 명상(明想) · OpenCode 기반",
+        },
+        extraFiles: [{ from: path.join(rootDir, "LICENSE"), to: "LICENSE.opencode.txt" }],
+        nsis: { ...base.nsis, shortcutName: "자비수", uninstallDisplayName: "자비수" },
       }
     }
   }

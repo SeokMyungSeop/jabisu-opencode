@@ -6,7 +6,7 @@ import { nodePtyPackage } from "./scripts/utils"
 function resolveChannel() {
   const raw = process.env.OPENCODE_CHANNEL
 
-  if (raw === "local" || raw === "dev" || raw === "beta" || raw === "prod") return raw
+  if (raw === "local" || raw === "dev" || raw === "beta" || raw === "prod" || raw === "jabisu") return raw
 
   if (raw === "latest") return "prod"
 
@@ -127,7 +127,17 @@ const require = __cjs_mod__.createRequire(import.meta.url);
           command === "serve" && process.env.OPENCODE_TEST_ONBOARDING === "1",
         ),
       },
-      plugins: [pickerPlugin(), appPlugin, initialChunk, sentry],
+      plugins: [
+        pickerPlugin(),
+        appPlugin,
+        initialChunk,
+        sentry,
+        // The page title is the window title, so 자비수 names its windows here.
+        channel === "jabisu" && {
+          name: "jabisu:window-title",
+          transformIndexHtml: (html: string) => html.replace("<title>OpenCode</title>", "<title>자비수</title>"),
+        },
+      ],
       publicDir: "../../../app/public",
       root: "src/renderer",
       build: {

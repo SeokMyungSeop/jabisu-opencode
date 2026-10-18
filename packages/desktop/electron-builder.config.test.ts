@@ -62,6 +62,19 @@ test.each(channels)("channel identity for $channel", ({ channel, appId }) => {
   }
 })
 
+test("the 자비수 redistribution installs beside OpenCode", () => {
+  const config = load("jabisu")
+  expect(config.appId).toBe("io.github.seokmyungseop.jabisu")
+  expect(config.productName).toBe("Jabisu")
+  expect(config.artifactName).toBe("Jabisu-Setup-${arch}.${ext}")
+  // No update feed and no `opencode://` scheme: both stay OpenCode's.
+  expect(config.publish).toBeUndefined()
+  expect(config.protocols).toEqual([])
+  expect(config.nsis).toMatchObject({ shortcutName: "자비수", uninstallDisplayName: "자비수" })
+  // Its own package name gives it its own per-user install folder instead of OpenCode's.
+  expect(config.extraMetadata).toMatchObject({ name: "jabisu", author: { name: "명상(明想)" } })
+})
+
 test("legacy Linux launcher stays hidden", async () => {
   const desktop = await Bun.file(path.join(import.meta.dirname, "resources/linux/opencode-desktop.desktop")).text()
   expect(desktop).toContain("Exec=/opt/OpenCode/ai.opencode.desktop %U")

@@ -7,12 +7,12 @@ const CLI_VERSION = "dev"
 
 const Manifest = Schema.fromJsonString(Schema.Struct({ version: Schema.NonEmptyString }))
 
-export type Channel = "dev" | "beta" | "prod"
+export type Channel = "dev" | "beta" | "prod" | "jabisu"
 
 export function resolveChannel(): Channel {
   const raw = process.env.OPENCODE_CHANNEL
 
-  if (raw === "dev" || raw === "beta" || raw === "prod") return raw
+  if (raw === "dev" || raw === "beta" || raw === "prod" || raw === "jabisu") return raw
 
   if (raw === "latest") return "prod"
 

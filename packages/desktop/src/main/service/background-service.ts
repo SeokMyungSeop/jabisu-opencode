@@ -1,5 +1,6 @@
 import { app } from "electron"
 import { Context, Effect, FileSystem, Layer, Path } from "effect"
+import { redistributionServiceFile } from "../constants"
 import { BackgroundServiceState } from "./background-service-state"
 import { cleanStages } from "./cli-stages"
 import { DesktopCli } from "./desktop-cli"
@@ -46,7 +47,7 @@ const connect = Effect.fn("BackgroundService.connect")(function* (mode: "initial
       file:
         isolated && process.env.OPENCODE_DESKTOP_SERVER_CHANNEL === "local"
           ? path.join(app.getPath("userData"), "opencode", "service-local.json")
-          : undefined,
+          : redistributionServiceFile(),
       version,
       // A fixed port makes a second contender fail to bind and back off; port 0 never collides, so two
       // services could boot against the same database.

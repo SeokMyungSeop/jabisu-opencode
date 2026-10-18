@@ -784,7 +784,8 @@ function ChannelIndicator(props: { horizontal?: boolean; sidebar?: boolean }) {
   const host = useExtensionHost()
   const channel = import.meta.env.VITE_OPENCODE_CHANNEL
 
-  if (!channel || channel === "prod") return null
+  // A redistribution (jabisu) is its own release, so it shows no channel badge either.
+  if (!channel || channel === "prod" || channel === "jabisu") return null
 
   const label = () => language.t(`titlebar.channel.${channel}`)
 
