@@ -34,7 +34,8 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
                 list: () => Object.entries(servers),
                 get: (name) => servers[name],
                 set: (name, server) => {
-                  servers[name] = server
+                  // SAFETY: the plugin hands over a fresh config object, which this fake owns from here on.
+                  servers[name] = server as Types.DeepMutable<Mcp.ServerConfig>
                 },
                 update: (name, update) => {
                   const server = servers[name]
@@ -58,7 +59,7 @@ describe("JabisuPlugin.Plugin", () => {
   it.live("bundles its skills with their files and offers Context7 switched off on the jabisu channel", () =>
     Effect.gen(function* () {
       const { skills, servers } = yield* run("jabisu", {})
-      const byId = new Map(skills.map((skill) => [skill.id, skill]))
+      const byId = new Map(skills.map((skill) => [String(skill.id), skill]))
 
       expect([...byId.keys()].toSorted()).toEqual([
         "codebase-design",
