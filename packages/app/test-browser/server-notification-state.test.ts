@@ -1,7 +1,7 @@
 import { beforeAll, expect, mock, setSystemTime, test, vi } from "bun:test"
 import { createEffect, createRoot } from "solid-js"
 import { createStore } from "solid-js/store"
-import type { OpenCodeEvent } from "@opencode/client/promise"
+import type { OpenCodeEvent, SessionInfo } from "@opencode/client/promise"
 import type { ServerConnection } from "@/runtime/server/registry"
 import { ServerScope } from "@/runtime/server/scope"
 import { createNotificationCoordinator } from "@/shell/notifications/coordinator"
@@ -80,16 +80,18 @@ beforeAll(async () => {
 })
 
 test.each([
-  ["session.execution.succeeded", "notification.session.responseReady.title"],
-  ["session.execution.failed", "notification.session.error.title"],
+  ["session.execution.succeeded", "notification.session.responseReady.title", session.id],
+  ["session.execution.failed", "notification.session.error.title", "notification.session.error.fallbackDescription"],
 ] as const)(
-  "alerts for %s require an open session tab and skip the toast for the session on screen",
-  async (type, title) => {
+  "alerts for %s require an open session tab, name the session and skip the toast for the session on screen",
+  async (type, status, untitled) => {
     alerts.length = 0
+    bodies.length = 0
     toasts.length = 0
     route = { type: "home" }
     tabs.store = [{ type: "session", server, sessionId: "another-session" }]
     const listeners = new Array<(event: OpenCodeEvent) => void>()
+    const named: Pick<SessionInfo, "title"> = { title: session.title }
 
     const emit = (id: string) =>
       listeners.forEach((listener) =>
@@ -110,7 +112,13 @@ test.each([
           },
           api: { message: { list: async () => ({ data: [] }) } },
         },
-        data: { session: { get: () => session, root: (id: string) => id, message: { list: () => [] } } },
+        data: {
+          session: {
+            get: () => ({ ...session, title: named.title }),
+            root: (id: string) => id,
+            message: { list: () => [] },
+          },
+        },
         coordinator: {
           system: async (_id: string, fn: () => Promise<void>) => fn(),
           toast: async (_id: string, fn: () => void) => fn(),
@@ -125,18 +133,27 @@ test.each([
     expect(alerts).toEqual([])
     expect(toasts).toEqual([])
 
-    // The coordinator picks the surface by window focus; the toast is skipped only for the session on screen.
+    // The conversation heads the alert and the body says what happened. The coordinator picks the surface by window
+    // focus; the toast is skipped only for the session on screen.
     tabs.store = [{ type: "session", server, sessionId: session.id }]
     emit("event-2")
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(alerts).toEqual([title])
-    expect(toasts).toEqual([title])
+    expect(alerts).toEqual([session.title])
+    expect(bodies).toEqual([status])
+    expect(toasts).toEqual([session.title])
 
     route = { type: "session", server, sessionId: session.id }
     emit("event-3")
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(alerts).toEqual([title, title])
-    expect(toasts).toEqual([title])
+    expect(alerts).toEqual([session.title, session.title])
+    expect(toasts).toEqual([session.title])
+
+    // A session without a title yet leads with what happened.
+    named.title = undefined
+    emit("event-4")
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(alerts.at(-1)).toBe(status)
+    expect(bodies.at(-1)).toBe(untitled)
     dispose()
   },
 )
@@ -209,10 +226,10 @@ test("response-ready alerts preview the first prose line of the latest turn's re
   await emit("event-1")
   expect(bodies).toEqual(["Fixed the build in ci.yml"])
 
-  // A turn without prose falls back to the session title, never to the previous turn's reply.
+  // A turn without prose says the response is ready, never showing the previous turn's reply.
   transcript.loaded = [assistant("Earlier reply"), { type: "idle" }, { type: "user" }, assistant("   ")]
   await emit("event-2")
-  expect(bodies.at(-1)).toBe(session.title)
+  expect(bodies.at(-1)).toBe("notification.session.responseReady.title")
 
   // Without a transcript the latest page is read newest first, and a long line is cut to a preview.
   transcript.loaded = []
@@ -220,12 +237,13 @@ test("response-ready alerts preview the first prose line of the latest turn's re
   await emit("event-3")
   expect(pages).toEqual([{ sessionID: session.id, limit: 20, order: "desc" }])
   expect(bodies.at(-1)).toBe(`${"가".repeat(99)}…`)
-  expect(alerts).toEqual(Array.from({ length: 3 }, () => "notification.session.responseReady.title"))
+  expect(alerts).toEqual([session.title, session.title, session.title])
   dispose()
 })
 
 test("permission requests alert for the root session tab unless they are auto-approved", async () => {
   alerts.length = 0
+  bodies.length = 0
   toasts.length = 0
   route = { type: "home" }
   autoApprove = false
@@ -268,8 +286,10 @@ test("permission requests alert for the root session tab unless they are auto-ap
 
   emit("permission-1")
   await new Promise((resolve) => setTimeout(resolve, 0))
-  expect(alerts).toEqual(["notification.permission.title"])
-  expect(toasts).toEqual(["notification.permission.title"])
+  // The root conversation heads the alert, not the subagent that asked.
+  expect(alerts).toEqual([session.title])
+  expect(bodies).toEqual(["notification.permission.title"])
+  expect(toasts).toEqual([session.title])
 
   autoApprove = true
   emit("permission-2")
