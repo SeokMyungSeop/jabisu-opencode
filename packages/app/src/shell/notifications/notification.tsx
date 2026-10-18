@@ -225,9 +225,17 @@ export function createServerNotificationState(input: {
       .catch(() => undefined)
   }
 
-  // A background window gets the system notification. The focused window gets a toast instead, unless it already
-  // shows the session, so a session finishing in another tab is not missed.
-  const alert = (eventID: string, title: string, description: string, sessionID: string) => {
+  // The conversation's name heads the alert and the body says what happened in it; a session without a title yet
+  // leads with what happened, over the detail or the fallback. A background window gets the system notification. The
+  // focused window gets a toast instead, unless it already shows the session, so a session finishing in another tab is
+  // not missed.
+  const alert = (
+    eventID: string,
+    sessionID: string,
+    notice: { name: string | undefined; status: string; detail?: string; fallback: string },
+  ) => {
+    const title = notice.name ?? notice.status
+    const description = notice.detail ?? (notice.name === undefined ? notice.fallback : notice.status)
     const open = () => openNotificationSession(tabs, input.key, sessionID)
     void input.coordinator.system(`${input.key}\0${eventID}`, () => platform.notify(title, description, open))
     const current = route()
@@ -273,12 +281,12 @@ export function createServerNotificationState(input: {
       const reply = await latestReply(sessionID)
 
       if (disposed.value) return
-      alert(
-        eventID,
-        language.t("notification.session.responseReady.title"),
-        reply ?? session.title ?? sessionID,
-        sessionID,
-      )
+      alert(eventID, sessionID, {
+        name: session.title,
+        status: language.t("notification.session.responseReady.title"),
+        detail: reply,
+        fallback: sessionID,
+      })
     })
   }
 
@@ -294,10 +302,12 @@ export function createServerNotificationState(input: {
         void input.coordinator.sound(`${input.key}\0${eventID}`, () => playSoundById(settings.sounds.errors()))
       }
 
-      const description = session?.title ?? language.t("notification.session.error.fallbackDescription")
-
       if (hasOpenTab && settings.notifications.errors()) {
-        alert(eventID, language.t("notification.session.error.title"), description, sessionID)
+        alert(eventID, sessionID, {
+          name: session?.title,
+          status: language.t("notification.session.error.title"),
+          fallback: language.t("notification.session.error.fallbackDescription"),
+        })
       }
     })
   }
@@ -319,8 +329,11 @@ export function createServerNotificationState(input: {
       }
 
       if (settings.notifications.permissions()) {
-        const title = input.data.session.get(root)?.title ?? session.title ?? root
-        alert(eventID, language.t("notification.permission.title"), title, root)
+        alert(eventID, root, {
+          name: input.data.session.get(root)?.title ?? session.title,
+          status: language.t("notification.permission.title"),
+          fallback: root,
+        })
       }
     })
   }
