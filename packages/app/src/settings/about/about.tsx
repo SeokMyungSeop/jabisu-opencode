@@ -1,5 +1,6 @@
-import { createResource } from "solid-js"
+import { createResource, Show } from "solid-js"
 import { useDialog } from "@opencode/ui/context/dialog"
+import { JABISU } from "@opencode/ui/logo"
 import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
 import { ExternalLink } from "@/runtime/platform/external-link"
@@ -81,6 +82,10 @@ export function SettingsAbout(props: { active: boolean }) {
       </div>
 
       <AnimatedWordmark active={props.active} />
+      {/* 자비수 credits its developer under its name, larger than the wordmark's own signature. */}
+      <Show when={JABISU}>
+        <p class="settings-about-developer">개발자 : 명상</p>
+      </Show>
 
       <div class="settings-about-credits">
         <p>{language.rich("settings.about.writtenByNames", { names: language.list(writerCredits()) })}</p>

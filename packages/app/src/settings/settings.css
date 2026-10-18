@@ -251,6 +251,21 @@
   opacity: 0.3;
 }
 
+/* The larger credit below replaces the wordmark's own small signature here. */
+.settings-about-wordmark text {
+  display: none;
+}
+
+/* Sits close under the 자비수 wordmark, so it pulls up half of the content gap. */
+.settings-about-content .settings-about-developer {
+  margin-block-start: -12px;
+  color: var(--v2-text-text-base);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: 0;
+}
+
 .settings-about-faint,
 .settings-about-credits {
   color: var(--v2-text-text-faint);
