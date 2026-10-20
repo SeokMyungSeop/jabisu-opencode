@@ -140,10 +140,6 @@ export interface Interface {
     readonly variables?: SessionEnvironment.Variables
   }) => Effect.Effect<SessionEnvironment.Variables | undefined, NotFoundError>
   readonly view: (input: { sessionID: SessionSchema.ID; idle: number }) => Effect.Effect<void, NotFoundError>
-  /** Removes the session from the session lists; archiving an archived session does nothing. */
-  readonly archive: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
-  /** Returns an archived session to the session lists. */
-  readonly unarchive: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
   readonly remove: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
   readonly messages: (
     input: SessionStore.MessagesInput,
@@ -189,6 +185,8 @@ export interface Interface {
   readonly switchAgent: (input: { sessionID: SessionSchema.ID; agent: Agent.ID }) => Effect.Effect<void, NotFoundError>
   readonly switchModel: (input: { sessionID: SessionSchema.ID; model: Model.Ref }) => Effect.Effect<void, NotFoundError>
   readonly rename: (input: { sessionID: SessionSchema.ID; title: string }) => Effect.Effect<void, NotFoundError>
+  readonly archive: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
+  readonly unarchive: (sessionID: SessionSchema.ID) => Effect.Effect<void, NotFoundError>
   readonly setMetadata: (input: {
     sessionID: SessionSchema.ID
     metadata: SessionSchema.Metadata
@@ -383,8 +381,6 @@ const layer = Layer.effect(
         return yield* environments.get(input.sessionID)
       }),
       view: (input) => sessions.forSession(input.sessionID).view(input),
-      archive: (sessionID) => sessions.forSession(sessionID).archive(),
-      unarchive: (sessionID) => sessions.forSession(sessionID).unarchive(),
       remove: Effect.fn("Session.remove")(function* (sessionID) {
         yield* result.get(sessionID)
         yield* execution.interrupt(sessionID)
@@ -484,6 +480,8 @@ const layer = Layer.effect(
       switchAgent: (input) => sessions.forSession(input.sessionID).switchAgent(input),
       switchModel: (input) => sessions.forSession(input.sessionID).switchModel(input),
       rename: (input) => sessions.forSession(input.sessionID).rename(input),
+      archive: (sessionID) => sessions.forSession(sessionID).archive(),
+      unarchive: (sessionID) => sessions.forSession(sessionID).unarchive(),
       setMetadata: (input) => sessions.forSession(input.sessionID).setMetadata(input),
       setPermissions: (input) => sessions.forSession(input.sessionID).setPermissions(input),
       move: moves.move,

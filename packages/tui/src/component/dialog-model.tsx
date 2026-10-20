@@ -178,7 +178,6 @@ export function DialogModel(props: { providerID?: string }) {
       skipFilter={true}
       title={title()}
       current={local.model.current()}
-      focusCurrent={false}
     />
   )
 }
@@ -192,12 +191,12 @@ export function prioritizeFavorites<T extends { value: { providerID: string; mod
   )
 }
 
+// The server owns model order (`Model.available()`: preferred free models first when signed out, newest first
+// otherwise). This only applies the picker's grouping and keeps the server's order for everything else.
 export function sortModelOptions<
   T extends {
     providerID?: string
     providerName?: string
-    releaseDate: string | number
-    title: string
     footer?: string
   },
 >(options: T[], grouped = true) {
@@ -211,13 +210,7 @@ export function sortModelOptions<
     const name = grouped ? (a.providerName ?? "").localeCompare(b.providerName ?? "") : 0
     if (name !== 0) return name
 
-    const free = Number(b.footer === "Free") - Number(a.footer === "Free")
-    if (free !== 0) return free
-
-    const release = Number(b.releaseDate) - Number(a.releaseDate)
-    if (release !== 0) return release
-
-    return a.title.localeCompare(b.title)
+    return Number(b.footer === "Free") - Number(a.footer === "Free")
   })
 }
 

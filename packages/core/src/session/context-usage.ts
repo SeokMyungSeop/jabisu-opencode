@@ -16,7 +16,6 @@ import { SessionContext } from "./context.js"
 import type { AgentNotFoundError } from "./error.js"
 import { SessionHistory } from "./history.js"
 import { SessionModelRequest } from "./model-request.js"
-import { SessionProviderContext } from "./provider-context.js"
 import { toLLMMessages } from "./runner/to-llm-message.js"
 import type { SessionRunnerModel } from "./runner/model.js"
 import type { SessionSchema } from "./schema.js"
@@ -58,7 +57,7 @@ export const estimate = Effect.fn("SessionContextUsage.estimate")(function* (inp
       database.db,
       selection.session.id,
       selection.instructions,
-      SessionProviderContext.provenance(model) ?? "local",
+      model.ref,
     )
     const tokens = new Map<Schema.Category, number>(order.map((category) => [category, 0]))
     const add = (category: Schema.Category, count: number) => tokens.set(category, (tokens.get(category) ?? 0) + count)

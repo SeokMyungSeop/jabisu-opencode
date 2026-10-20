@@ -872,6 +872,22 @@
             "required": false
           },
           {
+            "name": "archived",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["true", "false"]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false
+          },
+          {
             "name": "directory",
             "in": "query",
             "schema": {
@@ -1317,7 +1333,7 @@
             }
           }
         },
-        "description": "Import a projected session transcript at the requested location. If parentID is supplied, the parent session must already exist; import parents before children.",
+        "description": "Import a projected session transcript at the requested location. Accepts transcripts exported by earlier releases. If parentID is supplied, the parent session must already exist; import parents before children.",
         "summary": "Import session",
         "requestBody": {
           "content": {
@@ -1329,10 +1345,7 @@
                     "$ref": "#/components/schemas/Session.Info"
                   },
                   "messages": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/Session.Message.Info"
-                    }
+                    "type": "array"
                   },
                   "location": {
                     "anyOf": [
@@ -1715,6 +1728,17 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "archived": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Archive the session with true or restore it with false. Repeating the current state is a no-op."
                   }
                 },
                 "additionalProperties": false
@@ -5169,7 +5193,8 @@
                     "skill",
                     "shell",
                     "assistant",
-                    "compaction"
+                    "compaction",
+                    "idle"
                   ]
                 },
                 {
@@ -8508,6 +8533,122 @@
       }
     },
     "/api/permission/saved/{id}": {
+      "patch": {
+        "tags": ["permission"],
+        "operationId": "permission.saved.update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "$ref": "#/components/schemas/PermissionSaved.ID"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PermissionSaved.Info"
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "PermissionSavedNotFoundError | LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PermissionSavedNotFoundErrorEncoded"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ConflictError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Change the action or resource of a saved permission. Fails with a conflict when the project already has a saved permission with the same action and resource.",
+        "summary": "Update saved permission",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "resource": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      },
       "delete": {
         "tags": ["permission"],
         "operationId": "permission.saved.remove",
@@ -14369,6 +14510,9 @@
               "portable_shell_scanner": {
                 "type": "boolean"
               },
+              "todo": {
+                "type": "boolean"
+              },
               "subagent_depth": {
                 "type": "integer",
                 "minimum": 0
@@ -15069,9 +15213,6 @@
           },
           "metadata": {
             "type": "object"
-          },
-          "configuration": {
-            "$ref": "#/components/schemas/Form.Answer_1"
           }
         },
         "required": ["type", "key"],
@@ -15201,12 +15342,6 @@
         "additionalProperties": false
       },
       "Form.Answer": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Form.Value"
-        }
-      },
-      "Form.Answer_1": {
         "type": "object",
         "additionalProperties": {
           "$ref": "#/components/schemas/Form.Value"
@@ -17025,6 +17160,9 @@
           "supportsPromptCacheKey": {
             "type": "boolean"
           },
+          "streamUsage": {
+            "type": "boolean"
+          },
           "cacheFormat": {
             "$ref": "#/components/schemas/Model.CacheFormat"
           },
@@ -17421,6 +17559,23 @@
           }
         },
         "required": ["id", "projectID", "action", "resource", "time"],
+        "additionalProperties": false
+      },
+      "PermissionSavedNotFoundErrorEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["PermissionSavedNotFoundError"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "id", "message"],
         "additionalProperties": false
       },
       "PersistentPty.CreateInput": {
@@ -18128,6 +18283,9 @@
             "type": "boolean"
           },
           "supportsPromptCacheKey": {
+            "type": "boolean"
+          },
+          "streamUsage": {
             "type": "boolean"
           },
           "cacheFormat": {
@@ -19007,8 +19165,8 @@
           "rawFinish": {
             "type": "string"
           },
-          "providerState": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState_4"
+          "native": {
+            "$ref": "#/components/schemas/Session.Message.Native_3"
           },
           "cost": {
             "$ref": "#/components/schemas/Money.USD"
@@ -19036,8 +19194,8 @@
           "text": {
             "type": "string"
           },
-          "state": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState_1"
+          "native": {
+            "$ref": "#/components/schemas/Session.Message.Native_1"
           },
           "time": {
             "type": "object",
@@ -19083,8 +19241,8 @@
           "text": {
             "type": "string"
           },
-          "state": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState"
+          "native": {
+            "$ref": "#/components/schemas/Session.Message.Native"
           }
         },
         "required": ["type", "text"],
@@ -19106,11 +19264,8 @@
           "executed": {
             "type": "boolean"
           },
-          "providerState": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState_2"
-          },
-          "providerResultState": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState_3"
+          "native": {
+            "$ref": "#/components/schemas/Session.Message.Native_2"
           },
           "state": {
             "anyOf": [
@@ -19195,17 +19350,11 @@
           "model": {
             "$ref": "#/components/schemas/Model.Ref"
           },
-          "providerState": {
-            "$ref": "#/components/schemas/Session.Message.ProviderState_5"
+          "native": {
+            "$ref": "#/components/schemas/Session.Message.Native_4"
           },
           "summary": {
             "type": "string"
-          },
-          "recent": {
-            "type": "string"
-          },
-          "providerContext": {
-            "$ref": "#/components/schemas/Session.ProviderContext"
           },
           "cost": {
             "$ref": "#/components/schemas/Money.USD"
@@ -19214,7 +19363,7 @@
             "$ref": "#/components/schemas/TokenUsage.Info"
           }
         },
-        "required": ["type", "id", "time", "status", "reason", "summary", "recent"],
+        "required": ["type", "id", "time", "status", "reason", "summary"],
         "additionalProperties": false
       },
       "Session.Message.Compaction.Failed": {
@@ -19294,12 +19443,9 @@
           },
           "summary": {
             "type": "string"
-          },
-          "recent": {
-            "type": "string"
           }
         },
-        "required": ["type", "id", "time", "status", "reason", "summary", "recent"],
+        "required": ["type", "id", "time", "status", "reason", "summary"],
         "additionalProperties": false
       },
       "Session.Message.ID": {
@@ -19469,22 +19615,19 @@
         "required": ["id", "time", "type", "model"],
         "additionalProperties": false
       },
-      "Session.Message.ProviderState": {
+      "Session.Message.Native": {
         "type": "object"
       },
-      "Session.Message.ProviderState_1": {
+      "Session.Message.Native_1": {
         "type": "object"
       },
-      "Session.Message.ProviderState_2": {
+      "Session.Message.Native_2": {
         "type": "object"
       },
-      "Session.Message.ProviderState_3": {
+      "Session.Message.Native_3": {
         "type": "object"
       },
-      "Session.Message.ProviderState_4": {
-        "type": "object"
-      },
-      "Session.Message.ProviderState_5": {
+      "Session.Message.Native_4": {
         "type": "object"
       },
       "Session.Message.Shell": {
@@ -19803,46 +19946,6 @@
       },
       "Session.Metadata": {
         "type": "object"
-      },
-      "Session.ProviderContext": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "number",
-            "enum": [1]
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Session.ProviderContext.Provenance"
-          },
-          "messages": {}
-        },
-        "required": ["version", "provenance", "messages"],
-        "additionalProperties": false
-      },
-      "Session.ProviderContext.Provenance": {
-        "type": "object",
-        "properties": {
-          "providerID": {
-            "$ref": "#/components/schemas/Provider.ID"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "modelID": {
-            "type": "string"
-          },
-          "route": {
-            "type": "string"
-          },
-          "protocol": {
-            "type": "string"
-          },
-          "endpoint": {
-            "type": "string"
-          }
-        },
-        "required": ["providerID", "provider", "modelID", "route", "protocol", "endpoint"],
-        "additionalProperties": false
       },
       "Session.Revert": {
         "type": "object",
