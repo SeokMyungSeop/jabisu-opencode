@@ -284,12 +284,21 @@ export function getConfig() {
           author: { name: "명상(明想)" },
           description: "자비수(諮備秀) · 수석 AI 참모 · 만든이 명상(明想) · OpenCode 기반",
         },
-        // The licenses of OpenCode and of the Matt Pocock skills the CLI bundles.
+        // The licenses of OpenCode and of the skills the CLI bundles.
         extraFiles: [
           { from: path.join(rootDir, "LICENSE"), to: "LICENSE.opencode.txt" },
           {
             from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.mattpocock-skills"),
             to: "LICENSE.mattpocock-skills.txt",
+          },
+          {
+            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.hwpx-skill"),
+            to: "LICENSE.hwpx-skill.txt",
+          },
+          // SheetJS, unpdf and PDF.js, which read documents for the CLI and the file preview.
+          {
+            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.document-libraries"),
+            to: "LICENSE.document-libraries.txt",
           },
         ],
         nsis: { ...base.nsis, shortcutName: "자비수", uninstallDisplayName: "자비수" },

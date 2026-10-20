@@ -10,33 +10,16 @@ import { Hash } from "@opencode/util/hash"
 import { Effect } from "effect"
 import path from "path"
 import { SkillFile } from "../config/plugin/skill-file.js"
-import codebaseDesign from "./jabisu/skills/codebase-design/SKILL.md" with { type: "text" }
-import codebaseDesignDeepening from "./jabisu/skills/codebase-design/DEEPENING.md" with { type: "text" }
-import codebaseDesignTwice from "./jabisu/skills/codebase-design/DESIGN-IT-TWICE.md" with { type: "text" }
-import diagnosingBugs from "./jabisu/skills/diagnosing-bugs/SKILL.md" with { type: "text" }
-import diagnosingBugsLoop from "./jabisu/skills/diagnosing-bugs/scripts/hitl-loop.template.sh" with { type: "text" }
-import grillMe from "./jabisu/skills/grill-me/SKILL.md" with { type: "text" }
-import grilling from "./jabisu/skills/grilling/SKILL.md" with { type: "text" }
-import handoff from "./jabisu/skills/handoff/SKILL.md" with { type: "text" }
-import tdd from "./jabisu/skills/tdd/SKILL.md" with { type: "text" }
-import tddMocking from "./jabisu/skills/tdd/mocking.md" with { type: "text" }
-import tddTests from "./jabisu/skills/tdd/tests.md" with { type: "text" }
+import { JabisuBundle } from "./jabisu/bundle.js"
+import pythonHelper from "./jabisu/python/jabisu_python.py" with { type: "text" }
+import pythonSetup from "./jabisu/python/python-setup.md" with { type: "text" }
 
-// 자비수(諮備秀) ships six of Matt Pocock's skills (mattpocock/skills 1.3.1, MIT — jabisu/LICENSE.mattpocock-skills)
-// and offers Context7 as an MCP server that stays off until the user turns it on. Other channels get neither.
-const files: ReadonlyArray<readonly [file: string, content: string]> = [
-  ["codebase-design/SKILL.md", codebaseDesign],
-  ["codebase-design/DEEPENING.md", codebaseDesignDeepening],
-  ["codebase-design/DESIGN-IT-TWICE.md", codebaseDesignTwice],
-  ["diagnosing-bugs/SKILL.md", diagnosingBugs],
-  ["diagnosing-bugs/scripts/hitl-loop.template.sh", diagnosingBugsLoop],
-  ["grill-me/SKILL.md", grillMe],
-  ["grilling/SKILL.md", grilling],
-  ["handoff/SKILL.md", handoff],
-  ["tdd/SKILL.md", tdd],
-  ["tdd/mocking.md", tddMocking],
-  ["tdd/tests.md", tddTests],
-]
+// 자비수(諮備秀) ships six of Matt Pocock's skills (mattpocock/skills 1.3.1, MIT — jabisu/LICENSE.mattpocock-skills),
+// the hwpx skill (jkf87/hwpx-skill, MIT — jabisu/LICENSE.hwpx-skill) and its own docx, xlsx and pptx skills, and
+// offers Context7 as an MCP server that stays off until the user turns it on. Other channels get none of these.
+
+// The document skills share one Python package folder, which outlives the skill folder each update rewrites.
+const PYTHON_SKILLS = ["docx", "hwpx", "pptx", "xlsx"]
 
 export const Plugin = define({
   id: "jabisu.defaults",
@@ -44,21 +27,41 @@ export const Plugin = define({
     if (ctx.app.channel !== "jabisu") return
     const fs = yield* FSUtil.Service
     const global = yield* Global.Service
+    const helper = pythonHelper.replace("__JABISU_PYTHON__", path.join(global.data, "jabisu", "python"))
+    const contents = [
+      // Binary files are embedded in the CLI, so failing to read one is a build defect.
+      ...(yield* Effect.forEach(JabisuBundle.files, (file) =>
+        Effect.gen(function* () {
+          return {
+            path: file.path,
+            content: "text" in file ? file.text : yield* fs.readFile(file.file).pipe(Effect.orDie),
+          }
+        }),
+      )),
+      ...PYTHON_SKILLS.flatMap((skill) => [
+        { path: `${skill}/scripts/jabisu_python.py`, content: helper },
+        { path: `${skill}/python-setup.md`, content: pythonSetup },
+      ]),
+    ]
     // Skills point at their sibling files by relative path, so the bundle is written out once per content version.
-    const root = path.join(global.cache, "skills", `jabisu-${Hash.fast(files.map(([, content]) => content).join("\0"))}`)
+    const root = path.join(
+      global.cache,
+      "skills",
+      `jabisu-${Hash.fast(contents.map((file) => `${file.path}\0${Hash.fast(Buffer.from(file.content))}`).join("\0"))}`,
+    )
 
-    for (const [file, content] of files) {
-      const target = path.join(root, file)
+    for (const file of contents) {
+      const target = path.join(root, file.path)
 
       if (yield* fs.exists(target).pipe(Effect.orElseSucceed(() => false))) continue
       yield* fs
-        .writeWithDirs(target, content)
+        .writeWithDirs(target, file.content)
         .pipe(Effect.catchCause((cause) => Effect.logWarning("failed to write bundled skill file", { target, cause })))
     }
 
-    const skills = files.flatMap(([file, content]) => {
-      if (path.basename(file) !== "SKILL.md") return []
-      const parsed = SkillFile.parse(root, path.join(root, file), content)
+    const skills = contents.flatMap((file) => {
+      if (path.posix.basename(file.path) !== "SKILL.md" || typeof file.content !== "string") return []
+      const parsed = SkillFile.parse(root, path.join(root, file.path), file.content)
 
       return parsed._tag === "Parsed" ? [parsed.skill] : []
     })

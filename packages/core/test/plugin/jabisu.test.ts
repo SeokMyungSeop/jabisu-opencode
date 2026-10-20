@@ -4,6 +4,7 @@ import path from "path"
 import { Effect, type Types } from "effect"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
+import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { Skill } from "@opencode/core/skill"
 import type { Mcp } from "@opencode/schema/mcp"
 import { FSUtil } from "@opencode/util/fs-util"
@@ -20,6 +21,7 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
   Effect.gen(function* () {
     const skill = yield* Skill.Service
     const cache = (yield* tmpdirScoped()).path
+    const data = (yield* tmpdirScoped()).path
     const base = host()
 
     yield* JabisuPlugin.Plugin.effect(
@@ -50,10 +52,12 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
             }),
         },
       }),
-    ).pipe(Effect.provideService(Global.Service, Global.make({ cache })))
+    ).pipe(Effect.provideService(Global.Service, Global.make({ cache, data })))
 
-    return { skills: yield* skill.list(), servers }
+    return { skills: yield* skill.list(), servers, data }
   })
+
+const source = (file: string) => path.join(import.meta.dirname, "../../src/plugin/jabisu", file)
 
 describe("JabisuPlugin.Plugin", () => {
   it.live("bundles its skills with their files and offers Context7 switched off on the jabisu channel", () =>
@@ -64,10 +68,14 @@ describe("JabisuPlugin.Plugin", () => {
       expect([...byId.keys()].toSorted()).toEqual([
         "codebase-design",
         "diagnosing-bugs",
+        "docx",
         "grill-me",
         "grilling",
         "handoff",
+        "hwpx",
+        "pptx",
         "tdd",
+        "xlsx",
       ])
       // grill-me is user-invoked only, as its frontmatter says.
       expect(byId.get("grill-me")?.autoinvoke).toBe(false)
@@ -75,11 +83,43 @@ describe("JabisuPlugin.Plugin", () => {
       const tdd = byId.get("tdd")
       expect(tdd?.content).toContain("[tests.md](tests.md)")
       expect(yield* Effect.promise(() => fs.readFile(path.join(path.dirname(tdd!.path), "tests.md"), "utf8"))).toBe(
-        yield* Effect.promise(() =>
-          fs.readFile(path.join(import.meta.dirname, "../../src/plugin/jabisu/skills/tdd/tests.md"), "utf8"),
-        ),
+        yield* Effect.promise(() => fs.readFile(source("skills/tdd/tests.md"), "utf8")),
       )
       expect(servers.context7).toEqual({ type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
+    }),
+  )
+
+  it.live("gives each document skill the Python helper for the shared package folder, and copies binary files", () =>
+    Effect.gen(function* () {
+      const { skills, data } = yield* run("jabisu", {})
+      const read = (file: string) => Effect.promise(() => fs.readFile(file))
+      const directory = (name: string) => path.dirname(skills.find((skill) => String(skill.id) === name)?.path ?? "")
+
+      for (const name of ["docx", "hwpx", "pptx", "xlsx"]) {
+        const helper = (yield* read(path.join(directory(name), "scripts/jabisu_python.py"))).toString("utf8")
+        expect(helper).toContain(`ROOT = r"${path.join(data, "jabisu", "python")}"`)
+        expect(yield* read(path.join(directory(name), "python-setup.md"))).toEqual(
+          yield* read(source("python/python-setup.md")),
+        )
+      }
+      expect(yield* read(path.join(directory("hwpx"), "assets/report-template.hwpx"))).toEqual(
+        yield* read(source("skills/hwpx/assets/report-template.hwpx")),
+      )
+    }),
+  )
+
+  it.live("bundles every file in the skills folder", () =>
+    Effect.gen(function* () {
+      const present = (yield* Effect.promise(() =>
+        fs.readdir(source("skills"), { recursive: true, withFileTypes: true }),
+      ))
+        .filter((entry) => entry.isFile())
+        .map((entry) =>
+          path.relative(source("skills"), path.join(entry.parentPath, entry.name)).split(path.sep).join("/"),
+        )
+
+      // After adding or removing a skill file, regenerate the list with `bun run script/jabisu-bundle.ts`.
+      expect(JabisuBundle.files.map((file) => file.path).toSorted()).toEqual(present.toSorted())
     }),
   )
 
