@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test"
+import { CJK_FONT_ASSET_URLS } from "./fonts-cjk"
 import { loadFace, presentationFace, wordFonts } from "./fonts"
 
-// East Asian families the font package maps to its CJK add-on, which the app does not ship: by name, by alias, and as
-// weight variants that resolve through their base family.
+// Chinese and Japanese families the font package maps to its CJK add-on, whose faces for them the app does not ship:
+// by name, by alias, and as weight variants that resolve through their base family.
 const eastAsian = [
   "Microsoft YaHei",
   "DengXian",
@@ -10,9 +11,24 @@ const eastAsian = [
   "等线 Light",
   "Microsoft YaHei Light",
   "Yu Gothic Medium",
-  "Malgun Gothic Semilight",
   "MS Mincho",
 ]
+
+describe("Korean", () => {
+  test("draws Korean families with the shipped Korean face", () => {
+    for (const family of ["Malgun Gothic", "맑은 고딕", "굴림", "Batang", "Malgun Gothic Semilight"])
+      expect(presentationFace(family, false, false)).toMatchObject({ family: "Noto Sans KR", script: "cjk-kr" })
+    expect(wordFonts().resolve("맑은 고딕", false, false)).toBeFunction()
+    expect(wordFonts().resolveScriptFallback?.("cjk-kr", false, false)).toBeFunction()
+  })
+
+  test("ships the face the font package expects", async () => {
+    const face = presentationFace("Malgun Gothic", false, false)
+
+    expect(face.file).toBe("NotoSansKR-Regular.otf")
+    expect(Bun.file(CJK_FONT_ASSET_URLS["NotoSansKR-Regular.otf"]()).size).toBe(face.byteLength)
+  })
+})
 
 describe("presentationFace", () => {
   test("draws East Asian families with a face the app ships", async () => {

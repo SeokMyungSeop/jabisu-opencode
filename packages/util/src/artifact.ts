@@ -13,12 +13,20 @@ export type ArtifactKind =
   | "document"
   | "spreadsheet"
   | "presentation"
+  // Hangul (HWP, HWPX) documents and Word, Excel and PowerPoint 97-2003 files, which the app shows as their text.
+  | "hangul"
+  | "legacy-office"
   | "text"
 
 const officeKinds = new Map<string, ArtifactKind>([
   ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document"],
   ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "spreadsheet"],
   ["application/vnd.openxmlformats-officedocument.presentationml.presentation", "presentation"],
+  ["application/x-hwp", "hangul"],
+  ["application/hwp+zip", "hangul"],
+  ["application/msword", "legacy-office"],
+  ["application/vnd.ms-excel", "legacy-office"],
+  ["application/vnd.ms-powerpoint", "legacy-office"],
 ])
 
 const mimes = new Map([
@@ -66,6 +74,11 @@ const mimes = new Map([
   ["docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
   ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
   ["pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+  ["hwp", "application/x-hwp"],
+  ["hwpx", "application/hwp+zip"],
+  ["doc", "application/msword"],
+  ["xls", "application/vnd.ms-excel"],
+  ["ppt", "application/vnd.ms-powerpoint"],
 ])
 
 function artifactExtension(path: string) {

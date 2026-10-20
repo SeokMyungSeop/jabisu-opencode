@@ -93,7 +93,8 @@ export default [
         resolve: {
           alias: {
             "@": fileURLToPath(new URL("./src", import.meta.url)),
-            // The font package imports its 33 MB Chinese, Japanese and Korean add-on on demand; the app does not ship it.
+            // The font package imports its 33 MB Chinese, Japanese and Korean add-on on demand; the app ships only its
+            // Korean face.
             "@betteroffice/fonts-cjk": fileURLToPath(
               new URL("../gui-extensions/src/microsoft-office/fonts-cjk.ts", import.meta.url),
             ),

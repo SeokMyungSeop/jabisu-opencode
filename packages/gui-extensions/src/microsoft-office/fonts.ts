@@ -11,9 +11,11 @@ import {
 
 // Every face loads from the app's own files, so no font request leaves the machine. The Chinese, Japanese and Korean
 // faces are an add-on the app does not ship (see `fonts-cjk.ts`), yet the font package still maps East Asian families
-// such as Microsoft YaHei or Yu Gothic Medium to them, so every lookup passes through `shippedFace`.
+// such as Microsoft YaHei or Yu Gothic Medium to them, so every lookup passes through `shippedFace`. 자비수 ships the
+// add-on's Korean face (`fonts-cjk.ts`), which Malgun Gothic, Gulim, Dotum, Batang and Gungsuh map to, so Hangul draws
+// instead of boxes.
 function shipped(script: BundledFontScript) {
-  return !script.startsWith("cjk-")
+  return !script.startsWith("cjk-") || script === "cjk-kr"
 }
 
 /** The faces Word substitutes for a document's fonts: metric-compatible ones first, then Word's own fallbacks. */

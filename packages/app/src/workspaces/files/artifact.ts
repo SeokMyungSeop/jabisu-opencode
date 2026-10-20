@@ -11,6 +11,8 @@ const binaryKinds = new Set<ArtifactKind>([
   "document",
   "spreadsheet",
   "presentation",
+  "hangul",
+  "legacy-office",
 ])
 
 /** Text files never contain NUL; a NUL in the first 8 KiB marks an unknown binary. */
