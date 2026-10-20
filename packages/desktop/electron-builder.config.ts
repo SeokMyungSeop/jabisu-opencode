@@ -261,7 +261,8 @@ export function getConfig() {
     }
 
     // 자비수(諮備秀), 명상(明想)'s redistribution, installs beside OpenCode: its own identity and folder, an ASCII
-    // file name with the Korean name on shortcuts, no update feed, and no `opencode://` scheme, which stays OpenCode's.
+    // file name with the Korean name on shortcuts, updates from its own GitHub Releases, and no `opencode://` scheme,
+    // which stays OpenCode's.
     case "jabisu": {
       return {
         ...base,
@@ -270,6 +271,12 @@ export function getConfig() {
         artifactName: "Jabisu-Setup-${arch}.${ext}",
         copyright: "© 2026 명상(明想). Based on OpenCode, MIT License.",
         protocols: [],
+        // The latest release's assets, so each release must carry latest.yml and the blockmap with the installer.
+        publish: {
+          provider: "generic",
+          url: "https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest/download",
+          channel: "latest",
+        },
         extraMetadata: {
           ...base.extraMetadata,
           // A per-user install folder is named after the package, so OpenCode's name would share its folder.

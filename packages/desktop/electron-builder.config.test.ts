@@ -67,8 +67,12 @@ test("the 자비수 redistribution installs beside OpenCode", () => {
   expect(config.appId).toBe("io.github.seokmyungseop.jabisu")
   expect(config.productName).toBe("Jabisu")
   expect(config.artifactName).toBe("Jabisu-Setup-${arch}.${ext}")
-  // No update feed and no `opencode://` scheme: both stay OpenCode's.
-  expect(config.publish).toBeUndefined()
+  // It updates from its own releases, never OpenCode's feed, and leaves the `opencode://` scheme to OpenCode.
+  expect(config.publish).toEqual({
+    provider: "generic",
+    url: "https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest/download",
+    channel: "latest",
+  })
   expect(config.protocols).toEqual([])
   expect(config.nsis).toMatchObject({ shortcutName: "자비수", uninstallDisplayName: "자비수" })
   // Its own package name gives it its own per-user install folder instead of OpenCode's.
