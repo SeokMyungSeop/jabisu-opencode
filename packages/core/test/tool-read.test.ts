@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect } from "bun:test"
 import path from "path"
-import { Effect, Exit, Layer, Result } from "effect"
+import { DateTime, Effect, Exit, Layer, Result } from "effect"
+import { Money } from "@opencode/schema/money"
 import { Config } from "@opencode/core/config"
+import { Model } from "@opencode/core/model"
+import { Project } from "@opencode/core/project"
+import { Provider } from "@opencode/core/provider"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { FileSystem } from "@opencode/core/filesystem"
@@ -36,6 +40,8 @@ const readToolNode = makeLocationNode({
     SessionInstructions.node,
     FSUtil.node,
     Location.node,
+    Session.node,
+    Model.node,
   ],
 })
 
@@ -60,6 +66,8 @@ let readResult: ReadToolFileSystem.FileContent | ReadToolFileSystem.TextPage | R
 }
 let readFailure: ReadToolFileSystem.ReadError | undefined
 let readOverride: ReadToolFileSystem.Interface["read"] | undefined
+// What each read's PDF decision resolved to, for a reader that asks.
+const pdfDecisions: boolean[] = []
 const reader = Layer.succeed(
   ReadToolFileSystem.Service,
   ReadToolFileSystem.Service.of({
@@ -67,15 +75,45 @@ const reader = Layer.succeed(
       listCalls.push(input)
       return Effect.succeed(directoryEntryDetails)
     },
-    read: (input, resource, page = {}) => {
+    read: (input, resource, page = {}, options = {}) => {
       readCalls.push({ input, page })
       if (readDefect !== undefined) return Effect.die(readDefect)
       if (readOverride) return readOverride(input, resource, page)
       if (readFailure !== undefined) return Effect.fail(readFailure)
-      return Effect.succeed(readResult)
+      return (options.pdfAsText ?? Effect.succeed(false)).pipe(
+        Effect.tap((decision) => Effect.sync(() => pdfDecisions.push(decision))),
+        Effect.as(readResult),
+      )
     },
   }),
 )
+// The session's model decides whether a PDF reads as its text.
+let modelInput = ["text", "pdf"]
+const sessions = Layer.mock(Session.Service, {
+  get: (id) =>
+    Effect.succeed(
+      Session.Info.make({
+        id,
+        projectID: Project.ID.global,
+        cost: Money.USD.zero,
+        tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+        time: { created: DateTime.makeUnsafe(0), updated: DateTime.makeUnsafe(0) },
+        location: Location.Ref.make({ directory: AbsolutePath.make(process.cwd()) }),
+        model: Model.Ref.make({ providerID: Provider.ID.make("test"), id: Model.ID.make("reader") }),
+      }),
+    ),
+  revert: {
+    stage: () => Effect.die("unused"),
+    clear: () => Effect.die("unused"),
+    commit: () => Effect.die("unused"),
+  },
+})
+const models = Layer.mock(Model.Service, {
+  get: (providerID, id) => {
+    const info = Model.Info.default(providerID, id)
+    return Effect.succeed(Model.Info.make({ ...info, capabilities: { ...info.capabilities, input: modelInput } }))
+  },
+})
 let allow = true
 let deniedResource: string | undefined
 const permission = permissionLayer({
@@ -126,6 +164,8 @@ const readLayer = (imageLayer: Layer.Layer<Image.Service>) =>
       FSUtil.node.replace(testFileSystem),
       Location.node.replace(locationLayer),
       Global.node.replace(Global.layerWith({ data: Global.Path.data })),
+      Session.node.replace(sessions),
+      Model.node.replace(models),
     ]),
     // Merge by reference so Config.Test and Image.Service resolve to the memoized instances.
     config,
@@ -155,6 +195,8 @@ describe("ReadTool", () => {
     }
     readFailure = undefined
     readOverride = undefined
+    pdfDecisions.length = 0
+    modelInput = ["text", "pdf"]
   })
 
   it.effect("registers, authorizes, and reads through the location filesystem", () =>
@@ -545,6 +587,48 @@ describe("ReadTool", () => {
         content: [
           { type: "text", text: "PDF read successfully" },
           { type: "file", uri: `data:application/pdf;base64,${pdf}`, mime: "application/pdf", name: "document.pdf" },
+        ],
+      })
+      expect(pdfDecisions).toEqual([false])
+    }),
+  )
+
+  it.effect("asks for PDF text when the session's model cannot take PDFs", () =>
+    Effect.gen(function* () {
+      modelInput = ["text", "image"]
+      const registry = yield* Tool.Service
+
+      yield* executeTool(registry, {
+        sessionID,
+        ...toolIdentity,
+        call: { type: "tool-call", id: "call-pdf-text", name: "read", input: { path: "document.pdf" } },
+      })
+      expect(pdfDecisions).toEqual([true])
+    }),
+  )
+
+  it.effect("names a converted document in the model's read summary", () =>
+    Effect.gen(function* () {
+      readResult = new ReadToolFileSystem.TextPage({
+        type: "text-page",
+        content: "# 보고\n| 항목 | 담당 |",
+        mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        offset: 1,
+        truncated: false,
+        document: "Word document",
+      })
+      const registry = yield* Tool.Service
+
+      expect(
+        yield* executeTool(registry, {
+          sessionID,
+          ...toolIdentity,
+          call: { type: "tool-call", id: "call-docx", name: "read", input: { path: "report.docx" } },
+        }),
+      ).toMatchObject({
+        status: "completed",
+        content: [
+          { type: "text", text: "Read Word document report.docx as text, lines 1-2\n1: # 보고\n2: | 항목 | 담당 |" },
         ],
       })
     }),

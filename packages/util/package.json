@@ -55,11 +55,13 @@
     "cross-spawn": "catalog:",
     "effect": "catalog:",
     "glob": "13.0.5",
+    "htmlparser2": "8.0.2",
     "mime-types": "3.0.2",
     "minimatch": "10.2.5",
     "npm-package-arg": "13.0.2",
     "open": "11.0.4",
-    "pacote": "21.5.1"
+    "pacote": "21.5.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@tsconfig/bun": "catalog:",

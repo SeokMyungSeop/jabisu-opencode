@@ -48,6 +48,8 @@ const readToolNode = makeLocationNode({
     SessionInstructions.node,
     FSUtil.node,
     Location.node,
+    Session.node,
+    Model.node,
   ],
 })
 
@@ -75,6 +77,8 @@ const testLayer = AppNodeBuilder.build(
   ]),
   [
     Project.node.replace(globalProjectNode),
+    // Only a PDF read asks for the session's model, and these tests read no PDFs.
+    Model.node.replace(Layer.mock(Model.Service, {})),
     SessionExecution.node.replace(SessionExecution.noopLayer),
     Location.node.replace(tempLocationLayer),
     Permission.node.replace(permission),

@@ -93,7 +93,8 @@
     "@types/node": "catalog:",
     "@types/which": "3.0.4",
     "drizzle-kit": "catalog:",
-    "fast-check": "catalog:"
+    "fast-check": "catalog:",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "dependencies": {
     "@ai-sdk/cohere": "3.0.27",
@@ -132,6 +133,7 @@
     "mime-types": "3.0.2",
     "tree-sitter-bash": "0.25.0",
     "tree-sitter-powershell": "0.25.10",
+    "unpdf": "1.8.1",
     "web-tree-sitter": "0.25.10",
     "which": "6.0.1",
     "zod": "catalog:"

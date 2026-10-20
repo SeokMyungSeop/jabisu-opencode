@@ -7,6 +7,8 @@ import { Effect, Schema } from "effect"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Location } from "../../location.js"
 import { FileAccess } from "../../file-access.js"
+import { Model } from "../../model.js"
+import { Session } from "../../session.js"
 import { SessionInstructions } from "../../session/instructions.js"
 import { AbsolutePath } from "../../schema.js"
 import { ReadToolFileSystem } from "../read-filesystem.js"
@@ -34,6 +36,18 @@ export const Plugin = {
     const sessionInstructions = yield* SessionInstructions.Service
     const fs = yield* FSUtil.Service
     const location = yield* Location.Service
+    const sessions = yield* Session.Service
+    const models = yield* Model.Service
+
+    // A PDF reads as its text for a model without PDF input; an unknown model keeps the PDF itself.
+    const pdfAsText = (sessionID: Parameters<typeof sessions.get>[0]) =>
+      sessions.get(sessionID).pipe(
+        Effect.flatMap((session) =>
+          session.model ? models.get(session.model.providerID, session.model.id) : models.default(),
+        ),
+        Effect.map((model) => model !== undefined && !model.capabilities.input.some((item) => item.startsWith("pdf"))),
+        Effect.orElseSucceed(() => false),
+      )
 
     yield* ctx.tool
       .transform((editor) =>
@@ -41,16 +55,18 @@ export const Plugin = {
           name,
           options: { codemode: false },
           description:
-            "Read the contents of a file or directory. Supports text files, images, and PDFs. Images and PDFs are presented directly to the model. Each text line is prefixed by its 1-based line number as <line>: <content>. The prefix is for reference and is not part of the file content. Directory entries are returned one per line. Use offset and limit to read large files or directories in sections. Prefer one larger read over many small slices, and use grep to find specific content in large files.",
+            "Read the contents of a file or directory. Supports text files, images, PDFs, and documents. Images and PDFs are presented directly to the model; Word, Excel, PowerPoint and Hangul (HWP, HWPX) documents, and PDFs for models without PDF input, are converted to text and read like text files. Each text line is prefixed by its 1-based line number as <line>: <content>. The prefix is for reference and is not part of the file content. Directory entries are returned one per line. Use offset and limit to read large files or directories in sections. Prefer one larger read over many small slices, and use grep to find specific content in large files.",
           input: Input,
           output: Output,
           execute: (input, context) => {
             return Effect.gen(function* () {
               const read = (target: FileAccess.Target) =>
-                reader.read(target.absolute, target.resource, {
-                  offset: input.offset,
-                  limit: input.limit,
-                })
+                reader.read(
+                  target.absolute,
+                  target.resource,
+                  { offset: input.offset, limit: input.limit },
+                  { pdfAsText: pdfAsText(context.sessionID) },
+                )
 
               const requested = yield* access.authorizeRead(input.path, context)
               const result = yield* read(requested).pipe(
@@ -122,6 +138,7 @@ export const Plugin = {
                 if (error instanceof ToolFailure) return error
                 const message =
                   error instanceof ReadToolFileSystem.BinaryFileError ||
+                  error instanceof ReadToolFileSystem.DocumentError ||
                   error instanceof ReadToolFileSystem.MediaIngestLimitError ||
                   error instanceof ReadToolFileSystem.OffsetOutOfRangeError ||
                   error instanceof ReadToolFileSystem.PathKindError
@@ -201,8 +218,10 @@ export const toModelContent = (path: string, offset: number | undefined, output:
   // Pages already join selected lines; a trailing newline represents a selected blank line.
   const text = output.type === "file" ? output.content.replace(/\n$/, "") : output.content
   const lines = output.content === "" ? [] : text.split("\n")
+  const subject =
+    output.type === "text-page" && output.document !== undefined ? `${output.document} ${path} as text` : `file ${path}`
   const content = [
-    lines.length === 0 ? `Read file ${path}, 0 lines` : `Read file ${path}, lines ${start}-${start + lines.length - 1}`,
+    lines.length === 0 ? `Read ${subject}, 0 lines` : `Read ${subject}, lines ${start}-${start + lines.length - 1}`,
   ]
   lines.forEach((line, index) => content.push(`${start + index}: ${line}`))
   if (output.type === "text-page" && output.truncated && output.next !== undefined)

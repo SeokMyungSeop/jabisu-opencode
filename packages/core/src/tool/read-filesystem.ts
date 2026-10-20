@@ -10,6 +10,8 @@ import type { Files } from "../environment/index.js"
 import { FileSystem } from "../filesystem.js"
 import { Mime } from "../mime.js"
 import { AbsolutePath, NonNegativeInt, PositiveInt, RelativePath } from "../schema.js"
+import { DocumentText } from "@opencode/util/document-text"
+import { ReadDocument } from "./read-document.js"
 
 export const MAX_READ_LINES = 2_000
 export const MAX_READ_BYTES = 50 * 1024
@@ -40,6 +42,15 @@ export class MediaIngestLimitError extends Schema.TaggedError<MediaIngestLimitEr
   }
 }
 
+export class DocumentError extends Schema.TaggedError<DocumentError>()("ReadTool.DocumentError", {
+  resource: Schema.String,
+  reason: Schema.String,
+}) {
+  override get message() {
+    return `Cannot read ${this.resource}: ${this.reason}`
+  }
+}
+
 export class OffsetOutOfRangeError extends Schema.TaggedError<OffsetOutOfRangeError>()(
   "ReadTool.OffsetOutOfRangeError",
   { offset: Schema.Number, lines: Schema.Number },
@@ -62,6 +73,7 @@ export type ReadError =
   | Environment.NotFound
   | Environment.Failed
   | BinaryFileError
+  | DocumentError
   | MediaIngestLimitError
   | OffsetOutOfRangeError
   | PathKindError
@@ -85,6 +97,8 @@ export class TextPage extends Schema.Class<TextPage>("ReadTool.TextPage")({
   offset: PositiveInt,
   truncated: Schema.Boolean,
   next: Schema.optionalKey(PositiveInt),
+  /** The kind of document, such as "Word document", whose text this page holds instead of the file's own bytes. */
+  document: Schema.optionalKey(Schema.String),
 }) {}
 
 export interface ListEntry extends Schema.Schema.Type<typeof ListEntry> {}
@@ -100,12 +114,18 @@ export class ListPage extends Schema.Class<ListPage>("ReadTool.ListPage")({
   next: Schema.optionalKey(PositiveInt),
 }) {}
 
+export interface ReadOptions {
+  /** Whether a PDF is read as its text instead of as media, asked only when the file is a PDF. */
+  readonly pdfAsText?: Effect.Effect<boolean>
+}
+
 export interface Interface {
   readonly list: (path: AbsolutePath) => ReturnType<Files["list"]>
   readonly read: (
     path: AbsolutePath,
     resource: string,
     page?: PageInput,
+    options?: ReadOptions,
   ) => Effect.Effect<FileContent | TextPage | ListPage, ReadError>
 }
 
@@ -118,6 +138,7 @@ export const read = Effect.fn("ReadTool.read")(function* (
   input: AbsolutePath,
   resource: string,
   page: PageInput = {},
+  options: ReadOptions = {},
 ) {
   const first = yield* files.read(input, { offset: 0, length: FIRST_CHUNK }).pipe(
     Effect.catchTag("Environment.WrongKind", (error) => {
@@ -134,6 +155,8 @@ export const read = Effect.fn("ReadTool.read")(function* (
   if (first instanceof ListPage) return first
 
   const media = Mime.detect(first.bytes)
+  if (media === "application/pdf" && (yield* options.pdfAsText ?? Effect.succeed(false)))
+    return yield* document(files, input, resource, first, "pdf", page)
   if (MEDIA_MIMES.has(media)) {
     if (first.info.size > MAX_MEDIA_INGEST_BYTES)
       return yield* new MediaIngestLimitError({ resource, maximumBytes: MAX_MEDIA_INGEST_BYTES })
@@ -147,6 +170,9 @@ export const read = Effect.fn("ReadTool.read")(function* (
       mime: media,
     }
   }
+
+  const format = DocumentText.detect(input, first.bytes)
+  if (format !== undefined) return yield* document(files, input, resource, first, format, page)
 
   const paged = first.info.size > MAX_READ_BYTES || page.offset !== undefined || page.limit !== undefined
   if (!paged) {
@@ -241,6 +267,7 @@ const makeTextPage = Effect.fnUntraced(function* (
   result: NonNullable<ReturnType<typeof textPage>>,
   binary: boolean,
   lines: number,
+  document?: string,
 ) {
   if (binary) return yield* new BinaryFileError({ resource })
   if (result.entries.length === 0 && result.offset !== 1)
@@ -252,7 +279,49 @@ const makeTextPage = Effect.fnUntraced(function* (
     offset: result.offset,
     truncated: result.next !== undefined,
     ...(result.next === undefined ? {} : { next: result.next }),
+    ...(document === undefined ? {} : { document }),
   })
+})
+
+// A document converts as a whole, so its text pages like a complete text file.
+const document = Effect.fnUntraced(function* (
+  files: Files,
+  input: AbsolutePath,
+  resource: string,
+  first: { readonly info: { readonly size: number }; readonly bytes: Uint8Array },
+  format: ReadDocument.Format,
+  page: PageInput,
+) {
+  const label = ReadDocument.LABELS[format]
+  if (first.info.size > DocumentText.MAX_DOCUMENT_BYTES)
+    return yield* new DocumentError({
+      resource,
+      reason: `the ${label} is larger than the ${DocumentText.MAX_DOCUMENT_BYTES / 1024 / 1024} MiB document limit`,
+    })
+  const bytes = first.bytes.length >= first.info.size ? first.bytes : (yield* readFile(files, input, resource)).bytes
+  const content = Buffer.from(
+    yield* Effect.tryPromise({
+      try: () => ReadDocument.text(format, bytes),
+      catch: (cause) =>
+        new DocumentError({
+          resource,
+          reason:
+            cause instanceof DocumentText.Unreadable
+              ? cause.message
+              : `the ${label} could not be converted to text (${cause instanceof Error ? cause.message : String(cause)})`,
+        }),
+    }),
+  )
+  const result = textPage(content, true, page)
+  if (result === undefined) return yield* Effect.die("Read page did not settle for a converted document")
+  return yield* makeTextPage(
+    input,
+    resource,
+    result,
+    false,
+    lineCount(textLeaf(content).summary.lines, content.at(-1)),
+    label,
+  )
 })
 
 const list = (items: ReadonlyArray<Environment.DirEntry>, page: PageInput) => {
@@ -394,7 +463,7 @@ const layer = Layer.effect(
     const environment = yield* Environment.Service
     return Service.of({
       list: environment.files.list,
-      read: (path, resource, page) => read(environment.files, path, resource, page),
+      read: (path, resource, page, options) => read(environment.files, path, resource, page, options),
     })
   }),
 )
