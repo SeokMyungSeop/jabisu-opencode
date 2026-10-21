@@ -186,6 +186,7 @@
     "vite@8.2.2": "patches/vite@8.2.2.patch",
     "@modelcontextprotocol/client@2.0.0": "patches/@modelcontextprotocol%2Fclient@2.0.0.patch",
     "@corvu/drawer@0.2.4": "patches/@corvu%2Fdrawer@0.2.4.patch",
-    "unpdf@1.8.1": "patches/unpdf@1.8.1.patch"
+    "unpdf@1.8.1": "patches/unpdf@1.8.1.patch",
+    "kordoc@4.22.13": "patches/kordoc@4.22.13.patch"
   }
 }

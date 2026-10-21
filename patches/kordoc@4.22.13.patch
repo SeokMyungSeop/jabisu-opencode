@@ -1,0 +1,76 @@
+diff --git a/dist/chunk-6VNSISFI.js b/dist/chunk-6VNSISFI.js
+index 4d9d2695076552272696d6f80d8a12eb5b0d3ecd..d5204d00118ff4aa954505af54136d7c0e40ae8f 100644
+--- a/dist/chunk-6VNSISFI.js
++++ b/dist/chunk-6VNSISFI.js
+@@ -18410,7 +18410,8 @@ function hasRealUnderline(attrFlags) {
+ // src/hwp5/parser.ts
+ import { createRequire } from "module";
+ var require2 = createRequire(import.meta.url);
+-var CFB = require2("cfb");
++import __kordocCfb0 from "cfb";
++var CFB = __kordocCfb0;
+ var MAX_SECTIONS = 100;
+ var MAX_TOTAL_DECOMPRESS = 100 * 1024 * 1024;
+ function openHwp5Container(buffer, options) {
+diff --git a/dist/chunk-AEDBCPFA.js b/dist/chunk-AEDBCPFA.js
+index 5803279869a94358259bcbd49fe02ec3e207c336..fc074393ccb4a3a7a98a9e4454c7e8d72582691d 100644
+--- a/dist/chunk-AEDBCPFA.js
++++ b/dist/chunk-AEDBCPFA.js
+@@ -28689,7 +28689,8 @@ var Surgeon = class {
+ 
+ // src/roundtrip/hwp5-patch.ts
+ var require2 = createRequire(import.meta.url);
+-var CFB = require2("cfb");
++import __kordocCfb0 from "cfb";
++var CFB = __kordocCfb0;
+ var TAG_PARA_LINE_SEG = 69;
+ function cid(s) {
+   return (s.charCodeAt(0) << 24 | s.charCodeAt(1) << 16 | s.charCodeAt(2) << 8 | s.charCodeAt(3)) >>> 0;
+diff --git a/dist/index.js b/dist/index.js
+index 93c479c754bcde3902f57bafc24f623ebda8c248..1811618ad161cb1ad79d1e6dab66aa506ffe1690 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -5998,7 +5998,8 @@ function hasRealUnderline(attrFlags) {
+ // src/hwp5/parser.ts
+ import { createRequire } from "module";
+ var require2 = createRequire(import.meta.url);
+-var CFB = require2("cfb");
++import __kordocCfb0 from "cfb";
++var CFB = __kordocCfb0;
+ var MAX_SECTIONS = 100;
+ var MAX_TOTAL_DECOMPRESS = 100 * 1024 * 1024;
+ function openHwp5Container(buffer, options) {
+@@ -45459,7 +45460,8 @@ var Surgeon = class {
+ 
+ // src/roundtrip/hwp5-patch.ts
+ var require3 = createRequire2(import.meta.url);
+-var CFB2 = require3("cfb");
++import __kordocCfb1 from "cfb";
++var CFB2 = __kordocCfb1;
+ var TAG_PARA_LINE_SEG2 = 69;
+ function cid2(s) {
+   return (s.charCodeAt(0) << 24 | s.charCodeAt(1) << 16 | s.charCodeAt(2) << 8 | s.charCodeAt(3)) >>> 0;
+diff --git a/dist/redact-doc-BS5KXZJU.js b/dist/redact-doc-BS5KXZJU.js
+index b80a1ed058410be878a04b58c18d5f74c7242459..5dac55dcb4e96762fc345283c94d2f9fc67d3a41 100644
+--- a/dist/redact-doc-BS5KXZJU.js
++++ b/dist/redact-doc-BS5KXZJU.js
+@@ -54,7 +54,8 @@ import JSZip from "jszip";
+ import { deflateSync, inflateSync } from "zlib";
+ var PNG_TEXT_MAX = 16 * 1024 * 1024;
+ var require2 = createRequire(import.meta.url);
+-var CFB = require2("cfb");
++import __kordocCfb0 from "cfb";
++var CFB = __kordocCfb0;
+ function cannotContainPii(text) {
+   if (text.includes("@") || text.includes("\uFF20")) return false;
+   let digits = 0;
+@@ -932,7 +933,8 @@ async function scrubHwpx(original, ctx, mode) {
+ import { createRequire as createRequire2 } from "module";
+ import { deflateRawSync, inflateRawSync, constants as zlibConstants } from "zlib";
+ var require3 = createRequire2(import.meta.url);
+-var CFB2 = require3("cfb");
++import __kordocCfb1 from "cfb";
++var CFB2 = __kordocCfb1;
+ var CTRL_WHERE = {
+   "tbl ": "table",
+   head: "header",

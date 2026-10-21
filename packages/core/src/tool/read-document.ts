@@ -2,15 +2,31 @@ export * as ReadDocument from "./read-document.js"
 
 import { DocumentText } from "@opencode/util/document-text"
 
-// Office and Hangul documents convert through `DocumentText`, which the app's file preview shares. PDF text stays
-// here: only the read tool needs it, for models that cannot take a PDF.
+// Office documents convert through `DocumentText`, which the app's file preview shares. Hangul documents read through
+// kordoc, and PDF text stays here: only the read tool and 집현전 search need them.
 
 export type Format = DocumentText.Format | "pdf"
 
 export const LABELS = { ...DocumentText.LABELS, pdf: "PDF" } satisfies Record<Format, string>
 
 export function text(format: Format, bytes: Uint8Array) {
-  return format === "pdf" ? pdf(bytes) : DocumentText.text(format, bytes)
+  if (format === "pdf") return pdf(bytes)
+  if (format === "hwp" || format === "hwpx") return hangul(format, bytes)
+  return DocumentText.text(format, bytes)
+}
+
+/**
+ * A Hangul document through kordoc (MIT), which reads merged table cells, automatic numbering and headings as Hancom
+ * lays them out; a table with merged cells comes out as HTML with its spans. A document kordoc cannot read falls back
+ * to `DocumentText`, which also reports encrypted documents.
+ */
+async function hangul(format: "hwp" | "hwpx", bytes: Uint8Array) {
+  // Its OCR and formula models are not shipped and would be downloaded, so both stay off.
+  const result = await import("kordoc")
+    .then(({ parse }) => parse(Buffer.from(bytes), { ocr: false, formulaOcr: false, plain: true }))
+    .catch(() => undefined)
+  if (result?.success && result.markdown.trim()) return result.markdown.trim()
+  return DocumentText.text(format, bytes)
 }
 
 /** Each page's text. */

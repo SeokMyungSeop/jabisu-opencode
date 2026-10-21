@@ -150,9 +150,11 @@ describe("ReadTool documents", () => {
       expect(result).toMatchObject({
         document: "HWPX document",
         content: [
-          "제목\t본문",
+          "제목 본문",
           "다음 줄",
+          "",
           "표 뒤",
+          "",
           "| 항목 |  | 담당 |",
           "| --- | --- | --- |",
           "",
@@ -170,7 +172,7 @@ describe("ReadTool documents", () => {
 
       expect(result).toMatchObject({
         document: "HWP document",
-        content: ["보고서", "", "| 항목 | 담당 |", "| --- | --- |", "가\t나"].join("\n"),
+        content: ["보고서", "", "| 항목 | 담당 |", "| --- | --- |", "", "가\t나"].join("\n"),
       })
     }),
   )

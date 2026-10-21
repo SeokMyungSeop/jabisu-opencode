@@ -164,7 +164,18 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
       pluginRuntimePlugin,
       simulationGraphPlugin,
     ],
-    external: ["node-gyp"],
+    // kordoc loads its PDF reader and its OCR, formula and rendering engines (native modules and a headless browser)
+    // only for those inputs; 자비수 reads only Hangul documents with it, so they stay out of the executable.
+    external: [
+      "node-gyp",
+      "pdfjs-dist",
+      "pdfjs-dist/*",
+      "onnxruntime-node",
+      "sharp",
+      "@hyzyla/pdfium",
+      "@huggingface/tokenizers",
+      "puppeteer-core",
+    ],
     format: "esm",
     minify: true,
     bytecode: true,
