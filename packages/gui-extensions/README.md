@@ -675,6 +675,8 @@ export const builtins = Extension.compose(
   { ...wsl, main: () => import("./wsl/main") },
   microsoftOffice,
   documentText,
+  transcription,
+  jiphyeonjeon,
 )
 ```
 
@@ -702,6 +704,8 @@ export const builtins = Extension.compose(
   { ...wsl, renderer: eager(wslRenderer) },
   { ...microsoftOffice, renderer: eager(microsoftOfficeRenderer) },
   { ...documentText, renderer: eager(documentTextRenderer) },
+  { ...transcription, renderer: eager(transcriptionRenderer) },
+  { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
 )
 ```
 

@@ -1,3 +1,4 @@
+import { ExtensionSlot } from "@/runtime/extension/render"
 import type { HomeProjectsController } from "./controller"
 import { HomeProjectsView } from "./view"
 import type { HomeScrollController } from "../scroll"
@@ -10,6 +11,7 @@ export function HomeProjects(props: {
   return (
     <HomeProjectsView
       dropdown={props.dropdown}
+      top={<ExtensionSlot at="home.projects.top" input={{}} />}
       language={props.projects.copy.language}
       servers={props.projects.server.list()}
       projects={props.projects.project.list()}

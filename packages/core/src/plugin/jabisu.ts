@@ -11,6 +11,8 @@ import { Effect } from "effect"
 import path from "path"
 import { SkillFile } from "../config/plugin/skill-file.js"
 import { JabisuBundle } from "./jabisu/bundle.js"
+import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
+import { SourceSearch } from "./jabisu/source-search.js"
 import pythonHelper from "./jabisu/python/jabisu_python.py" with { type: "text" }
 import pythonSetup from "./jabisu/python/python-setup.md" with { type: "text" }
 
@@ -75,5 +77,15 @@ export const Plugin = define({
       if (editor.get("context7")) return
       editor.set("context7", { type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
     })
+
+    // A 집현전's sessions search its sources; its AGENTS.md, loaded as their instructions, says to use the tool and cite.
+    const agents = yield* fs
+      .readFileStringSafe(path.join(ctx.location.directory, "AGENTS.md"))
+      .pipe(Effect.orElseSucceed(() => undefined))
+    if (agents && Jiphyeonjeon.isJiphyeonjeon(agents)) {
+      // A 집현전 made by an older version gets this version's rules before its sessions read them.
+      yield* Jiphyeonjeon.refresh({ fs, global }, ctx.location.directory, agents)
+      yield* ctx.tool.transform((editor) => editor.add(SourceSearch.tool({ fs, global }, ctx.location.directory)))
+    }
   }),
 })

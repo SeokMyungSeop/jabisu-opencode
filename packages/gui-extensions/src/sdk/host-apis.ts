@@ -617,6 +617,13 @@ export interface Sessions {
    * Reactive.
    */
   current(): MountedSession | undefined
+  /**
+   * Opens an existing session in a shell tab and routes to it. Waits until the app interface mounts.
+   *
+   * @param server - The server's `ServerRef.id`.
+   * @param id - The session's id on that server.
+   */
+  open(server: string, id: string): void
 }
 
 /**
@@ -785,8 +792,9 @@ export interface Layout {
    *
    * @param server - The server's `ServerRef.id`.
    * @param title - The picker's title.
+   * @param directory - Opens this directory on the server instead of asking for one.
    */
-  project(server: string, title: string): void
+  project(server: string, title: string, directory?: string): void
 }
 
 /**

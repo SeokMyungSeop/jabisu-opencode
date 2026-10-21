@@ -62,7 +62,8 @@ type Attached = {
     stored(extension: string, session: SessionRef): readonly string[]
   }
   settings: (page?: string) => void
-  project: (server: string, title: string) => void
+  project: (server: string, title: string, directory?: string) => void
+  open: (server: string, session: string) => void
   font: Accessor<string>
   routing: Accessor<boolean>
   path: Accessor<string>
@@ -286,6 +287,7 @@ export function createHostApis() {
     sessions: () => ({
       list: () => current()?.sessions() ?? [],
       current: () => current()?.current(),
+      open: (server, id) => write((value) => value.open(server, id)),
     }),
     screen: () => ({
       current: () => {
@@ -317,7 +319,7 @@ export function createHostApis() {
         set: (session, key, value) => write((connected) => connected.layout.scroll.set(session, key, value)),
       },
       settings: (page) => write((value) => value.settings(page)),
-      project: (server, title) => write((value) => value.project(server, title)),
+      project: (server, title, directory) => write((value) => value.project(server, title, directory)),
     }),
     embeds: () => embeds,
   }
@@ -723,7 +725,7 @@ export function createExtensionAttachment(apis: HostApis) {
 
   // Open-project requests wait until their server is listed (e.g. an SSH server that just connected).
   const picker = useDirectoryPicker()
-  const [projects, setProjects] = createSignal<readonly { server: string; title: string }[]>([])
+  const [projects, setProjects] = createSignal<readonly { server: string; title: string; directory?: string }[]>([])
   createEffect(() => {
     const pending = projects()
 
@@ -736,20 +738,24 @@ export function createExtensionAttachment(apis: HostApis) {
     if (ready.length === 0) return
     setProjects(pending.filter((request) => !ready.some((item) => item.request === request)))
     untrack(() =>
-      ready.forEach(({ request, server }) =>
+      ready.forEach(({ request, server }) => {
+        const open = (directory: string) => {
+          const key = ServerConnection.key(server)
+          servers.projects.forServer(key).open(directory)
+          void tabs.newDraft({ server: key, directory })
+        }
+
+        if (request.directory) return open(request.directory)
         picker({
           server,
           title: request.title,
           onSelect: (value) => {
             const directory = Array.isArray(value) ? value[0] : value
 
-            if (!directory) return
-            const key = ServerConnection.key(server)
-            servers.projects.forServer(key).open(directory)
-            void tabs.newDraft({ server: key, directory })
+            if (directory) open(directory)
           },
-        }),
-      ),
+        })
+      }),
     )
   })
 
@@ -793,7 +799,12 @@ export function createExtensionAttachment(apis: HostApis) {
     screen,
     scope,
     scoped: layout.sessionState.track,
-    project: (server, title) => setProjects((pending) => [...pending, { server, title }]),
+    project: (server, title, directory) => setProjects((pending) => [...pending, { server, title, directory }]),
+    open: (server, id) => {
+      const conn = servers.list.find((item) => ServerConnection.key(item) === server)
+
+      if (conn) tabs.select(tabs.addSessionTab({ server: ServerConnection.key(conn), sessionId: id }))
+    },
     font: () => terminalFontFamily(settings.appearance.terminalFont()),
     routing: useIsRouting(),
     path: () => `${location.pathname}${location.search}`,

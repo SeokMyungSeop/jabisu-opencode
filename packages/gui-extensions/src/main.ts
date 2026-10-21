@@ -13,6 +13,8 @@ import ssh from "./ssh"
 import wsl from "./wsl"
 import microsoftOffice from "./microsoft-office"
 import documentText from "./document-text"
+import transcription from "./transcription"
+import jiphyeonjeon from "./jiphyeonjeon"
 
 /**
  * Built-in extensions with their main entries. Lists every built-in so their ids stay reserved. `builtins.typecheck.ts`
@@ -33,4 +35,6 @@ export const builtins = Extension.compose(
   { ...wsl, main: () => import("./wsl/main") },
   microsoftOffice,
   documentText,
+  transcription,
+  jiphyeonjeon,
 )

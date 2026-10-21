@@ -1,4 +1,6 @@
 import { Layer } from "effect"
+import { FSUtil } from "@opencode/util/fs-util"
+import { LayerNode } from "@opencode/util/effect/layer-node"
 import { GenerateHandler } from "./handlers/generate"
 import { VoiceHandler } from "./handlers/voice"
 import { MessageHandler } from "./handlers/message"
@@ -31,6 +33,7 @@ import { VcsHandler } from "./handlers/vcs"
 import { EventFeed } from "./event-feed"
 import { MigrationHandler } from "./handlers/migration"
 import { ConfigHandler } from "./handlers/config"
+import { JabisuHandler } from "./handlers/jabisu"
 
 export const handlers = Layer.mergeAll(
   ServerHandler,
@@ -64,4 +67,6 @@ export const handlers = Layer.mergeAll(
   WorktreeHandler,
   VcsHandler,
   ConfigHandler,
+  // The settings file is read and written with the shared filesystem helpers, which no application service exports.
+  JabisuHandler.pipe(Layer.provide(LayerNode.compile(FSUtil.node))),
 )

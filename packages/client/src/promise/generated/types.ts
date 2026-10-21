@@ -320,6 +320,16 @@ export type ConfigModelReasoning =
 
 export type ConfigShellOption = { path: string; name: string; acceptable: boolean }
 
+export type JabisuTranscription = { enabled: boolean; model: string; defaultModel: string; openrouter: boolean }
+
+export type Jiphyeonjeon = { name: string; directory: string; instructions: string; sources: Array<string> }
+
+export type JiphyeonjeonSource = {
+  path: string
+  status: "ready" | "pending" | "unsupported" | "unreadable"
+  reason?: string | undefined
+}
+
 export type LocationPublicRef = { directory: AbsolutePath }
 
 export type FileSystemWrite = { path: AbsolutePath }
@@ -869,6 +879,8 @@ export type ConfigModelCapabilities = {
   temperature?: boolean
   reasoning?: ConfigModelReasoning
 }
+
+export type JiphyeonjeonList = { root: string; items: Array<Jiphyeonjeon>; openrouter: boolean; suggestModel: string }
 
 export type SessionMessageLocationSwitched = {
   id: SessionMessageID
@@ -6049,3 +6061,59 @@ export type ConfigShellsOutput = Array<ConfigShellOption>
 export type ConfigUpdateInput = { readonly shell: { readonly shell: string | null }["shell"] }
 
 export type ConfigUpdateOutput = void
+
+export type JabisuTranscriptionGetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuTranscriptionGetOutput = JabisuTranscription
+
+export type JabisuTranscriptionUpdateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly enabled: { readonly enabled: boolean; readonly model?: string | undefined }["enabled"]
+  readonly model?: { readonly enabled: boolean; readonly model?: string | undefined }["model"]
+}
+
+export type JabisuTranscriptionUpdateOutput = JabisuTranscription
+
+export type JabisuJiphyeonjeonListInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuJiphyeonjeonListOutput = JiphyeonjeonList
+
+export type JabisuJiphyeonjeonCreateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string }["name"]
+}
+
+export type JabisuJiphyeonjeonCreateOutput = Jiphyeonjeon
+
+export type JabisuJiphyeonjeonInstructInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string; readonly instructions: string }["name"]
+  readonly instructions: { readonly name: string; readonly instructions: string }["instructions"]
+}
+
+export type JabisuJiphyeonjeonInstructOutput = Jiphyeonjeon
+
+export type JabisuJiphyeonjeonSourcesInput = {
+  readonly location?: {
+    readonly location?: { readonly directory?: string | undefined } | undefined
+    readonly name: string
+  }["location"]
+  readonly name: {
+    readonly location?: { readonly directory?: string | undefined } | undefined
+    readonly name: string
+  }["name"]
+}
+
+export type JabisuJiphyeonjeonSourcesOutput = Array<JiphyeonjeonSource>
+
+export type JabisuJiphyeonjeonSuggestInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string; readonly openrouter?: boolean | undefined }["name"]
+  readonly openrouter?: { readonly name: string; readonly openrouter?: boolean | undefined }["openrouter"]
+}
+
+export type JabisuJiphyeonjeonSuggestOutput = { instructions: string }

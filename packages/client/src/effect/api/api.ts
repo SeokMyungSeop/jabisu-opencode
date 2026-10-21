@@ -2347,6 +2347,118 @@ export interface ConfigApi<E = never> {
   readonly update: ConfigUpdateOperation<E>
 }
 
+export type JabisuTranscriptionGetInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type JabisuTranscriptionGetOutput = {
+  readonly enabled: boolean
+  readonly model: string
+  readonly defaultModel: string
+  readonly openrouter: boolean
+}
+export type JabisuTranscriptionGetOperation<E = never> = (
+  input?: JabisuTranscriptionGetInput,
+) => Effect.Effect<JabisuTranscriptionGetOutput, E>
+
+export type JabisuTranscriptionUpdateInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly enabled: boolean
+  readonly model?: string | undefined
+}
+export type JabisuTranscriptionUpdateOutput = {
+  readonly enabled: boolean
+  readonly model: string
+  readonly defaultModel: string
+  readonly openrouter: boolean
+}
+export type JabisuTranscriptionUpdateOperation<E = never> = (
+  input: JabisuTranscriptionUpdateInput,
+) => Effect.Effect<JabisuTranscriptionUpdateOutput, E>
+
+export type JabisuJiphyeonjeonListInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+}
+export type JabisuJiphyeonjeonListOutput = {
+  readonly root: string
+  readonly items: ReadonlyArray<{
+    readonly name: string
+    readonly directory: string
+    readonly instructions: string
+    readonly sources: ReadonlyArray<string>
+  }>
+  readonly openrouter: boolean
+  readonly suggestModel: string
+}
+export type JabisuJiphyeonjeonListOperation<E = never> = (
+  input?: JabisuJiphyeonjeonListInput,
+) => Effect.Effect<JabisuJiphyeonjeonListOutput, E>
+
+export type JabisuJiphyeonjeonCreateInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+}
+export type JabisuJiphyeonjeonCreateOutput = {
+  readonly name: string
+  readonly directory: string
+  readonly instructions: string
+  readonly sources: ReadonlyArray<string>
+}
+export type JabisuJiphyeonjeonCreateOperation<E = never> = (
+  input: JabisuJiphyeonjeonCreateInput,
+) => Effect.Effect<JabisuJiphyeonjeonCreateOutput, E>
+
+export type JabisuJiphyeonjeonInstructInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly instructions: string
+}
+export type JabisuJiphyeonjeonInstructOutput = {
+  readonly name: string
+  readonly directory: string
+  readonly instructions: string
+  readonly sources: ReadonlyArray<string>
+}
+export type JabisuJiphyeonjeonInstructOperation<E = never> = (
+  input: JabisuJiphyeonjeonInstructInput,
+) => Effect.Effect<JabisuJiphyeonjeonInstructOutput, E>
+
+export type JabisuJiphyeonjeonSourcesInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+}
+export type JabisuJiphyeonjeonSourcesOutput = ReadonlyArray<{
+  readonly path: string
+  readonly status: "ready" | "pending" | "unsupported" | "unreadable"
+  readonly reason?: string | undefined
+}>
+export type JabisuJiphyeonjeonSourcesOperation<E = never> = (
+  input: JabisuJiphyeonjeonSourcesInput,
+) => Effect.Effect<JabisuJiphyeonjeonSourcesOutput, E>
+
+export type JabisuJiphyeonjeonSuggestInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly openrouter?: boolean | undefined
+}
+export type JabisuJiphyeonjeonSuggestOutput = { readonly instructions: string }
+export type JabisuJiphyeonjeonSuggestOperation<E = never> = (
+  input: JabisuJiphyeonjeonSuggestInput,
+) => Effect.Effect<JabisuJiphyeonjeonSuggestOutput, E>
+
+export interface JabisuApi<E = never> {
+  readonly transcription: {
+    readonly get: JabisuTranscriptionGetOperation<E>
+    readonly update: JabisuTranscriptionUpdateOperation<E>
+  }
+  readonly jiphyeonjeon: {
+    readonly list: JabisuJiphyeonjeonListOperation<E>
+    readonly create: JabisuJiphyeonjeonCreateOperation<E>
+    readonly instruct: JabisuJiphyeonjeonInstructOperation<E>
+    readonly sources: JabisuJiphyeonjeonSourcesOperation<E>
+    readonly suggest: JabisuJiphyeonjeonSuggestOperation<E>
+  }
+}
+
 export interface AppApi<E = never> {
   readonly server: ServerApi<E>
   readonly location: LocationApi<E>
@@ -2379,4 +2491,5 @@ export interface AppApi<E = never> {
   readonly migration: MigrationApi<E>
   readonly websearch: WebsearchApi<E>
   readonly config: ConfigApi<E>
+  readonly jabisu: JabisuApi<E>
 }

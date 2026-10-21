@@ -14,6 +14,9 @@ import { Image } from "@opencode/core/image"
 import { Location } from "@opencode/core/location"
 import { FileAccess } from "@opencode/core/file-access"
 import { Model } from "@opencode/core/model"
+import { Integration } from "@opencode/core/integration"
+import { AppProcess } from "@opencode/util/process"
+import { httpClient } from "@opencode/util/effect/app-node-platform"
 import { Permission } from "@opencode/core/permission"
 import { Project } from "@opencode/core/project"
 import { Provider } from "@opencode/core/provider"
@@ -32,6 +35,7 @@ import { Tool } from "@opencode/core/tool"
 import { tempLocationLayer } from "./fixture/location"
 import { makeLocationNode } from "@opencode/util/effect/app-node"
 import { testEffect } from "./lib/effect"
+import { unusedIntegrations } from "./lib/integration"
 import { permissionLayer } from "./lib/permission"
 import { globalProjectNode } from "./lib/project"
 import { executeTool, registerToolPlugin } from "./lib/tool"
@@ -50,6 +54,10 @@ const readToolNode = makeLocationNode({
     Location.node,
     Session.node,
     Model.node,
+    Global.node,
+    Integration.node,
+    AppProcess.node,
+    httpClient,
   ],
 })
 
@@ -79,6 +87,7 @@ const testLayer = AppNodeBuilder.build(
     Project.node.replace(globalProjectNode),
     // Only a PDF read asks for the session's model, and these tests read no PDFs.
     Model.node.replace(Layer.mock(Model.Service, {})),
+    Integration.node.replace(unusedIntegrations),
     SessionExecution.node.replace(SessionExecution.noopLayer),
     Location.node.replace(tempLocationLayer),
     Permission.node.replace(permission),

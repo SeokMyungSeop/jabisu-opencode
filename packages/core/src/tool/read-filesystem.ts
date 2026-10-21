@@ -10,6 +10,7 @@ import type { Files } from "../environment/index.js"
 import { FileSystem } from "../filesystem.js"
 import { Mime } from "../mime.js"
 import { AbsolutePath, NonNegativeInt, PositiveInt, RelativePath } from "../schema.js"
+import { artifactKind } from "@opencode/util/artifact"
 import { DocumentText } from "@opencode/util/document-text"
 import { ReadDocument } from "./read-document.js"
 
@@ -117,6 +118,8 @@ export class ListPage extends Schema.Class<ListPage>("ReadTool.ListPage")({
 export interface ReadOptions {
   /** Whether a PDF is read as its text instead of as media, asked only when the file is a PDF. */
   readonly pdfAsText?: Effect.Effect<boolean>
+  /** A recording's transcript, for audio and video files; without it they read as other binary files do. */
+  readonly transcript?: (path: AbsolutePath) => Effect.Effect<string, DocumentError>
 }
 
 export interface Interface {
@@ -153,6 +156,10 @@ export const read = Effect.fn("ReadTool.read")(function* (
     }),
   )
   if (first instanceof ListPage) return first
+
+  const kind = artifactKind(input)
+  if (options.transcript && (kind === "audio" || kind === "video"))
+    return yield* textDocument(input, resource, yield* options.transcript(input), "audio transcript", page)
 
   const media = Mime.detect(first.bytes)
   if (media === "application/pdf" && (yield* options.pdfAsText ?? Effect.succeed(false)))
@@ -299,21 +306,31 @@ const document = Effect.fnUntraced(function* (
       reason: `the ${label} is larger than the ${DocumentText.MAX_DOCUMENT_BYTES / 1024 / 1024} MiB document limit`,
     })
   const bytes = first.bytes.length >= first.info.size ? first.bytes : (yield* readFile(files, input, resource)).bytes
-  const content = Buffer.from(
-    yield* Effect.tryPromise({
-      try: () => ReadDocument.text(format, bytes),
-      catch: (cause) =>
-        new DocumentError({
-          resource,
-          reason:
-            cause instanceof DocumentText.Unreadable
-              ? cause.message
-              : `the ${label} could not be converted to text (${cause instanceof Error ? cause.message : String(cause)})`,
-        }),
-    }),
-  )
+  const content = yield* Effect.tryPromise({
+    try: () => ReadDocument.text(format, bytes),
+    catch: (cause) =>
+      new DocumentError({
+        resource,
+        reason:
+          cause instanceof DocumentText.Unreadable
+            ? cause.message
+            : `the ${label} could not be converted to text (${cause instanceof Error ? cause.message : String(cause)})`,
+      }),
+  })
+  return yield* textDocument(input, resource, content, label, page)
+})
+
+// Text that stands for a file's content, such as a converted document or a transcript, pages like a whole text file.
+const textDocument = Effect.fnUntraced(function* (
+  input: AbsolutePath,
+  resource: string,
+  text: string,
+  label: string,
+  page: PageInput,
+) {
+  const content = Buffer.from(text)
   const result = textPage(content, true, page)
-  if (result === undefined) return yield* Effect.die("Read page did not settle for a converted document")
+  if (result === undefined) return yield* Effect.die(new Error("Read page did not settle for a converted document"))
   return yield* makeTextPage(
     input,
     resource,

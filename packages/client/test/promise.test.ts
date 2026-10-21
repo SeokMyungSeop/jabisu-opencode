@@ -36,6 +36,7 @@ test("exposes every standard HTTP API group", () => {
     "migration",
     "websearch",
     "config",
+    "jabisu",
   ])
   expect(Object.keys(client.debug)).toEqual(["location"])
   expect(Object.keys(client.debug.location)).toEqual(["list", "evict"])

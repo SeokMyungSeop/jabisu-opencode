@@ -4,14 +4,19 @@ import type { Context } from "@opencode/plugin/effect/plugin"
 import { basename, dirname, join } from "path"
 import { ToolFailure } from "@opencode/ai"
 import { Effect, Schema } from "effect"
+import { HttpClient } from "effect/http"
 import { FSUtil } from "@opencode/util/fs-util"
+import { Global } from "@opencode/util/global"
+import { AppProcess } from "@opencode/util/process"
 import { Location } from "../../location.js"
 import { FileAccess } from "../../file-access.js"
+import { Integration } from "../../integration.js"
 import { Model } from "../../model.js"
 import { Session } from "../../session.js"
 import { SessionInstructions } from "../../session/instructions.js"
 import { AbsolutePath } from "../../schema.js"
 import { ReadToolFileSystem } from "../read-filesystem.js"
+import { Transcribe } from "../transcribe.js"
 import { Environment } from "../../environment/index.js"
 
 export const name = "read"
@@ -38,6 +43,13 @@ export const Plugin = {
     const location = yield* Location.Service
     const sessions = yield* Session.Service
     const models = yield* Model.Service
+    const transcribeDeps: Transcribe.Dependencies = {
+      fs,
+      global: yield* Global.Service,
+      http: yield* HttpClient.HttpClient,
+      integrations: yield* Integration.Service,
+      process: yield* AppProcess.Service,
+    }
 
     // A PDF reads as its text for a model without PDF input; an unknown model keeps the PDF itself.
     const pdfAsText = (sessionID: Parameters<typeof sessions.get>[0]) =>
@@ -55,7 +67,7 @@ export const Plugin = {
           name,
           options: { codemode: false },
           description:
-            "Read the contents of a file or directory. Supports text files, images, PDFs, and documents. Images and PDFs are presented directly to the model; Word, Excel, PowerPoint and Hangul (HWP, HWPX) documents, and PDFs for models without PDF input, are converted to text and read like text files. Each text line is prefixed by its 1-based line number as <line>: <content>. The prefix is for reference and is not part of the file content. Directory entries are returned one per line. Use offset and limit to read large files or directories in sections. Prefer one larger read over many small slices, and use grep to find specific content in large files.",
+            "Read the contents of a file or directory. Supports text files, images, PDFs, and documents. Images and PDFs are presented directly to the model; Word, Excel, PowerPoint and Hangul (HWP, HWPX) documents, and PDFs for models without PDF input, are converted to text and read like text files. Audio and video recordings read as a timestamped transcript when the user has turned on audio transcription; a long recording takes minutes the first time. Each text line is prefixed by its 1-based line number as <line>: <content>. The prefix is for reference and is not part of the file content. Directory entries are returned one per line. Use offset and limit to read large files or directories in sections. Prefer one larger read over many small slices, and use grep to find specific content in large files.",
           input: Input,
           output: Output,
           execute: (input, context) => {
@@ -65,7 +77,16 @@ export const Plugin = {
                   target.absolute,
                   target.resource,
                   { offset: input.offset, limit: input.limit },
-                  { pdfAsText: pdfAsText(context.sessionID) },
+                  {
+                    pdfAsText: pdfAsText(context.sessionID),
+                    transcript: (path) =>
+                      Transcribe.transcript(transcribeDeps, path).pipe(
+                        Effect.mapError(
+                          (error) =>
+                            new ReadToolFileSystem.DocumentError({ resource: target.resource, reason: error.reason }),
+                        ),
+                      ),
+                  },
                 )
 
               const requested = yield* access.authorizeRead(input.path, context)

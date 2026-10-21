@@ -4,6 +4,9 @@ import { DateTime, Effect, Exit, Layer, Result } from "effect"
 import { Money } from "@opencode/schema/money"
 import { Config } from "@opencode/core/config"
 import { Model } from "@opencode/core/model"
+import { Integration } from "@opencode/core/integration"
+import { AppProcess } from "@opencode/util/process"
+import { httpClient } from "@opencode/util/effect/app-node-platform"
 import { Project } from "@opencode/core/project"
 import { Provider } from "@opencode/core/provider"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
@@ -25,6 +28,7 @@ import { makeLocationNode } from "@opencode/util/effect/app-node"
 import { SessionInstructions } from "@opencode/core/session/instructions"
 import { Environment } from "@opencode/core/environment/index"
 import { testEffect } from "./lib/effect"
+import { unusedIntegrations } from "./lib/integration"
 import { permissionLayer } from "./lib/permission"
 import { toolIdentity, executeTool, registerToolPlugin, toolDefinitions } from "./lib/tool"
 
@@ -42,6 +46,10 @@ const readToolNode = makeLocationNode({
     Location.node,
     Session.node,
     Model.node,
+    Global.node,
+    Integration.node,
+    AppProcess.node,
+    httpClient,
   ],
 })
 
@@ -166,6 +174,8 @@ const readLayer = (imageLayer: Layer.Layer<Image.Service>) =>
       Global.node.replace(Global.layerWith({ data: Global.Path.data })),
       Session.node.replace(sessions),
       Model.node.replace(models),
+      // Only an audio read asks for the OpenRouter connection, and these tests transcribe nothing.
+      Integration.node.replace(unusedIntegrations),
     ]),
     // Merge by reference so Config.Test and Image.Service resolve to the memoized instances.
     config,

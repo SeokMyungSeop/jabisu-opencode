@@ -546,6 +546,8 @@ export interface TitlebarItem {
 export interface SlotMap {
   /** Full-width strip under the window content, above toasts. */
   readonly "window.bottom": Record<string, never>
+  /** The home screen's side column, above its project list; not in the narrow-screen project menu. */
+  readonly "home.projects.top": Record<string, never>
   /** The timeline title row. Cached timelines stay mounted while hidden; `active` is false then. */
   readonly "session.header": {
     /** The timeline's owning session screen; always present, also while the timeline is cached. */

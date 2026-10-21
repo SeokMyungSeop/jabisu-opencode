@@ -281,6 +281,20 @@ import type {
   ConfigShellsOutput,
   ConfigUpdateInput,
   ConfigUpdateOutput,
+  JabisuTranscriptionGetInput,
+  JabisuTranscriptionGetOutput,
+  JabisuTranscriptionUpdateInput,
+  JabisuTranscriptionUpdateOutput,
+  JabisuJiphyeonjeonListInput,
+  JabisuJiphyeonjeonListOutput,
+  JabisuJiphyeonjeonCreateInput,
+  JabisuJiphyeonjeonCreateOutput,
+  JabisuJiphyeonjeonInstructInput,
+  JabisuJiphyeonjeonInstructOutput,
+  JabisuJiphyeonjeonSourcesInput,
+  JabisuJiphyeonjeonSourcesOutput,
+  JabisuJiphyeonjeonSuggestInput,
+  JabisuJiphyeonjeonSuggestOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1683,6 +1697,70 @@ const adaptGroupConfig = (raw: RawClient["server.config"]) => ({
   update: EndpointConfigUpdate(raw),
 })
 
+const EndpointJabisuTranscriptionGet = (raw: RawClient["server.jabisu"]) => (input?: JabisuTranscriptionGetInput) =>
+  preserveEffect<JabisuTranscriptionGetOutput>()(
+    raw["jabisu.transcription.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuTranscriptionUpdate =
+  (raw: RawClient["server.jabisu"]) => (input: JabisuTranscriptionUpdateInput) =>
+    preserveEffect<JabisuTranscriptionUpdateOutput>()(
+      raw["jabisu.transcription.update"]({
+        query: { location: input["location"] },
+        payload: { enabled: input["enabled"], model: input["model"] },
+      }).pipe(Effect.mapError(mapClientError)),
+    )
+
+const EndpointJabisuJiphyeonjeonList = (raw: RawClient["server.jabisu"]) => (input?: JabisuJiphyeonjeonListInput) =>
+  preserveEffect<JabisuJiphyeonjeonListOutput>()(
+    raw["jabisu.jiphyeonjeon.list"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuJiphyeonjeonCreate = (raw: RawClient["server.jabisu"]) => (input: JabisuJiphyeonjeonCreateInput) =>
+  preserveEffect<JabisuJiphyeonjeonCreateOutput>()(
+    raw["jabisu.jiphyeonjeon.create"]({
+      query: { location: input["location"] },
+      payload: { name: input["name"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuJiphyeonjeonInstruct =
+  (raw: RawClient["server.jabisu"]) => (input: JabisuJiphyeonjeonInstructInput) =>
+    preserveEffect<JabisuJiphyeonjeonInstructOutput>()(
+      raw["jabisu.jiphyeonjeon.instruct"]({
+        query: { location: input["location"] },
+        payload: { name: input["name"], instructions: input["instructions"] },
+      }).pipe(Effect.mapError(mapClientError)),
+    )
+
+const EndpointJabisuJiphyeonjeonSources =
+  (raw: RawClient["server.jabisu"]) => (input: JabisuJiphyeonjeonSourcesInput) =>
+    preserveEffect<JabisuJiphyeonjeonSourcesOutput>()(
+      raw["jabisu.jiphyeonjeon.sources"]({ query: { location: input["location"], name: input["name"] } }).pipe(
+        Effect.mapError(mapClientError),
+      ),
+    )
+
+const EndpointJabisuJiphyeonjeonSuggest =
+  (raw: RawClient["server.jabisu"]) => (input: JabisuJiphyeonjeonSuggestInput) =>
+    preserveEffect<JabisuJiphyeonjeonSuggestOutput>()(
+      raw["jabisu.jiphyeonjeon.suggest"]({
+        query: { location: input["location"] },
+        payload: { name: input["name"], openrouter: input["openrouter"] },
+      }).pipe(Effect.mapError(mapClientError)),
+    )
+
+const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
+  transcription: { get: EndpointJabisuTranscriptionGet(raw), update: EndpointJabisuTranscriptionUpdate(raw) },
+  jiphyeonjeon: {
+    list: EndpointJabisuJiphyeonjeonList(raw),
+    create: EndpointJabisuJiphyeonjeonCreate(raw),
+    instruct: EndpointJabisuJiphyeonjeonInstruct(raw),
+    sources: EndpointJabisuJiphyeonjeonSources(raw),
+    suggest: EndpointJabisuJiphyeonjeonSuggest(raw),
+  },
+})
+
 const adaptClient = (raw: RawClient) => ({
   server: adaptGroupServer(raw["server.server"]),
   location: adaptGroupLocation(raw["server.location"]),
@@ -1715,6 +1793,7 @@ const adaptClient = (raw: RawClient) => ({
   migration: adaptGroupMigration(raw["server.migration"]),
   websearch: adaptGroupWebsearch(raw["server.websearch"]),
   config: adaptGroupConfig(raw["server.config"]),
+  jabisu: adaptGroupJabisu(raw["server.jabisu"]),
 })
 
 export const make = (options?: { readonly baseUrl?: URL | string }) =>

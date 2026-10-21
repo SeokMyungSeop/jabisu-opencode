@@ -5,6 +5,9 @@ import { Effect, type Types } from "effect"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
+import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
+import { Location } from "@opencode/core/location"
+import { AbsolutePath } from "@opencode/core/schema"
 import { Skill } from "@opencode/core/skill"
 import type { Mcp } from "@opencode/schema/mcp"
 import { FSUtil } from "@opencode/util/fs-util"
@@ -16,17 +19,40 @@ import { host } from "./host"
 
 const it = testEffect(AppNodeBuilder.build(LayerNode.group([Skill.node, FSUtil.node])))
 
-// Runs the plugin on one channel over the given configured MCP servers, with its cache in a temporary directory.
-const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>) =>
+// Runs the plugin on one channel over the given configured MCP servers, with its cache in a temporary directory, at
+// the given Location directory or the host's default one.
+const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>, directory?: string) =>
   Effect.gen(function* () {
     const skill = yield* Skill.Service
     const cache = (yield* tmpdirScoped()).path
     const data = (yield* tmpdirScoped()).path
     const base = host()
+    const tools: string[] = []
 
     yield* JabisuPlugin.Plugin.effect(
       host({
         app: { name: "test", version: "1.1.0", channel },
+        location: directory
+          ? new Location.Info({ ...base.location, directory: AbsolutePath.make(directory) })
+          : base.location,
+        tool: {
+          ...base.tool,
+          transform: (transform) =>
+            Effect.sync(() => {
+              transform({
+                list: () => [],
+                get: () => undefined,
+                namespace: () => {},
+                add: (tool) => {
+                  tools.push(tool.name)
+                },
+                update: () => {},
+                remove: () => {},
+              })
+
+              return { dispose: Effect.void }
+            }),
+        },
         skill: { list: () => Effect.die("unused skill.list"), transform: skill.transform, reload: skill.reload },
         mcp: {
           ...base.mcp,
@@ -54,7 +80,7 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
       }),
     ).pipe(Effect.provideService(Global.Service, Global.make({ cache, data })))
 
-    return { skills: yield* skill.list(), servers, data }
+    return { skills: yield* skill.list(), servers, data, tools }
   })
 
 const source = (file: string) => path.join(import.meta.dirname, "../../src/plugin/jabisu", file)
@@ -147,6 +173,16 @@ describe("JabisuPlugin.Plugin", () => {
 
       expect(skills).toEqual([])
       expect(servers).toEqual({})
+    }),
+  )
+
+  it.live("offers the source search only in a 집현전", () =>
+    Effect.gen(function* () {
+      const directory = (yield* tmpdirScoped()).path
+      yield* Effect.promise(() => fs.writeFile(path.join(directory, "AGENTS.md"), Jiphyeonjeon.agents("시험", "")))
+
+      expect((yield* run("jabisu", {}, directory)).tools).toEqual(["source_search"])
+      expect((yield* run("jabisu", {})).tools).toEqual([])
     }),
   )
 })

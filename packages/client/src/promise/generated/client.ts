@@ -279,6 +279,20 @@ import type {
   ConfigShellsOutput,
   ConfigUpdateInput,
   ConfigUpdateOutput,
+  JabisuTranscriptionGetInput,
+  JabisuTranscriptionGetOutput,
+  JabisuTranscriptionUpdateInput,
+  JabisuTranscriptionUpdateOutput,
+  JabisuJiphyeonjeonListInput,
+  JabisuJiphyeonjeonListOutput,
+  JabisuJiphyeonjeonCreateInput,
+  JabisuJiphyeonjeonCreateOutput,
+  JabisuJiphyeonjeonInstructInput,
+  JabisuJiphyeonjeonInstructOutput,
+  JabisuJiphyeonjeonSourcesInput,
+  JabisuJiphyeonjeonSourcesOutput,
+  JabisuJiphyeonjeonSuggestInput,
+  JabisuJiphyeonjeonSuggestOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2332,6 +2346,100 @@ export function make(options: ClientOptions) {
           },
           requestOptions,
         ),
+    },
+    jabisu: {
+      transcription: {
+        get: (input?: JabisuTranscriptionGetInput, requestOptions?: RequestOptions) =>
+          request<JabisuTranscriptionGetOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/transcription`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        update: (input: JabisuTranscriptionUpdateInput, requestOptions?: RequestOptions) =>
+          request<JabisuTranscriptionUpdateOutput>(
+            {
+              method: "PUT",
+              path: `/api/jabisu/transcription`,
+              query: { location: input["location"] },
+              body: { enabled: input["enabled"], model: input["model"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      jiphyeonjeon: {
+        list: (input?: JabisuJiphyeonjeonListInput, requestOptions?: RequestOptions) =>
+          request<JabisuJiphyeonjeonListOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/jiphyeonjeon`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        create: (input: JabisuJiphyeonjeonCreateInput, requestOptions?: RequestOptions) =>
+          request<JabisuJiphyeonjeonCreateOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/jiphyeonjeon`,
+              query: { location: input["location"] },
+              body: { name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        instruct: (input: JabisuJiphyeonjeonInstructInput, requestOptions?: RequestOptions) =>
+          request<JabisuJiphyeonjeonInstructOutput>(
+            {
+              method: "PUT",
+              path: `/api/jabisu/jiphyeonjeon/instructions`,
+              query: { location: input["location"] },
+              body: { name: input["name"], instructions: input["instructions"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        sources: (input: JabisuJiphyeonjeonSourcesInput, requestOptions?: RequestOptions) =>
+          request<JabisuJiphyeonjeonSourcesOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/jiphyeonjeon/sources`,
+              query: { location: input["location"], name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        suggest: (input: JabisuJiphyeonjeonSuggestInput, requestOptions?: RequestOptions) =>
+          request<JabisuJiphyeonjeonSuggestOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/jiphyeonjeon/suggest`,
+              query: { location: input["location"] },
+              body: { name: input["name"], openrouter: input["openrouter"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
     },
   }
 }

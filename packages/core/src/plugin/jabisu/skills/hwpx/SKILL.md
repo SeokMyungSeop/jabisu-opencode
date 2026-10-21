@@ -10,6 +10,7 @@ allowed-tools: Bash(python *), Read, Write, Glob, Grep
 > - 스크립트를 쓰기 전에 [python-setup.md](python-setup.md)대로 Python과 패키지(python-hwpx, lxml, HWP→HWPX 변환에는 pyhwp, olefile도)를 확인한다. 없으면 사용자에게 먼저 묻고 허락받은 뒤 설치한다. pyhwp는 AGPL 라이선스라는 점도 알린다.
 > - Windows에서는 `python` 명령을 쓴다(`python3`가 아니다).
 > - HWP 변환 엔진(hwp2hwpx-python-refactor)이 없으면 내려받기 전에 사용자에게 먼저 묻는다.
+> - 녹음·영상 파일(MP3, M4A, WAV, MP4 등)로 회의록을 만들 때는 read 도구로 그 파일을 읽어 `[시:분:초] 화자 N: 말` 꼴의 받아쓰기를 얻는다. 받아쓰기가 꺼져 있다는 답이 오면 설정 → 음성 받아쓰기를 켜 달라고 안내한다. 잘못 들은 낱말·이름·숫자는 맥락과 사용자 자료로 바로잡고 확실하지 않은 것은 사용자에게 확인한다. 화자 번호는 추정이라 참석자와 맞춰 달라고 묻는다. 그다음 회의록 템플릿(minutes)으로 만든다.
 
 
 # HWPX 통합 문서 스킬

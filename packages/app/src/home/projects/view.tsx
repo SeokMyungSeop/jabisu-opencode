@@ -43,6 +43,8 @@ const projectContextMenuID = (server: ServerConnection.Any, directory: string) =
 
 export type HomeProjectsViewProps = {
   dropdown?: boolean
+  /** Content above the project list, such as extension sections; left out of the dropdown. */
+  top?: JSX.Element
   language: ReturnType<typeof useLanguage>
   servers: ServerConnection.Any[]
   projects: LocalProject[]
@@ -184,6 +186,7 @@ function HomeProjectsPanel(props: HomeProjectsViewProps) {
       }}
     >
       <Show when={!props.dropdown}>
+        {props.top}
         <div class="flex h-7 min-w-0 shrink-0 items-center justify-between pl-1.5 pr-3">
           <div class="text-v2-text-text-muted [font-weight:530]">{props.language.t("home.projects")}</div>
           <Show when={props.servers.length === 1 && !(props.projects.length === 0 && props.recentlyClosed.length > 0)}>
