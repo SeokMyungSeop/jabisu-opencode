@@ -17,7 +17,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-x64.exe`를 내려받아요.
+1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.3.1-x64.exe`)를 내려받아요.
 2. 내려받은 파일을 실행하면 바로 설치되고, 바탕화면과 시작 메뉴에 **자비수**가 생겨요.
 
 - Windows 10/11 64비트용이에요. 관리자 권한 없이 내 사용자 폴더에 설치돼요.
@@ -34,9 +34,12 @@
 | 세션 정보 패널 | 컨텍스트를 어디에 얼마나 쓰는지 항목별로 보여 주고, 옆 패널로 열 수 있어요 |
 | 세션 보관 | 보관하면 다 쓴 워크트리 폴더를 알아서 정리해요 |
 | 새 창으로 열기 · 분할 화면 | 위쪽 탭을 오른쪽 클릭해서 대화를 새 창이나 옆 화면에 열어요 |
-| 문서 읽기 | AI가 한글(.hwp, .hwpx), 워드(.docx, .doc), 엑셀(.xlsx, .xls), 파워포인트(.pptx, .ppt) 파일을 바로 읽어요. PDF를 못 읽는 모델에는 PDF의 글자를 뽑아 줘요 |
+| 문서 읽기 | AI가 한글(.hwp, .hwpx), 워드(.docx, .doc), 엑셀(.xlsx, .xls), 파워포인트(.pptx, .ppt) 파일을 바로 읽어요. 한글 문서는 합쳐진 칸과 자동 번호까지 정확히 읽어요(kordoc). PDF를 못 읽는 모델에는 PDF의 글자를 뽑아 줘요 |
 | 문서 미리보기 | 파일 보기에서 한글 파일과 옛 오피스 파일(.doc, .xls, .ppt)의 내용을 글과 표로 보여 줘요 |
 | 앱 안에서 업데이트 | 새 버전이 나오면 오른쪽 위에 업데이트 단추가 떠요. 누르면 받아서 다시 시작해요 |
+| 사용 금액 원화 표시 | 대화에 쓴 금액을 원(₩)으로 보여 줘요. 환율은 하루 한 번 유럽중앙은행 기준값을 받아 오고, **설정 → 일반 → 사용 금액**에서 직접 넣거나 달러로 되돌려요 |
+| 음성 받아쓰기 | 녹음·영상 파일(MP3, M4A, WAV, MP4 등)을 AI가 읽으면 `[00:12:30] 화자 1: …`처럼 시간과 화자를 붙인 글로 바꿔요. **설정 → 일반 → 음성 받아쓰기**에서 켜요(OpenRouter 연결 필요, 기본 모델 `xiaomi/mimo-v2.6-flash`). 소리는 OpenRouter를 거쳐 모델 회사로 보내져요 |
+| 집현전 | 자료를 모아 두고 그 자료로 묻고 답해요. 홈 화면의 **집현전**에서 만들고 파일을 끌어다 넣으면, 자료에 맞는 지침(역할·맥락·작업·답변 양식)을 알아서 써 줘요. 대화 옆 **자료** 칸에서 자료를 보고, 답에 붙은 `[파일 · 3쪽]` 같은 출처를 누르면 그 파일이 열려요. 자료에 없는 질문은 없다고 하고 웹을 찾아볼지 물어요. 자료는 `문서\자비수 집현전`에 있어요 |
 
 ## 기본으로 들어 있는 스킬과 MCP
 
@@ -107,7 +110,7 @@ git clone -b jabisu https://github.com/SeokMyungSeop/jabisu-opencode.git
 cd jabisu-opencode
 bun install
 
-export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.2.0
+export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.3.1
 export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 
 # 1. 엔진(CLI): 앱이 구형 CPU 호환판을 넣어요
@@ -117,7 +120,7 @@ export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 cd packages/desktop
 bun ./scripts/prepare.ts            # 엔진·아이콘을 넣고 package.json 버전을 바꿔요
 ./node_modules/.bin/electron-vite build
-bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-x64.exe
+bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.3.1-x64.exe
 git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려요
 ```
 
@@ -133,5 +136,5 @@ git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려�
 - OpenCode는 Anomaly Innovations, Inc.의 등록 상표예요. 자비수는 공식 OpenCode가 아니며, OpenCode 팀과 관계없이 개인이 만든 배포판이에요.
 - 기본 스킬 6개는 [mattpocock/skills](https://github.com/mattpocock/skills)(MIT, © Matt Pocock)에서 가져왔어요. 설치 폴더에 그 라이선스(`LICENSE.mattpocock-skills.txt`)가 함께 들어 있어요.
 - `hwpx` 스킬은 jkf87의 hwpx-skill(MIT)을 Windows와 자비수에 맞게 고친 것이에요(`LICENSE.hwpx-skill.txt`).
-- 문서 읽기에는 [SheetJS](https://sheetjs.com)(Apache-2.0), [unpdf](https://github.com/unjs/unpdf)(MIT)와 그 안의 PDF.js(Apache-2.0)를 써요(`LICENSE.document-libraries.txt`).
+- 문서 읽기에는 [SheetJS](https://sheetjs.com)(Apache-2.0), [unpdf](https://github.com/unjs/unpdf)(MIT)와 그 안의 PDF.js(Apache-2.0), 한글 문서용 [kordoc](https://github.com/chrisryugj/kordoc)(MIT, © chrisryugj)을 써요(`LICENSE.document-libraries.txt`).
 - 자비수 이름, 아이콘, 글자 디자인: 명상(明想)
