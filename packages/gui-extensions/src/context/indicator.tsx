@@ -4,6 +4,8 @@ import { Button } from "@opencode/ui/button"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { useI18n } from "@opencode/ui/context/i18n"
 import { useExtension, type MountedSession } from "../sdk"
+import type definition from "./index"
+import { moneyFormat } from "./money"
 import { createSessionUsage } from "./usage"
 
 function ContextTooltipRow(props: { name: JSX.Element; value: JSX.Element }) {
@@ -20,20 +22,14 @@ export function SessionContextUsage(props: {
   variant?: "button" | "indicator"
   placement?: ComponentProps<typeof Tooltip>["placement"]
 }) {
-  const ctx = useExtension()
+  const ctx = useExtension<typeof definition>()
   const layout = ctx.layout
   const i18n = useI18n()
   const { context, spent, showCost } = createSessionUsage(() => props.session)
 
   const variant = createMemo(() => props.variant ?? "button")
 
-  const usd = createMemo(
-    () =>
-      new Intl.NumberFormat(i18n.locale(), {
-        style: "currency",
-        currency: "USD",
-      }),
-  )
+  const money = createMemo(() => moneyFormat(i18n.locale(), ctx.stores.currency.value))
 
   const tokens = createMemo(() =>
     new Intl.NumberFormat(i18n.locale(), { notation: "compact", maximumFractionDigits: 0 })
@@ -41,7 +37,7 @@ export function SessionContextUsage(props: {
       .toLocaleLowerCase(i18n.locale()),
   )
 
-  const cost = createMemo(() => usd().format(spent()))
+  const cost = createMemo(() => money()(spent()))
 
   const openContext = () => {
     if (!props.session.id) return

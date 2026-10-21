@@ -16,6 +16,8 @@ import { createKeyed, useExtension, type MountedSession } from "../sdk"
 import { catalogModel, syncCatalog } from "./catalog"
 import { fetchSessionExport, sessionExportFilename } from "./export"
 import { createSessionContextFormatter } from "./format"
+import type definition from "./index"
+import { moneyFormat } from "./money"
 
 function Stat(props: { label: string; value: JSX.Element }) {
   return (
@@ -80,7 +82,7 @@ function RawMessage(props: {
 const emptyMessages: SessionMessageInfo[] = []
 
 export default function SessionContextTab(props: { session: MountedSession }) {
-  const ctx = useExtension()
+  const ctx = useExtension<typeof definition>()
   const layout = ctx.layout
   const system = ctx.system
   const i18n = useI18n()
@@ -101,13 +103,7 @@ export default function SessionContextTab(props: { session: MountedSession }) {
     { equals: same },
   )
 
-  const usd = createMemo(
-    () =>
-      new Intl.NumberFormat(i18n.locale(), {
-        style: "currency",
-        currency: "USD",
-      }),
-  )
+  const money = createMemo(() => moneyFormat(i18n.locale(), ctx.stores.currency.value))
 
   // Same step as the TUI and the header button: after the last completed compaction and before an undo boundary.
   const context = createMemo(() => {
@@ -138,7 +134,7 @@ export default function SessionContextTab(props: { session: MountedSession }) {
   const formatter = createMemo(() => createSessionContextFormatter(i18n.locale()))
 
   // A root session's cost includes its subagent sessions, as in the TUI.
-  const cost = createMemo(() => usd().format(props.session.id ? data().session.cost(props.session.id) : 0))
+  const cost = createMemo(() => money()(props.session.id ? data().session.cost(props.session.id) : 0))
 
   const counts = createMemo(() => {
     const all = messages()

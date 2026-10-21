@@ -5,6 +5,8 @@ import { useI18n } from "@opencode/ui/context/i18n"
 import { createLatest, useExtension } from "../sdk"
 import type { ContextUsageProps } from "./contract"
 import { createSessionContextFormatter } from "./format"
+import type definition from "./index"
+import { moneyFormat } from "./money"
 import { createSessionUsage } from "./usage"
 
 const colors: Readonly<Record<SessionContextUsageCategory, string>> = {
@@ -30,7 +32,7 @@ function SummaryRow(props: { name: JSX.Element; value: JSX.Element; color?: stri
 
 /** The rows of a session summary's Context card. */
 export function ContextSummary(props: ContextUsageProps) {
-  const ctx = useExtension()
+  const ctx = useExtension<typeof definition>()
   const i18n = useI18n()
   const usage = createSessionUsage(() => props.session)
   const formatter = createMemo(() => createSessionContextFormatter(i18n.locale()))
@@ -39,7 +41,7 @@ export function ContextSummary(props: ContextUsageProps) {
     () => new Intl.NumberFormat(i18n.locale(), { notation: "compact", maximumFractionDigits: 1 }),
   )
 
-  const usd = createMemo(() => new Intl.NumberFormat(i18n.locale(), { style: "currency", currency: "USD" }))
+  const money = createMemo(() => moneyFormat(i18n.locale(), ctx.stores.currency.value))
 
   const tokens = () => {
     const context = usage.context()
@@ -135,7 +137,7 @@ export function ContextSummary(props: ContextUsageProps) {
       </div>
       <SummaryRow name={ctx.t("usage.tokens")} value={tokens()} />
       <Show when={usage.showCost()}>
-        <SummaryRow name={ctx.t("usage.cost")} value={usd().format(usage.spent())} />
+        <SummaryRow name={ctx.t("usage.cost")} value={money()(usage.spent())} />
       </Show>
       <Show when={parts()}>
         {(parts) => (

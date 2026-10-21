@@ -1,11 +1,16 @@
-import { Extension } from "../sdk"
+import { Extension, Store } from "../sdk"
 import { ContextUsage } from "./contract"
 import en from "./i18n/en"
+import { Currency } from "./money"
 
 export default Extension.define({
   id: "context",
   legacy: ["usage"],
   provides: { usage: ContextUsage },
+  stores: {
+    // 자비수: costs show in won by default, at the day's exchange rate unless the user sets one.
+    currency: Store.global(Currency, { code: "KRW" }),
+  },
   i18n: {
     en,
     am: () => import("./i18n/am"),

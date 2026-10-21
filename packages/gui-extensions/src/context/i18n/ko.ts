@@ -28,4 +28,12 @@ export default {
   "export.success.description": "세션 저장 위치: {{filename}}",
   "export.failed.title": "세션 내보내기 실패",
   "export.failed.description": "세션을 내보내는 동안 오류가 발생했습니다",
+  "currency.section": "사용 금액",
+  "currency.won.title": "원화로 표시",
+  "currency.won.description": "모델 사용 금액을 달러 대신 원화로 보여 줍니다.",
+  "currency.rate.title": "환율",
+  "currency.rate.auto":
+    "매일 받아오는 1달러당 환율: {{rate}}원 ({{date}}, 유럽중앙은행 기준). 직접 넣으면 그 값을 씁니다.",
+  "currency.rate.fallback": "아직 환율을 받아오지 못해 1달러당 {{rate}}원으로 계산합니다. 직접 넣으면 그 값을 씁니다.",
+  "currency.rate.manual": "직접 넣은 환율로 계산합니다. 지우면 매일 받아오는 환율로 돌아갑니다.",
 }

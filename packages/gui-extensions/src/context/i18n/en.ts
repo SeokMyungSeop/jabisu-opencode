@@ -37,4 +37,13 @@ export default {
   "export.success.description": "Saved session to {{filename}}",
   "export.failed.title": "Failed to export session",
   "export.failed.description": "An error occurred while exporting the session",
+  "currency.section": "Usage cost",
+  "currency.won.title": "Show costs in won",
+  "currency.won.description": "Show what models cost in Korean won instead of US dollars.",
+  "currency.rate.title": "Exchange rate",
+  "currency.rate.auto":
+    "Won per dollar, fetched daily: {{rate}} ({{date}}, European Central Bank reference rate). Enter a rate to use your own.",
+  "currency.rate.fallback":
+    "The daily rate has not been fetched yet, so costs use {{rate}} won per dollar. Enter a rate to use your own.",
+  "currency.rate.manual": "Costs use the rate you entered. Clear it to use the rate fetched daily.",
 }
