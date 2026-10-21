@@ -24,6 +24,29 @@ const keys: Record<string, string> = {
   GEMINI_API_KEY: "gemini-env-key",
 }
 
+const unused = () => Effect.die("unused")
+
+const mockIntegration = (
+  connections: (id: Integration.ID) => Integration.Info["connections"],
+  resolve: Integration.Interface["connection"]["resolve"] = () => Effect.die("Voice.models resolved a credential"),
+) =>
+  Layer.mock(Integration.Service, {
+    revision: () => 0,
+    get: (id) => Effect.succeed({ id, name: id, methods: [], connections: connections(id) }),
+    connection: {
+      active: unused,
+      resolve,
+      key: unused,
+      external: unused,
+      activate: unused,
+      update: unused,
+      remove: unused,
+      status: unused,
+    },
+    oauth: { connect: unused, status: unused, complete: unused, cancel: unused },
+    command: { connect: unused, status: unused, cancel: unused },
+  })
+
 it.effect("uses the first key or env connection Integration lists and never a ChatGPT sign-in", () =>
   Effect.gen(function* () {
     yield* TestClock.setTime(1760000000_000)
@@ -42,39 +65,18 @@ it.effect("uses the first key or env connection Integration lists and never a Ch
           Voice.layer.pipe(
             Layer.provide(
               Layer.merge(
-                Layer.mock(Integration.Service, {
-                  revision: () => 0,
-                  get: (id) => Effect.succeed({ id, name: id, methods: [], connections }),
-                  connection: {
-                    active: () => Effect.die("unused"),
-                    resolve: (connection) =>
-                      connection.type === "credential" && connection.method === "oauth"
-                        ? Effect.die("a ChatGPT sign-in was resolved")
-                        : Effect.succeed(
-                            Credential.Key.make({
-                              type: "key",
-                              key: keys[connection.type === "env" ? connection.name : connection.id],
-                            }),
-                          ),
-                    key: () => Effect.die("unused"),
-                    external: () => Effect.die("unused"),
-                    activate: () => Effect.die("unused"),
-                    update: () => Effect.die("unused"),
-                    remove: () => Effect.die("unused"),
-                    status: () => Effect.die("unused"),
-                  },
-                  oauth: {
-                    connect: () => Effect.die("unused"),
-                    status: () => Effect.die("unused"),
-                    complete: () => Effect.die("unused"),
-                    cancel: () => Effect.die("unused"),
-                  },
-                  command: {
-                    connect: () => Effect.die("unused"),
-                    status: () => Effect.die("unused"),
-                    cancel: () => Effect.die("unused"),
-                  },
-                }),
+                mockIntegration(
+                  () => connections,
+                  (connection) =>
+                    connection.type === "credential" && connection.method === "oauth"
+                      ? Effect.die("a ChatGPT sign-in was resolved")
+                      : Effect.succeed(
+                          Credential.Key.make({
+                            type: "key",
+                            key: keys[connection.type === "env" ? connection.name : connection.id],
+                          }),
+                        ),
+                ),
                 RequestExecutor.layer.pipe(
                   Layer.provide(
                     Layer.succeed(
@@ -126,5 +128,50 @@ it.effect("uses the first key or env connection Integration lists and never a Ch
     const missingGoogle = yield* call("gemini-3.8-live", []).pipe(Effect.flip)
     expect(missingGoogle).toMatchObject({ _tag: "Voice.UnavailableError", service: "google" })
     expect(missingGoogle.message).toContain("GEMINI_API_KEY")
+  }),
+)
+
+it.effect("lists voice models with availability and default without resolving credentials", () =>
+  Effect.gen(function* () {
+    const list = (connections: Partial<Record<string, Integration.Info["connections"]>>) =>
+      Effect.flatMap(Voice.Service, (voice) => voice.models()).pipe(
+        Effect.provide(
+          Voice.layer.pipe(
+            Layer.provide(
+              Layer.merge(
+                mockIntegration((id) => connections[id] ?? []),
+                Layer.mock(RequestExecutor.Service, {}),
+              ),
+            ),
+          ),
+        ),
+      )
+
+    expect(
+      yield* list({
+        openai: [credential("chatgpt", "oauth")],
+        xai: [{ type: "env", name: "XAI_API_KEY" }],
+        google: [credential("gemini", "key")],
+      }),
+    ).toEqual({
+      models: [
+        { model: "gpt-live-1", provider: "openai", transports: ["webrtc"], available: false },
+        { model: "gpt-realtime-2.1", provider: "openai", transports: ["webrtc", "websocket"], available: false },
+        { model: "grok-voice-3.0", provider: "xai", transports: ["websocket"], available: true },
+        { model: "gemini-3.8-live", provider: "google", transports: ["websocket"], available: true },
+      ],
+      default: "grok-voice-3.0",
+    })
+
+    const none = yield* list({ openai: [credential("chatgpt", "oauth")] })
+    expect(none).toEqual({
+      models: [
+        { model: "gpt-live-1", provider: "openai", transports: ["webrtc"], available: false },
+        { model: "gpt-realtime-2.1", provider: "openai", transports: ["webrtc", "websocket"], available: false },
+        { model: "grok-voice-3.0", provider: "xai", transports: ["websocket"], available: false },
+        { model: "gemini-3.8-live", provider: "google", transports: ["websocket"], available: false },
+      ],
+    })
+    expect("default" in none).toBe(false)
   }),
 )

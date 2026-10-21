@@ -121,6 +121,7 @@ import type {
   ModelDefaultOutput,
   GenerateTextInput,
   GenerateTextOutput,
+  VoiceModelsOutput,
   VoiceSessionInput,
   VoiceSessionOutput,
   ProviderListInput,
@@ -900,6 +901,14 @@ const EndpointGenerateText = (raw: RawClient["server.generate"]) => (input: Gene
 
 const adaptGroupGenerate = (raw: RawClient["server.generate"]) => ({ text: EndpointGenerateText(raw) })
 
+const EndpointVoiceModels = (raw: RawClient["server.voice"]) => () =>
+  preserveEffect<VoiceModelsOutput>()(
+    raw["voice.models"]({}).pipe(
+      Effect.mapError(mapClientError),
+      Effect.map((value) => value.data),
+    ),
+  )
+
 const EndpointVoiceSession = (raw: RawClient["server.voice"]) => (input: VoiceSessionInput) =>
   preserveEffect<VoiceSessionOutput>()(
     raw["voice.session"]({
@@ -910,7 +919,10 @@ const EndpointVoiceSession = (raw: RawClient["server.voice"]) => (input: VoiceSe
     ),
   )
 
-const adaptGroupVoice = (raw: RawClient["server.voice"]) => ({ session: EndpointVoiceSession(raw) })
+const adaptGroupVoice = (raw: RawClient["server.voice"]) => ({
+  models: EndpointVoiceModels(raw),
+  session: EndpointVoiceSession(raw),
+})
 
 const EndpointProviderList = (raw: RawClient["server.provider"]) => (input?: ProviderListInput) =>
   preserveEffect<ProviderListOutput>()(

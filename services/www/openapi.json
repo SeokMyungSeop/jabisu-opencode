@@ -5382,6 +5382,68 @@
         }
       }
     },
+    "/api/experimental/voice/models": {
+      "get": {
+        "tags": ["voice"],
+        "operationId": "experimental.voice.models",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "VoiceModelsResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ServiceUnavailableError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "List supported voice models, their transports, and whether the server has a usable API key for each provider.",
+        "summary": "List voice models"
+      }
+    },
     "/api/experimental/voice/session": {
       "post": {
         "tags": ["voice"],
@@ -14324,6 +14386,17 @@
                 "type": "integer",
                 "minimum": 0
               },
+              "location_idle_timeout": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean",
+                    "enum": [false]
+                  }
+                ]
+              },
               "policies": {
                 "type": "array",
                 "items": {
@@ -20525,6 +20598,58 @@
         "required": ["_tag", "providerID", "message"],
         "additionalProperties": false
       },
+      "VoiceModel": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "transports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoiceTransportType"
+            }
+          },
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": ["model", "provider", "transports", "available"],
+        "additionalProperties": false
+      },
+      "VoiceModelsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "models": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VoiceModel"
+                }
+              },
+              "default": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": ["models"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["data"],
+        "additionalProperties": false
+      },
       "VoiceSessionResponse": {
         "type": "object",
         "properties": {
@@ -20561,6 +20686,10 @@
             "$ref": "#/components/schemas/VoiceWebSocketTransportInput"
           }
         ]
+      },
+      "VoiceTransportType": {
+        "type": "string",
+        "enum": ["webrtc", "websocket"]
       },
       "VoiceWebRTCTransport": {
         "type": "object",
