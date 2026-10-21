@@ -66,7 +66,7 @@ test("the 자비수 redistribution installs beside OpenCode", () => {
   const config = load("jabisu")
   expect(config.appId).toBe("io.github.seokmyungseop.jabisu")
   expect(config.productName).toBe("Jabisu")
-  expect(config.artifactName).toBe("Jabisu-Setup-${arch}.${ext}")
+  expect(config.artifactName).toBe("Jabisu-Setup-${version}-${arch}.${ext}")
   // It updates from its own releases, never OpenCode's feed, and leaves the `opencode://` scheme to OpenCode.
   expect(config.publish).toEqual({
     provider: "generic",

@@ -268,7 +268,8 @@ export function getConfig() {
         ...base,
         appId,
         productName: "Jabisu",
-        artifactName: "Jabisu-Setup-${arch}.${ext}",
+        // The version in the name tells installers apart; latest.yml names the file, so in-app updates follow it.
+        artifactName: "Jabisu-Setup-${version}-${arch}.${ext}",
         copyright: "© 2026 명상(明想). Based on OpenCode, MIT License.",
         protocols: [],
         // The latest release's assets, so each release must carry latest.yml and the blockmap with the installer.
