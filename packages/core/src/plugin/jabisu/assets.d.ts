@@ -9,6 +9,11 @@ declare module "*.py" {
   export default content
 }
 
+declare module "*.ps1" {
+  const content: string
+  export default content
+}
+
 declare module "*.hpf" {
   const content: string
   export default content

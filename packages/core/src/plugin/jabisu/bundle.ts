@@ -7,128 +7,130 @@ export * as JabisuBundle from "./bundle.js"
 import file0 from "./skills/codebase-design/DEEPENING.md" with { type: "text" }
 import file1 from "./skills/codebase-design/DESIGN-IT-TWICE.md" with { type: "text" }
 import file2 from "./skills/codebase-design/SKILL.md" with { type: "text" }
-import file3 from "./skills/diagnosing-bugs/SKILL.md" with { type: "text" }
-import file4 from "./skills/diagnosing-bugs/scripts/hitl-loop.template.sh" with { type: "text" }
-import file5 from "./skills/docx/SKILL.md" with { type: "text" }
-import file6 from "./skills/docx/scripts/md2docx.py" with { type: "text" }
-import file7 from "./skills/grill-me/SKILL.md" with { type: "text" }
-import file8 from "./skills/grilling/SKILL.md" with { type: "text" }
-import file9 from "./skills/handoff/SKILL.md" with { type: "text" }
-import file10 from "./skills/hwpx/SKILL.md" with { type: "text" }
-import file11 from "./skills/hwpx/assets/government-reference.hwpx" with { type: "file" }
-import file12 from "./skills/hwpx/assets/report-template.hwpx" with { type: "file" }
-import file13 from "./skills/hwpx/references/gonmunseo-2025-writing-rules.md" with { type: "text" }
-import file14 from "./skills/hwpx/references/hwpx-format.md" with { type: "text" }
-import file15 from "./skills/hwpx/references/official-doc-style.md" with { type: "text" }
-import file16 from "./skills/hwpx/references/report-style.md" with { type: "text" }
-import file17 from "./skills/hwpx/references/template-styles.md" with { type: "text" }
-import file18 from "./skills/hwpx/references/troubleshooting.md" with { type: "text" }
-import file19 from "./skills/hwpx/references/xml-internals.md" with { type: "text" }
-import file20 from "./skills/hwpx/references/xml-structure.md" with { type: "text" }
-import file21 from "./skills/hwpx/scripts/analyze_template.py" with { type: "text" }
-import file22 from "./skills/hwpx/scripts/build_hwpx.py" with { type: "text" }
-import file23 from "./skills/hwpx/scripts/clone_form.py" with { type: "text" }
-import file24 from "./skills/hwpx/scripts/convert_hwp.py" with { type: "text" }
-import file25 from "./skills/hwpx/scripts/create_document.py" with { type: "text" }
-import file26 from "./skills/hwpx/scripts/fix_namespaces.py" with { type: "text" }
-import file27 from "./skills/hwpx/scripts/hwpx_helpers.py" with { type: "text" }
-import file28 from "./skills/hwpx/scripts/md2hwpx.py" with { type: "text" }
-import file29 from "./skills/hwpx/scripts/office/pack.py" with { type: "text" }
-import file30 from "./skills/hwpx/scripts/office/unpack.py" with { type: "text" }
-import file31 from "./skills/hwpx/scripts/text_extract.py" with { type: "text" }
-import file32 from "./skills/hwpx/scripts/validate.py" with { type: "text" }
-import file33 from "./skills/hwpx/scripts/verify_hwpx.py" with { type: "text" }
-import file34 from "./skills/hwpx/templates/base/Contents/content.hpf" with { type: "text" }
-import file35 from "./skills/hwpx/templates/base/Contents/header.xml" with { type: "text" }
-import file36 from "./skills/hwpx/templates/base/Contents/section0.xml" with { type: "text" }
-import file37 from "./skills/hwpx/templates/base/META-INF/container.rdf" with { type: "text" }
-import file38 from "./skills/hwpx/templates/base/META-INF/container.xml" with { type: "text" }
-import file39 from "./skills/hwpx/templates/base/META-INF/manifest.xml" with { type: "text" }
-import file40 from "./skills/hwpx/templates/base/Preview/PrvImage.png" with { type: "file" }
-import file41 from "./skills/hwpx/templates/base/Preview/PrvText.txt" with { type: "text" }
-import file42 from "./skills/hwpx/templates/base/mimetype" with { type: "text" }
-import file43 from "./skills/hwpx/templates/base/settings.xml" with { type: "text" }
-import file44 from "./skills/hwpx/templates/base/version.xml" with { type: "text" }
-import file45 from "./skills/hwpx/templates/gonmun/header.xml" with { type: "text" }
-import file46 from "./skills/hwpx/templates/gonmun/section0.xml" with { type: "text" }
-import file47 from "./skills/hwpx/templates/government/header.xml" with { type: "text" }
-import file48 from "./skills/hwpx/templates/government/section0.xml" with { type: "text" }
-import file49 from "./skills/hwpx/templates/minutes/header.xml" with { type: "text" }
-import file50 from "./skills/hwpx/templates/minutes/section0.xml" with { type: "text" }
-import file51 from "./skills/hwpx/templates/proposal/header.xml" with { type: "text" }
-import file52 from "./skills/hwpx/templates/proposal/section0.xml" with { type: "text" }
-import file53 from "./skills/hwpx/templates/report/header.xml" with { type: "text" }
-import file54 from "./skills/hwpx/templates/report/section0.xml" with { type: "text" }
-import file55 from "./skills/pptx/SKILL.md" with { type: "text" }
-import file56 from "./skills/pptx/scripts/md2pptx.py" with { type: "text" }
-import file57 from "./skills/tdd/SKILL.md" with { type: "text" }
-import file58 from "./skills/tdd/mocking.md" with { type: "text" }
-import file59 from "./skills/tdd/tests.md" with { type: "text" }
-import file60 from "./skills/xlsx/SKILL.md" with { type: "text" }
-import file61 from "./skills/xlsx/scripts/csv2xlsx.py" with { type: "text" }
+import file3 from "./skills/craft-apps/SKILL.md" with { type: "text" }
+import file4 from "./skills/diagnosing-bugs/SKILL.md" with { type: "text" }
+import file5 from "./skills/diagnosing-bugs/scripts/hitl-loop.template.sh" with { type: "text" }
+import file6 from "./skills/docx/SKILL.md" with { type: "text" }
+import file7 from "./skills/docx/scripts/md2docx.py" with { type: "text" }
+import file8 from "./skills/grill-me/SKILL.md" with { type: "text" }
+import file9 from "./skills/grilling/SKILL.md" with { type: "text" }
+import file10 from "./skills/handoff/SKILL.md" with { type: "text" }
+import file11 from "./skills/hwpx/SKILL.md" with { type: "text" }
+import file12 from "./skills/hwpx/assets/government-reference.hwpx" with { type: "file" }
+import file13 from "./skills/hwpx/assets/report-template.hwpx" with { type: "file" }
+import file14 from "./skills/hwpx/references/gonmunseo-2025-writing-rules.md" with { type: "text" }
+import file15 from "./skills/hwpx/references/hwpx-format.md" with { type: "text" }
+import file16 from "./skills/hwpx/references/official-doc-style.md" with { type: "text" }
+import file17 from "./skills/hwpx/references/report-style.md" with { type: "text" }
+import file18 from "./skills/hwpx/references/template-styles.md" with { type: "text" }
+import file19 from "./skills/hwpx/references/troubleshooting.md" with { type: "text" }
+import file20 from "./skills/hwpx/references/xml-internals.md" with { type: "text" }
+import file21 from "./skills/hwpx/references/xml-structure.md" with { type: "text" }
+import file22 from "./skills/hwpx/scripts/analyze_template.py" with { type: "text" }
+import file23 from "./skills/hwpx/scripts/build_hwpx.py" with { type: "text" }
+import file24 from "./skills/hwpx/scripts/clone_form.py" with { type: "text" }
+import file25 from "./skills/hwpx/scripts/convert_hwp.py" with { type: "text" }
+import file26 from "./skills/hwpx/scripts/create_document.py" with { type: "text" }
+import file27 from "./skills/hwpx/scripts/fix_namespaces.py" with { type: "text" }
+import file28 from "./skills/hwpx/scripts/hwpx_helpers.py" with { type: "text" }
+import file29 from "./skills/hwpx/scripts/md2hwpx.py" with { type: "text" }
+import file30 from "./skills/hwpx/scripts/office/pack.py" with { type: "text" }
+import file31 from "./skills/hwpx/scripts/office/unpack.py" with { type: "text" }
+import file32 from "./skills/hwpx/scripts/text_extract.py" with { type: "text" }
+import file33 from "./skills/hwpx/scripts/validate.py" with { type: "text" }
+import file34 from "./skills/hwpx/scripts/verify_hwpx.py" with { type: "text" }
+import file35 from "./skills/hwpx/templates/base/Contents/content.hpf" with { type: "text" }
+import file36 from "./skills/hwpx/templates/base/Contents/header.xml" with { type: "text" }
+import file37 from "./skills/hwpx/templates/base/Contents/section0.xml" with { type: "text" }
+import file38 from "./skills/hwpx/templates/base/META-INF/container.rdf" with { type: "text" }
+import file39 from "./skills/hwpx/templates/base/META-INF/container.xml" with { type: "text" }
+import file40 from "./skills/hwpx/templates/base/META-INF/manifest.xml" with { type: "text" }
+import file41 from "./skills/hwpx/templates/base/Preview/PrvImage.png" with { type: "file" }
+import file42 from "./skills/hwpx/templates/base/Preview/PrvText.txt" with { type: "text" }
+import file43 from "./skills/hwpx/templates/base/mimetype" with { type: "text" }
+import file44 from "./skills/hwpx/templates/base/settings.xml" with { type: "text" }
+import file45 from "./skills/hwpx/templates/base/version.xml" with { type: "text" }
+import file46 from "./skills/hwpx/templates/gonmun/header.xml" with { type: "text" }
+import file47 from "./skills/hwpx/templates/gonmun/section0.xml" with { type: "text" }
+import file48 from "./skills/hwpx/templates/government/header.xml" with { type: "text" }
+import file49 from "./skills/hwpx/templates/government/section0.xml" with { type: "text" }
+import file50 from "./skills/hwpx/templates/minutes/header.xml" with { type: "text" }
+import file51 from "./skills/hwpx/templates/minutes/section0.xml" with { type: "text" }
+import file52 from "./skills/hwpx/templates/proposal/header.xml" with { type: "text" }
+import file53 from "./skills/hwpx/templates/proposal/section0.xml" with { type: "text" }
+import file54 from "./skills/hwpx/templates/report/header.xml" with { type: "text" }
+import file55 from "./skills/hwpx/templates/report/section0.xml" with { type: "text" }
+import file56 from "./skills/pptx/SKILL.md" with { type: "text" }
+import file57 from "./skills/pptx/scripts/md2pptx.py" with { type: "text" }
+import file58 from "./skills/tdd/SKILL.md" with { type: "text" }
+import file59 from "./skills/tdd/mocking.md" with { type: "text" }
+import file60 from "./skills/tdd/tests.md" with { type: "text" }
+import file61 from "./skills/xlsx/SKILL.md" with { type: "text" }
+import file62 from "./skills/xlsx/scripts/csv2xlsx.py" with { type: "text" }
 
 /** Each bundled skill file by its path under the skills folder, as text or as the path of an embedded file. */
 export const files: ReadonlyArray<{ readonly path: string; readonly text: string } | { readonly path: string; readonly file: string }> = [
   { path: "codebase-design/DEEPENING.md", text: String(file0) },
   { path: "codebase-design/DESIGN-IT-TWICE.md", text: String(file1) },
   { path: "codebase-design/SKILL.md", text: String(file2) },
-  { path: "diagnosing-bugs/SKILL.md", text: String(file3) },
-  { path: "diagnosing-bugs/scripts/hitl-loop.template.sh", text: String(file4) },
-  { path: "docx/SKILL.md", text: String(file5) },
-  { path: "docx/scripts/md2docx.py", text: String(file6) },
-  { path: "grill-me/SKILL.md", text: String(file7) },
-  { path: "grilling/SKILL.md", text: String(file8) },
-  { path: "handoff/SKILL.md", text: String(file9) },
-  { path: "hwpx/SKILL.md", text: String(file10) },
-  { path: "hwpx/assets/government-reference.hwpx", file: file11 },
-  { path: "hwpx/assets/report-template.hwpx", file: file12 },
-  { path: "hwpx/references/gonmunseo-2025-writing-rules.md", text: String(file13) },
-  { path: "hwpx/references/hwpx-format.md", text: String(file14) },
-  { path: "hwpx/references/official-doc-style.md", text: String(file15) },
-  { path: "hwpx/references/report-style.md", text: String(file16) },
-  { path: "hwpx/references/template-styles.md", text: String(file17) },
-  { path: "hwpx/references/troubleshooting.md", text: String(file18) },
-  { path: "hwpx/references/xml-internals.md", text: String(file19) },
-  { path: "hwpx/references/xml-structure.md", text: String(file20) },
-  { path: "hwpx/scripts/analyze_template.py", text: String(file21) },
-  { path: "hwpx/scripts/build_hwpx.py", text: String(file22) },
-  { path: "hwpx/scripts/clone_form.py", text: String(file23) },
-  { path: "hwpx/scripts/convert_hwp.py", text: String(file24) },
-  { path: "hwpx/scripts/create_document.py", text: String(file25) },
-  { path: "hwpx/scripts/fix_namespaces.py", text: String(file26) },
-  { path: "hwpx/scripts/hwpx_helpers.py", text: String(file27) },
-  { path: "hwpx/scripts/md2hwpx.py", text: String(file28) },
-  { path: "hwpx/scripts/office/pack.py", text: String(file29) },
-  { path: "hwpx/scripts/office/unpack.py", text: String(file30) },
-  { path: "hwpx/scripts/text_extract.py", text: String(file31) },
-  { path: "hwpx/scripts/validate.py", text: String(file32) },
-  { path: "hwpx/scripts/verify_hwpx.py", text: String(file33) },
-  { path: "hwpx/templates/base/Contents/content.hpf", text: String(file34) },
-  { path: "hwpx/templates/base/Contents/header.xml", text: String(file35) },
-  { path: "hwpx/templates/base/Contents/section0.xml", text: String(file36) },
-  { path: "hwpx/templates/base/META-INF/container.rdf", text: String(file37) },
-  { path: "hwpx/templates/base/META-INF/container.xml", text: String(file38) },
-  { path: "hwpx/templates/base/META-INF/manifest.xml", text: String(file39) },
-  { path: "hwpx/templates/base/Preview/PrvImage.png", file: file40 },
-  { path: "hwpx/templates/base/Preview/PrvText.txt", text: String(file41) },
-  { path: "hwpx/templates/base/mimetype", text: String(file42) },
-  { path: "hwpx/templates/base/settings.xml", text: String(file43) },
-  { path: "hwpx/templates/base/version.xml", text: String(file44) },
-  { path: "hwpx/templates/gonmun/header.xml", text: String(file45) },
-  { path: "hwpx/templates/gonmun/section0.xml", text: String(file46) },
-  { path: "hwpx/templates/government/header.xml", text: String(file47) },
-  { path: "hwpx/templates/government/section0.xml", text: String(file48) },
-  { path: "hwpx/templates/minutes/header.xml", text: String(file49) },
-  { path: "hwpx/templates/minutes/section0.xml", text: String(file50) },
-  { path: "hwpx/templates/proposal/header.xml", text: String(file51) },
-  { path: "hwpx/templates/proposal/section0.xml", text: String(file52) },
-  { path: "hwpx/templates/report/header.xml", text: String(file53) },
-  { path: "hwpx/templates/report/section0.xml", text: String(file54) },
-  { path: "pptx/SKILL.md", text: String(file55) },
-  { path: "pptx/scripts/md2pptx.py", text: String(file56) },
-  { path: "tdd/SKILL.md", text: String(file57) },
-  { path: "tdd/mocking.md", text: String(file58) },
-  { path: "tdd/tests.md", text: String(file59) },
-  { path: "xlsx/SKILL.md", text: String(file60) },
-  { path: "xlsx/scripts/csv2xlsx.py", text: String(file61) },
+  { path: "craft-apps/SKILL.md", text: String(file3) },
+  { path: "diagnosing-bugs/SKILL.md", text: String(file4) },
+  { path: "diagnosing-bugs/scripts/hitl-loop.template.sh", text: String(file5) },
+  { path: "docx/SKILL.md", text: String(file6) },
+  { path: "docx/scripts/md2docx.py", text: String(file7) },
+  { path: "grill-me/SKILL.md", text: String(file8) },
+  { path: "grilling/SKILL.md", text: String(file9) },
+  { path: "handoff/SKILL.md", text: String(file10) },
+  { path: "hwpx/SKILL.md", text: String(file11) },
+  { path: "hwpx/assets/government-reference.hwpx", file: file12 },
+  { path: "hwpx/assets/report-template.hwpx", file: file13 },
+  { path: "hwpx/references/gonmunseo-2025-writing-rules.md", text: String(file14) },
+  { path: "hwpx/references/hwpx-format.md", text: String(file15) },
+  { path: "hwpx/references/official-doc-style.md", text: String(file16) },
+  { path: "hwpx/references/report-style.md", text: String(file17) },
+  { path: "hwpx/references/template-styles.md", text: String(file18) },
+  { path: "hwpx/references/troubleshooting.md", text: String(file19) },
+  { path: "hwpx/references/xml-internals.md", text: String(file20) },
+  { path: "hwpx/references/xml-structure.md", text: String(file21) },
+  { path: "hwpx/scripts/analyze_template.py", text: String(file22) },
+  { path: "hwpx/scripts/build_hwpx.py", text: String(file23) },
+  { path: "hwpx/scripts/clone_form.py", text: String(file24) },
+  { path: "hwpx/scripts/convert_hwp.py", text: String(file25) },
+  { path: "hwpx/scripts/create_document.py", text: String(file26) },
+  { path: "hwpx/scripts/fix_namespaces.py", text: String(file27) },
+  { path: "hwpx/scripts/hwpx_helpers.py", text: String(file28) },
+  { path: "hwpx/scripts/md2hwpx.py", text: String(file29) },
+  { path: "hwpx/scripts/office/pack.py", text: String(file30) },
+  { path: "hwpx/scripts/office/unpack.py", text: String(file31) },
+  { path: "hwpx/scripts/text_extract.py", text: String(file32) },
+  { path: "hwpx/scripts/validate.py", text: String(file33) },
+  { path: "hwpx/scripts/verify_hwpx.py", text: String(file34) },
+  { path: "hwpx/templates/base/Contents/content.hpf", text: String(file35) },
+  { path: "hwpx/templates/base/Contents/header.xml", text: String(file36) },
+  { path: "hwpx/templates/base/Contents/section0.xml", text: String(file37) },
+  { path: "hwpx/templates/base/META-INF/container.rdf", text: String(file38) },
+  { path: "hwpx/templates/base/META-INF/container.xml", text: String(file39) },
+  { path: "hwpx/templates/base/META-INF/manifest.xml", text: String(file40) },
+  { path: "hwpx/templates/base/Preview/PrvImage.png", file: file41 },
+  { path: "hwpx/templates/base/Preview/PrvText.txt", text: String(file42) },
+  { path: "hwpx/templates/base/mimetype", text: String(file43) },
+  { path: "hwpx/templates/base/settings.xml", text: String(file44) },
+  { path: "hwpx/templates/base/version.xml", text: String(file45) },
+  { path: "hwpx/templates/gonmun/header.xml", text: String(file46) },
+  { path: "hwpx/templates/gonmun/section0.xml", text: String(file47) },
+  { path: "hwpx/templates/government/header.xml", text: String(file48) },
+  { path: "hwpx/templates/government/section0.xml", text: String(file49) },
+  { path: "hwpx/templates/minutes/header.xml", text: String(file50) },
+  { path: "hwpx/templates/minutes/section0.xml", text: String(file51) },
+  { path: "hwpx/templates/proposal/header.xml", text: String(file52) },
+  { path: "hwpx/templates/proposal/section0.xml", text: String(file53) },
+  { path: "hwpx/templates/report/header.xml", text: String(file54) },
+  { path: "hwpx/templates/report/section0.xml", text: String(file55) },
+  { path: "pptx/SKILL.md", text: String(file56) },
+  { path: "pptx/scripts/md2pptx.py", text: String(file57) },
+  { path: "tdd/SKILL.md", text: String(file58) },
+  { path: "tdd/mocking.md", text: String(file59) },
+  { path: "tdd/tests.md", text: String(file60) },
+  { path: "xlsx/SKILL.md", text: String(file61) },
+  { path: "xlsx/scripts/csv2xlsx.py", text: String(file62) },
 ]

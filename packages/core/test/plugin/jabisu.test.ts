@@ -5,6 +5,7 @@ import { Effect, type Types } from "effect"
 import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
+import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { Location } from "@opencode/core/location"
 import { AbsolutePath } from "@opencode/core/schema"
@@ -85,6 +86,21 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
 
 const source = (file: string) => path.join(import.meta.dirname, "../../src/plugin/jabisu", file)
 
+// The plugin looks for FilmCraft under ProgramFiles, which tests point at a temporary folder for their scope.
+const withProgramFiles = (directory: string) =>
+  Effect.acquireRelease(
+    Effect.sync(() => {
+      const previous = process.env.ProgramFiles
+      process.env.ProgramFiles = directory
+      return previous
+    }),
+    (previous) =>
+      Effect.sync(() => {
+        if (previous === undefined) delete process.env.ProgramFiles
+        else process.env.ProgramFiles = previous
+      }),
+  )
+
 describe("JabisuPlugin.Plugin", () => {
   it.live("bundles its skills with their files and offers Context7 switched off on the jabisu channel", () =>
     Effect.gen(function* () {
@@ -93,6 +109,7 @@ describe("JabisuPlugin.Plugin", () => {
 
       expect([...byId.keys()].toSorted()).toEqual([
         "codebase-design",
+        "craft-apps",
         "diagnosing-bugs",
         "docx",
         "grill-me",
@@ -146,6 +163,52 @@ describe("JabisuPlugin.Plugin", () => {
 
       // After adding or removing a skill file, regenerate the list with `bun run script/jabisu-bundle.ts`.
       expect(JabisuBundle.files.map((file) => file.path).toSorted()).toEqual(present.toSorted())
+    }),
+  )
+
+  it.live("offers FilmCraft's remote control switched off when FilmCraft is installed, with one kept token", () =>
+    Effect.gen(function* () {
+      const programFiles = (yield* tmpdirScoped()).path
+      const cli = path.join(programFiles, "FilmCraft", "filmcraft-cli.exe")
+
+      yield* Effect.promise(() => fs.mkdir(path.dirname(cli), { recursive: true }))
+      yield* Effect.promise(() => fs.writeFile(cli, ""))
+      yield* withProgramFiles(programFiles)
+
+      const { servers, data, skills } = yield* run("jabisu", {})
+      const file = FilmCraft.tokenFile(data)
+      const token = yield* Effect.promise(() => fs.readFile(file, "utf8"))
+
+      expect(token).toMatch(/^[0-9a-f]{64}$/)
+      expect(servers.filmcraft).toEqual({
+        type: "local",
+        command: [cli, "mcp", "--bridge", `127.0.0.1:${FilmCraft.PORT}`],
+        environment: { FILMCRAFT_CONTROL_TOKEN: token },
+        disabled: true,
+      })
+      // The launcher reads the same token file itself and starts FilmCraft on the same port.
+      const skill = skills.find((item) => String(item.id) === "craft-apps")
+      const launcher = yield* Effect.promise(() =>
+        fs.readFile(path.join(path.dirname(skill!.path), "scripts/start-filmcraft.ps1"), "utf8"),
+      )
+      expect(launcher).toContain(`$port = ${FilmCraft.PORT}`)
+      expect(launcher).toContain(`'${file}'`)
+      expect(launcher).not.toContain("__")
+
+      // A FilmCraft started earlier keeps accepting the bridge, so the token stays.
+      yield* Effect.promise(() => fs.writeFile(file, token))
+      expect(yield* FilmCraft.token(yield* FSUtil.Service, file)).toBe(token)
+    }),
+  )
+
+  it.live("offers no FilmCraft and makes no token when FilmCraft is not installed", () =>
+    Effect.gen(function* () {
+      yield* withProgramFiles((yield* tmpdirScoped()).path)
+
+      const { servers, data } = yield* run("jabisu", {})
+
+      expect(servers.filmcraft).toBeUndefined()
+      expect(yield* Effect.promise(() => fs.access(FilmCraft.tokenFile(data)).then(() => true, () => false))).toBe(false)
     }),
   )
 
