@@ -140,6 +140,32 @@ export function Sources(props: {
 
   const status = createMemo(() => new Map((statuses.latest ?? []).map((source) => [source.path, source])))
 
+  // Writes recommended instructions from the sources when the 집현전 has none yet. The view's listing can be older
+  // than the folder, so the 집현전 is listed again first.
+  const recommend = async () => {
+    const current = builtin(ctx.servers)
+
+    if (!current) return
+
+    const location = locationOf(current)
+    const name = props.item.name
+    const latest = await current.client.jabisu.jiphyeonjeon.list({ location })
+
+    if (latest.items.find((item) => item.name === name)?.instructions !== "") return
+
+    setSuggesting(true)
+
+    const instructions = await writing
+      .suggest(name, latest)
+      .catch((error: Error) => void writing.failed(latest)(error))
+      .finally(() => setSuggesting(false))
+
+    if (!instructions) return
+
+    await current.client.jabisu.jiphyeonjeon.instruct({ location, name, instructions })
+    props.sync.changed()
+  }
+
   // Files keep their names; a name already among the sources gets a number, so nothing is overwritten.
   const add = useMutation(() => ({
     mutationFn: async (files: readonly File[]) => {
@@ -162,25 +188,21 @@ export function Sources(props: {
       }
 
       props.sync.changed()
-
-      if (props.item.instructions) return
-
-      setSuggesting(true)
-
-      const name = props.item.name
-
-      const instructions = await writing
-        .suggest(name, props.writer)
-        .catch((error: Error) => void writing.failed(props.writer)(error))
-        .finally(() => setSuggesting(false))
-
-      if (!instructions) return
-
-      await current.client.jabisu.jiphyeonjeon.instruct({ location, name, instructions })
-      props.sync.changed()
+      await recommend()
     },
     onError: failed,
   }))
+
+  // Files put into the sources folder outside the app, such as from File Explorer, get instructions the same way.
+  onCleanup(
+    props.sync.arrived(
+      () => props.item.name,
+      () => {
+        if (add.isPending || suggesting()) return
+        void recommend().catch(failed)
+      },
+    ),
+  )
 
   const take = (list: FileList | null | undefined) => {
     const files = [...(list ?? [])]

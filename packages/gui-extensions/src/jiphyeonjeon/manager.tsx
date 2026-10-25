@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, For, Show } from "solid-js"
+import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js"
 import type { Jiphyeonjeon } from "@opencode/client/promise"
 import { Button } from "@opencode/ui/button"
 import { Dialog, DialogBody, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
@@ -17,6 +17,8 @@ export default function Manager(props: { dialog: DialogHandle; sync: Sync; name?
   const [chosen, setChosen] = createSignal(props.name)
   const [creating, setCreating] = createSignal(props.create ?? false)
   const [name, setName] = createSignal("")
+
+  onCleanup(props.sync.watch())
 
   const [list] = createResource(
     () => {

@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { onCleanup, Show } from "solid-js"
 import type { Jiphyeonjeon } from "@opencode/client/promise"
 import { Button } from "@opencode/ui/button"
 import { useExtension, type MountedSession } from "../sdk"
@@ -14,6 +14,8 @@ export default function SourcesPanel(props: {
   session: MountedSession
 }) {
   const ctx = useExtension<typeof definition>()
+
+  onCleanup(props.sync.watch())
 
   return (
     <div class="flex h-full min-h-0 flex-col gap-3 overflow-auto p-3">

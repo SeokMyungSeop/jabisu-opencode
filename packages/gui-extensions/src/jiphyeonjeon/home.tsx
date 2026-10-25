@@ -1,4 +1,4 @@
-import { createResource, For, Show } from "solid-js"
+import { createResource, For, onCleanup, Show } from "solid-js"
 import { Icon } from "@opencode/ui/icon"
 import { IconButton } from "@opencode/ui/icon-button"
 import { useExtension } from "../sdk"
@@ -11,6 +11,8 @@ const ROW =
 /** The home screen's 집현전 list, above the projects; each opens the 집현전 window on it. */
 export default function HomeSection(props: { sync: Sync; open: (input: { name?: string; create?: boolean }) => void }) {
   const ctx = useExtension<typeof definition>()
+
+  onCleanup(props.sync.watch())
 
   const [list] = createResource(
     () => {

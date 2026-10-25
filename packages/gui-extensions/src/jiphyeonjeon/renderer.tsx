@@ -25,7 +25,14 @@ const setup: Setup<typeof definition> = (ctx) => {
 
   onCleanup(onIdle(() => void Manager.preload()))
 
-  const sync = createSync()
+  const sync = createSync(async () => {
+    const current = builtin(ctx.servers)
+
+    if (!current) return undefined
+    const reply = await current.client.jabisu.jiphyeonjeon.list({ location: locationOf(current) })
+
+    return reply.items
+  })
 
   const open = (input: { name?: string; create?: boolean } = {}) => {
     ctx.dialogs.open((dialog) => (
