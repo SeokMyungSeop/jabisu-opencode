@@ -17,7 +17,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.3.1-x64.exe`)를 내려받아요.
+1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.3.2-x64.exe`)를 내려받아요.
 2. 내려받은 파일을 실행하면 바로 설치되고, 바탕화면과 시작 메뉴에 **자비수**가 생겨요.
 
 - Windows 10/11 64비트용이에요. 관리자 권한 없이 내 사용자 폴더에 설치돼요.
@@ -39,7 +39,8 @@
 | 앱 안에서 업데이트 | 새 버전이 나오면 오른쪽 위에 업데이트 단추가 떠요. 누르면 받아서 다시 시작해요 |
 | 사용 금액 원화 표시 | 대화에 쓴 금액을 원(₩)으로 보여 줘요. 환율은 하루 한 번 유럽중앙은행 기준값을 받아 오고, **설정 → 일반 → 사용 금액**에서 직접 넣거나 달러로 되돌려요 |
 | 음성 받아쓰기 | 녹음·영상 파일(MP3, M4A, WAV, MP4 등)을 AI가 읽으면 `[00:12:30] 화자 1: …`처럼 시간과 화자를 붙인 글로 바꿔요. **설정 → 일반 → 음성 받아쓰기**에서 켜요(OpenRouter 연결 필요, 기본 모델 `xiaomi/mimo-v2.6-flash`). 소리는 OpenRouter를 거쳐 모델 회사로 보내져요 |
-| 집현전 | 자료를 모아 두고 그 자료로 묻고 답해요. 홈 화면의 **집현전**에서 만들고 파일을 끌어다 넣으면, 자료에 맞는 지침(역할·맥락·작업·답변 양식)을 알아서 써 줘요. 대화 옆 **자료** 칸에서 자료를 보고, 답에 붙은 `[파일 · 3쪽]` 같은 출처를 누르면 그 파일이 열려요. 자료에 없는 질문은 없다고 하고 웹을 찾아볼지 물어요. 자료는 `문서\자비수 집현전`에 있어요 |
+| 집현전 | 자료를 모아 두고 그 자료로 묻고 답해요. 홈 화면의 **집현전**에서 만들고 파일을 끌어다 넣으면, 자료에 맞는 지침(역할·맥락·작업·답변 양식)을 알아서 써 줘요. 대화 옆 **자료** 칸에서 자료를 보고, 답에 붙은 `[파일 · 3쪽]` 같은 출처를 누르면 그 파일이 열려요. 자료에 없는 질문은 없다고 하고 웹을 찾아볼지 물어요. 자료는 `문서\자비수 집현전`에 있고, 탐색기에서 그 폴더의 `자료`에 파일을 넣어도 저절로 반영돼요 |
+| 오류 안내와 신고 | 흔한 오류(API 키, 충전 금액, 요청 한도, 인터넷 연결, 모델 문제 등) 아래에 무엇을 하면 되는지 한국어로 알려 줘요. **오류 신고** 단추나 **도움말 → 오류 신고 · 피드백 보내기**를 누르면 버전과 오류 내용이 채워진 신고 양식(구글 설문지)이 브라우저에서 열려요. 그때 자비수 창을 캡처해 `사진\자비수 오류 캡처`에 저장하고 클립보드에도 복사해 두니, 원하면 양식에 올려요(구글 로그인이 필요하고, 올리면 구글 계정 이름과 이메일이 함께 기록돼요). 직접 보내기 전에는 아무것도 전송되지 않아요 |
 
 ## 기본으로 들어 있는 스킬과 MCP
 
@@ -110,7 +111,7 @@ git clone -b jabisu https://github.com/SeokMyungSeop/jabisu-opencode.git
 cd jabisu-opencode
 bun install
 
-export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.3.1
+export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.3.2
 export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 
 # 1. 엔진(CLI): 앱이 구형 CPU 호환판을 넣어요
@@ -120,7 +121,7 @@ export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 cd packages/desktop
 bun ./scripts/prepare.ts            # 엔진·아이콘을 넣고 package.json 버전을 바꿔요
 ./node_modules/.bin/electron-vite build
-bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.3.1-x64.exe
+bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.3.2-x64.exe
 git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려요
 ```
 
