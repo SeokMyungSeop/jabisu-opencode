@@ -59,11 +59,16 @@ export namespace TimelineRow {
 
   /**
    * `free-limit` marks OpenCode Zen's daily free allowance running out; `resetAt` is when the allowance comes back, if
-   * known.
+   * known. `errorType` and `status` are the recorded failure's type and HTTP status, and `provider` and `model` name
+   * the model whose step failed when a step recorded the failure, so a host can explain it.
    */
   export class Error extends Data.TaggedClass("Error")<{
     userMessageID: string
     text: string
+    errorType: string
+    status?: number
+    provider?: string
+    model?: string
     kind?: "free-limit"
     resetAt?: number
   }> {}

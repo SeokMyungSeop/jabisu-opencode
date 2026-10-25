@@ -460,6 +460,9 @@ export const dict = {
   "error.page.circular": "[Circular]",
   "error.page.report.prefix": "Please report this error to the OpenCode team",
   "error.page.report.discord": "on Discord",
+  "error.page.report.jabisu": "Please let Jabisu know about this error:",
+  "error.page.report.form": "Report form",
+  "error.page.report.captured": "Saved a screenshot of this window to {{file}}. Attach it in the form if you want to.",
   "error.page.version": "Version: {{version}}",
 
   "error.dev.rootNotFound":

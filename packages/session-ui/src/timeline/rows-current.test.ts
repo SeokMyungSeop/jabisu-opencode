@@ -1368,7 +1368,11 @@ describe("current session timeline rows", () => {
     const preStepRows = Timeline.constructSessionMessageRows(preStep, true, { type: "idle" }).rows
     expect(preStepRows.map((row) => row._tag)).toEqual(["UserMessage", "Error", "Notice"])
     expect(preStepRows[1]).toEqual(
-      new TimelineRow.Error({ userMessageID: "msg_user", text: "Model unavailable: opencode/gpt-5.2" }),
+      new TimelineRow.Error({
+        userMessageID: "msg_user",
+        text: "Model unavailable: opencode/gpt-5.2",
+        errorType: "provider.no-route",
+      }),
     )
 
     const betweenSteps = [
@@ -1447,6 +1451,7 @@ describe("current session timeline rows", () => {
       new TimelineRow.Error({
         userMessageID: "msg_user",
         text: "Execution was interrupted repeatedly and will not be resumed automatically.",
+        errorType: "aborted",
       }),
     )
   })
@@ -1475,13 +1480,19 @@ describe("current session timeline rows", () => {
 
     const quota = [
       user,
-      { ...assistant, error: { type: "provider.quota", message: "Go usage limit exceeded", retryAfterMs: 60_000 } },
+      {
+        ...assistant,
+        error: { type: "provider.quota", message: "Go usage limit exceeded", status: 429, retryAfterMs: 60_000 },
+      },
     ] satisfies SessionMessageInfo[]
 
     expect(Timeline.constructSessionMessageRows(step, true, { type: "idle" }).rows.at(-1)).toEqual(
       new TimelineRow.Error({
         userMessageID: "msg_user",
         text: "Free usage limit reached.",
+        errorType: "provider.free-limit",
+        provider: "opencode",
+        model: "big-pickle",
         kind: "free-limit",
         resetAt: 61_000,
       }),
@@ -1500,11 +1511,21 @@ describe("current session timeline rows", () => {
       new TimelineRow.Error({
         userMessageID: "msg_user",
         text: "Free usage limit reached.",
+        errorType: "provider.free-limit",
+        provider: "opencode",
+        model: "big-pickle",
         kind: "free-limit",
       }),
     )
     expect(Timeline.constructSessionMessageRows(quota, true, { type: "idle" }).rows.at(-1)).toEqual(
-      new TimelineRow.Error({ userMessageID: "msg_user", text: "Go usage limit exceeded" }),
+      new TimelineRow.Error({
+        userMessageID: "msg_user",
+        text: "Go usage limit exceeded",
+        errorType: "provider.quota",
+        status: 429,
+        provider: "opencode",
+        model: "big-pickle",
+      }),
     )
   })
 

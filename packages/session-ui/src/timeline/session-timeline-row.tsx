@@ -78,6 +78,8 @@ export function createSessionTimelineRowRenderer(input: {
   centered?: Accessor<boolean>
   padding?: Accessor<string>
   anchor?: (messageID: string) => string | undefined
+  /** Content the host shows under a failure's error card, such as advice on fixing it. */
+  errorDetail?: (error: TimelineRow.Error) => JSX.Element
 }) {
   const i18n = useI18n()
   const data = useData()
@@ -1031,7 +1033,15 @@ export function createSessionTimelineRowRenderer(input: {
     return (
       <Frame row={current()}>
         <div data-slot="session-turn-message-container" class={`w-full ${padding()}`}>
-          <Show when={freeLimit()} fallback={<SessionError message={current().text} />}>
+          <Show
+            when={freeLimit()}
+            fallback={
+              <>
+                <SessionError message={current().text} />
+                {input.errorDetail?.(current())}
+              </>
+            }
+          >
             {(text) => (
               <div
                 role="status"

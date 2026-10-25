@@ -251,6 +251,9 @@ export const dict = {
   "error.page.action.updateTo": "{{version}} 버전으로 업데이트",
   "error.page.report.prefix": "이 오류를 OpenCode 팀에 제보해 주세요: ",
   "error.page.report.discord": "Discord",
+  "error.page.report.jabisu": "이 오류를 자비수에 알려 주세요:",
+  "error.page.report.form": "오류 신고 양식",
+  "error.page.report.captured": "이 창을 캡처해 {{file}}에 저장했습니다. 원하면 양식에 올려 주세요.",
   "error.page.version": "버전: {{version}}",
   "error.dev.rootNotFound":
     "루트 요소를 찾을 수 없습니다. index.html에 추가하는 것을 잊으셨나요? 또는 id 속성의 철자가 틀렸을 수 있습니다.",
@@ -586,6 +589,8 @@ export const dict = {
   "desktop.menu.supportForum": "지원 포럼",
   "desktop.menu.shareFeedback": "피드백 보내기",
   "desktop.menu.reportBug": "버그 신고",
+  "desktop.menu.jabisuGuide": "자비수 안내",
+  "desktop.menu.reportError": "오류 신고",
   "desktop.menu.ariaLabel": "OpenCode 메뉴",
 
   "desktop.recovery.action.relaunch": "다시 실행",

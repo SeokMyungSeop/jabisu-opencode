@@ -5,6 +5,8 @@ import { Button } from "@opencode/ui/button"
 import { Component, createSignal, onCleanup, onMount, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Predicate } from "effect"
+import { environment, formUrl, system } from "@opencode/gui-extensions/support"
+import { Capture } from "@opencode/gui-extensions/support/capture"
 import { Updater } from "@opencode/gui-extensions/updater"
 import { usePlatform } from "@/runtime/platform/platform"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -295,6 +297,25 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
   onCleanup(ipcs.dispose)
   const updater = () => ipcs.typed(Updater)
 
+  // 자비수 saves a picture of the window for the report before the browser covers it.
+  const [captured, setCaptured] = createSignal<string>()
+
+  async function reportToJabisu() {
+    const file = await ipcs
+      .typed(Capture)
+      ?.window()
+      .catch(() => null)
+
+    if (file) setCaptured(file)
+    platform.openExternal(
+      formUrl({
+        kind: "report",
+        error: formattedError(),
+        environment: environment({ version: platform.version ?? "", system: system(navigator.userAgent) }),
+      }),
+    )
+  }
+
   async function checkForUpdates() {
     const state = await updater()?.check()
     setStore("actionError", state?.status === "error" ? state.message : undefined)
@@ -408,17 +429,37 @@ export const ErrorPage: Component<ErrorPageProps> = (props) => {
           {(message) => <p class="text-xs text-text-danger-base text-center max-w-2xl">{message()}</p>}
         </Show>
         <div class="flex flex-col items-center gap-2 text-xs text-center">
-          <div class="flex flex-wrap items-center justify-center gap-1">
-            {language.t("error.page.report.prefix")}
-            <button
-              type="button"
-              class="flex items-center text-text-interactive-base gap-1"
-              onClick={() => platform.openExternal("https://opencode.ai/desktop-feedback")}
-            >
-              <div>{language.t("error.page.report.discord")}</div>
-              <Icon name="discord" class="text-text-interactive-base" />
-            </button>
-          </div>
+          {/* 자비수 takes reports through its own questionnaire, filled in with this error. */}
+          <Show
+            when={import.meta.env.VITE_OPENCODE_CHANNEL === "jabisu"}
+            fallback={
+              <div class="flex flex-wrap items-center justify-center gap-1">
+                {language.t("error.page.report.prefix")}
+                <button
+                  type="button"
+                  class="flex items-center text-text-interactive-base gap-1"
+                  onClick={() => platform.openExternal("https://opencode.ai/desktop-feedback")}
+                >
+                  <div>{language.t("error.page.report.discord")}</div>
+                  <Icon name="discord" class="text-text-interactive-base" />
+                </button>
+              </div>
+            }
+          >
+            <div class="flex flex-wrap items-center justify-center gap-1">
+              {language.t("error.page.report.jabisu")}
+              <button
+                type="button"
+                class="flex items-center text-text-interactive-base gap-1"
+                onClick={() => void reportToJabisu()}
+              >
+                {language.t("error.page.report.form")}
+              </button>
+            </div>
+            <Show when={captured()}>
+              {(file) => <p class="text-xs text-text-weak">{language.t("error.page.report.captured", { file: file() })}</p>}
+            </Show>
+          </Show>
           <Show when={platform.version}>
             {(version) => (
               <p class="text-xs text-text-weak">{language.t("error.page.version", { version: version() })}</p>

@@ -574,6 +574,29 @@ export interface SlotMap {
     /** The routed session; a new object when another session is routed. */
     readonly session: MountedSession
   }
+  /** Under the error card of a turn that failed. */
+  readonly "session.error": {
+    /** The timeline's owning session screen. */
+    readonly screen: SessionScreen
+    /** The timeline's session. */
+    readonly session: MountedSession
+    /** The failure the card shows. */
+    readonly error: SessionFailure
+  }
+}
+
+/** A turn's failure as the session recorded it. */
+export interface SessionFailure {
+  /** The text the error card shows. */
+  readonly message: string
+  /** The engine's failure type, such as `provider.auth` or `provider.rate-limit`. */
+  readonly type: string
+  /** The provider's HTTP status, when it answered with one. */
+  readonly status?: number
+  /** The provider of the failed step, when a step recorded the failure. */
+  readonly provider?: string
+  /** The model of the failed step, when a step recorded the failure. */
+  readonly model?: string
 }
 
 /** Content for one of the host's slots, typed by `at`. */

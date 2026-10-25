@@ -272,7 +272,14 @@ export const DESKTOP_MENU: DesktopMenu[] = [
   {
     id: "help",
     labelKey: "desktop.menu.help",
-    items: [
+    // 자비수's own guide and report questionnaire, from its `support` extension, replace OpenCode's links.
+    items: import.meta.env.VITE_OPENCODE_CHANNEL === "jabisu" ? [
+      { type: "item", labelKey: "desktop.menu.jabisuGuide", command: "support.guide" },
+      { type: "item", labelKey: "desktop.menu.exportLogs", command: "logs.export" },
+      { type: "separator" },
+      { type: "item", labelKey: "desktop.menu.shareFeedback", command: "support.feedback" },
+      { type: "item", labelKey: "desktop.menu.reportError", command: "support.report" },
+    ] : [
       { type: "item", labelKey: "desktop.menu.documentation", href: "https://opencode.ai/docs" },
       { type: "item", labelKey: "desktop.menu.supportForum", href: "https://discord.com/invite/opencode" },
       { type: "item", labelKey: "desktop.menu.exportLogs", command: "logs.export" },

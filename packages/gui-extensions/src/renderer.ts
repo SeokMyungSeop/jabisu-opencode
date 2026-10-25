@@ -31,6 +31,8 @@ import transcription from "./transcription"
 import transcriptionRenderer from "./transcription/renderer"
 import jiphyeonjeon from "./jiphyeonjeon"
 import jiphyeonjeonRenderer from "./jiphyeonjeon/renderer"
+import support from "./support"
+import supportRenderer from "./support/renderer"
 
 // The window renders once every built-in is active, so the small renderer entries load with the app, like the
 // features they replaced. Heavy UI stays behind `lazy()` inside them.
@@ -58,4 +60,5 @@ export const builtins = Extension.compose(
   { ...documentText, renderer: eager(documentTextRenderer) },
   { ...transcription, renderer: eager(transcriptionRenderer) },
   { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
+  { ...support, renderer: eager(supportRenderer) },
 )

@@ -567,6 +567,9 @@ export namespace Timeline {
           new TimelineRow.Error({
             userMessageID: turnID,
             text: unwrapErrorMessage(lastAssistant.error.message),
+            ...failure(lastAssistant.error),
+            provider: lastAssistant.model.providerID,
+            model: lastAssistant.model.id,
             ...freeLimit(lastAssistant),
           }),
         )
@@ -588,6 +591,7 @@ export namespace Timeline {
               new TimelineRow.Error({
                 userMessageID: turnID,
                 text: unwrapErrorMessage(entry.message.error.message),
+                ...failure(entry.message.error),
                 ...freeLimit(entry.message),
               }),
             )
@@ -640,6 +644,10 @@ export namespace Timeline {
 }
 
 const MAX_RETRY_AFTER_MS = 7 * 86_400_000
+
+function failure(error: NonNullable<SessionMessageAssistant["error"]>) {
+  return error.status === undefined ? { errorType: error.type } : { errorType: error.type, status: error.status }
+}
 
 function freeLimit(
   message: Pick<SessionMessageAssistant, "error"> & { time: { created: number; completed?: number } },

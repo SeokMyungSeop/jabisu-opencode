@@ -314,6 +314,26 @@ function MessageTimelineView(
     centered: () => props.centered,
     padding: turnPadding,
     anchor: props.anchor,
+    errorDetail: (error) => (
+      <ExtensionSlot
+        at="session.error"
+        input={{
+          get session() {
+            return props.view
+          },
+          get screen() {
+            return props.screen
+          },
+          error: {
+            message: error.text,
+            type: error.errorType,
+            status: error.status,
+            provider: error.provider,
+            model: error.model,
+          },
+        }}
+      />
+    ),
   })
 
   const backgroundHintPartID = createMemo(() => {

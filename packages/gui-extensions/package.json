@@ -11,7 +11,9 @@
     "./sdk": "./src/sdk/index.ts",
     "./sdk/main": "./src/sdk/main.ts",
     "./sdk/bridge": "./src/sdk/bridge.ts",
-    "./updater": "./src/updater/contract.ts"
+    "./updater": "./src/updater/contract.ts",
+    "./support": "./src/support/form.ts",
+    "./support/capture": "./src/support/contract.ts"
   },
   "scripts": {
     "typecheck": "tsc -b",
