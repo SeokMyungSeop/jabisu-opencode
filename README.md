@@ -63,6 +63,12 @@
 | `xlsx` | 엑셀(.xlsx) 표를 서식·수식·차트와 함께 만들어요 |
 | `pptx` | 파워포인트(.pptx) 발표 자료를 만들어요 |
 
+다른 프로그램을 대신 움직이는 스킬도 있어요.
+
+| 스킬 | 하는 일 |
+|---|---|
+| `craft-apps` | PC에 깔린 Craft 앱(FilmCraft 영상, SoundCraft 소리, PhotoCraft 사진, LightCraft RAW 사진, PdfCraft PDF 등)을 명령줄로 움직여 편집해요. "회의.mp4 앞 3초 자르고 자막 넣어 MP4로"처럼 말하면 원본은 두고 새 파일을 만들어요 |
+
 같은 이름의 스킬을 직접 설치하면 그쪽이 쓰여요. 입력창에 `@`를 치면 스킬 목록이 나와요(`/`는 명령 목록이에요).
 
 ### 필요한 프로그램
@@ -74,13 +80,19 @@
 | [Python](https://www.python.org/downloads/) 3.10 이상 | 위의 문서 **만들기** 스킬을 쓸 때 | AI가 먼저 "Python을 설치할까요?" 하고 묻고, 허락하면 Windows 기본 도구(winget)로 설치해요 |
 | 문서용 Python 부품 (python-docx, openpyxl, python-pptx, python-hwpx 등) | 문서 만들기 스킬을 처음 쓸 때 | 필요한 것만 AI가 묻고 허락받아 설치해요. `%USERPROFILE%\.local\share\opencode\jabisu\python`에 따로 두어서 시스템 Python을 건드리지 않고, 업데이트해도 남아요 |
 | [Git](https://git-scm.com/) | 코드 프로젝트의 변경 기록·작업 공간 기능을 쓸 때 | 문서 작업에는 영향이 없어요 |
+| Craft 앱 (FilmCraft 등) | 영상·소리·사진·PDF 편집을 맡길 때 (`craft-apps` 스킬, filmcraft MCP) | 그 편집만 못 해요. 자비수가 대신 설치하지 않아요 |
 
 파일 검색 도구(ripgrep)는 처음 쓸 때 자비수가 알아서 받아요.
 
-**Context7 MCP**(라이브러리 최신 문서 찾아보기)도 들어 있지만 **꺼진 상태**예요. 쓰면 질문 내용이 Context7 서버로 전송되기 때문이에요.
+MCP 서버도 두 개 들어 있지만 둘 다 **꺼진 상태**예요. 켜 두면 질문할 때마다 그 도구 설명이 AI에게 함께 가서 비용이 조금 늘고, Context7은 질문 내용이 그 서버로 전송되기 때문이에요.
 
-- 잠깐 쓰기: **설정 → 확장 → MCP**에서 켜요. 앱을 다시 켜면 다시 꺼져요.
-- 늘 켜 두기: 설정 파일 `~/.config/opencode/opencode.jsonc`의 `mcp`에 아래를 넣어요.
+| MCP | 하는 일 |
+|---|---|
+| **Context7** | 라이브러리 최신 문서를 찾아봐요 |
+| **filmcraft** | 열려 있는 FilmCraft 화면을 보면서 클릭·드래그로 편집해요. FilmCraft가 깔려 있을 때만 목록에 나와요. 원격 조종은 이 PC 안에서만 되고, 자비수가 만든 비밀 값이 있어야 연결돼요 |
+
+- 잠깐 쓰기: **Ctrl+;**(또는 입력창에 `/mcp`)를 눌러 켜요. 앱을 다시 켜면 다시 꺼져요.
+- 늘 켜 두기(Context7): 설정 파일 `~/.config/opencode/opencode.jsonc`의 `mcp`에 아래를 넣어요.
 
 ```jsonc
 "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp", "enabled": true }
@@ -139,4 +151,5 @@ git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려�
 - 기본 스킬 6개는 [mattpocock/skills](https://github.com/mattpocock/skills)(MIT, © Matt Pocock)에서 가져왔어요. 설치 폴더에 그 라이선스(`LICENSE.mattpocock-skills.txt`)가 함께 들어 있어요.
 - `hwpx` 스킬은 jkf87의 hwpx-skill(MIT)을 Windows와 자비수에 맞게 고친 것이에요(`LICENSE.hwpx-skill.txt`).
 - 문서 읽기에는 [SheetJS](https://sheetjs.com)(Apache-2.0), [unpdf](https://github.com/unjs/unpdf)(MIT)와 그 안의 PDF.js(Apache-2.0), 한글 문서용 [kordoc](https://github.com/chrisryugj/kordoc)(MIT, © chrisryugj)을 써요(`LICENSE.document-libraries.txt`).
+- Craft 앱(FilmCraft, PdfCraft 등)은 Learning Machines LLC의 별도 제품이에요. 자비수에 들어 있지 않고, 사용자가 설치한 앱의 명령줄 도구를 불러 쓸 뿐이에요.
 - 자비수 이름, 아이콘, 글자 디자인: 명상(明想)
