@@ -17,7 +17,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.3.3-x64.exe`)를 내려받아요.
+1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.3.4-x64.exe`)를 내려받아요.
 2. 내려받은 파일을 실행하면 바로 설치되고, 바탕화면과 시작 메뉴에 **자비수**가 생겨요.
 
 - Windows 10/11 64비트용이에요. 관리자 권한 없이 내 사용자 폴더에 설치돼요.
@@ -42,6 +42,7 @@
 | 집현전 | 자료를 모아 두고 그 자료로 묻고 답해요. 홈 화면의 **집현전**에서 만들고 파일을 끌어다 넣으면, 자료에 맞는 지침(역할·맥락·작업·답변 양식)을 알아서 써 줘요. 대화 옆 **자료** 칸에서 자료를 보고, 답에 붙은 `[파일 · 3쪽]` 같은 출처를 누르면 그 파일이 열려요. 자료에 없는 질문은 없다고 하고 웹을 찾아볼지 물어요. 자료는 `문서\자비수 집현전`에 있고, 탐색기에서 그 폴더의 `자료`에 파일을 넣어도 저절로 반영돼요 |
 | 오류 안내와 신고 | 흔한 오류(API 키, 충전 금액, 요청 한도, 인터넷 연결, 모델 문제 등) 아래에 무엇을 하면 되는지 한국어로 알려 줘요. **오류 신고** 단추나 **도움말 → 오류 신고 · 피드백 보내기**를 누르면 버전과 오류 내용이 채워진 신고 양식(구글 설문지)이 브라우저에서 열려요. 그때 자비수 창을 캡처해 `사진\자비수 오류 캡처`에 저장하고 클립보드에도 복사해 두니, 원하면 양식에 올려요(구글 로그인이 필요하고, 올리면 구글 계정 이름과 이메일이 함께 기록돼요). 직접 보내기 전에는 아무것도 전송되지 않아요 |
 | Craft 앱으로 편집 | PC에 Craft 앱(Learning Machines의 FilmCraft 영상, SoundCraft 소리, PhotoCraft 사진, PdfCraft PDF 등)이 깔려 있으면, "회의.mp4 앞 3초 자르고 자막 넣어 MP4로"처럼 말해서 편집을 맡겨요. 앱 화면 없이 뒤에서 처리하고 원본은 그대로 둬요. FilmCraft는 **Ctrl+;**(또는 `/mcp`)에서 「filmcraft」를 켜면 열려 있는 FilmCraft 화면을 보면서 조종해요(켜 둔 동안 질문마다 비용이 조금 늘어요). Craft 앱은 따로 설치해야 해요 |
+| 기본 스킬 고쳐 쓰기 | **설정 → 일반 → 기본 스킬**에서 기본 스킬을 **내 스킬로 복사**해 고쳐 써요. 업데이트해도 고친 내용이 남고, 업데이트로 그 기본 스킬이 바뀌면 계속 쓸지 물어봐요([자세히](#기본-스킬-고쳐-쓰기)) |
 
 ## 기본으로 들어 있는 스킬과 MCP
 
@@ -69,7 +70,20 @@
 |---|---|
 | `craft-apps` | PC에 깔린 Craft 앱(FilmCraft 영상, SoundCraft 소리, PhotoCraft 사진, LightCraft RAW 사진, PdfCraft PDF 등)을 명령줄로 움직여 편집해요. "회의.mp4 앞 3초 자르고 자막 넣어 MP4로"처럼 말하면 원본은 두고 새 파일을 만들어요 |
 
-같은 이름의 스킬을 직접 설치하면 그쪽이 쓰여요. 입력창에 `@`를 치면 스킬 목록이 나와요(`/`는 명령 목록이에요).
+입력창에 `@`를 치면 스킬 목록이 나와요(`/`는 명령 목록이에요).
+
+### 기본 스킬 고쳐 쓰기
+
+기본 스킬은 업데이트할 때마다 새로 풀리기 때문에, 풀린 파일을 직접 고치면 고친 내용이 사라져요. 고쳐 쓰려면 이렇게 해요.
+
+1. **설정 → 일반 → 기본 스킬**에서 고칠 스킬의 **내 스킬로 복사**를 눌러요.
+2. 내 스킬 폴더(`%USERPROFILE%\.config\opencode\skills\<이름>`)에 복사된 파일을 고쳐요. 같은 이름이면 내 스킬이 기본 스킬 대신 쓰이고, 업데이트해도 그대로 남아요.
+3. 나중에 업데이트로 그 기본 스킬이 바뀌면 자비수가 물어봐요.
+   - **고친 스킬 계속 쓰기(추천)**: 고친 내용이 그대로 쓰여요. 새 기본판의 개선은 들어오지 않아요.
+   - **새 기본 스킬로 바꾸기**: 새 기본판을 써요. 고친 스킬은 `%USERPROFILE%\.config\opencode\skills-backup`에 옮겨 두니 다시 꺼내 쓸 수 있어요.
+   - **나중에**: 다음에 켤 때 다시 물어요. 설정의 **기본 스킬**에서 하나씩 고를 수도 있어요.
+
+내 스킬 폴더는 공식 OpenCode도 함께 읽어서, 거기서도 그 스킬이 보여요.
 
 ### 필요한 프로그램
 
@@ -112,6 +126,8 @@ MCP 서버도 두 개 들어 있지만 둘 다 **꺼진 상태**예요. 켜 두�
 | 프로그램 | `%LOCALAPPDATA%\Programs\jabisu` |
 | 대화 기록 | `%USERPROFILE%\.local\share\opencode\opencode-jabisu.db` |
 | 앱 설정 | `%APPDATA%\io.github.seokmyungseop.jabisu` |
+| 내 스킬 (고쳐 쓰는 스킬) | `%USERPROFILE%\.config\opencode\skills` |
+| 내 스킬 백업 | `%USERPROFILE%\.config\opencode\skills-backup` |
 
 지울 때는 **설정 → 앱 → 설치된 앱 → 자비수 → 제거**를 눌러요. 대화 기록 파일은 지워지지 않고 남아요.
 
@@ -124,7 +140,7 @@ git clone -b jabisu https://github.com/SeokMyungSeop/jabisu-opencode.git
 cd jabisu-opencode
 bun install
 
-export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.3.3
+export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.3.4
 export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 
 # 1. 엔진(CLI): 앱이 구형 CPU 호환판을 넣어요
@@ -134,7 +150,7 @@ export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 cd packages/desktop
 bun ./scripts/prepare.ts            # 엔진·아이콘을 넣고 package.json 버전을 바꿔요
 ./node_modules/.bin/electron-vite build
-bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.3.3-x64.exe
+bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.3.4-x64.exe
 git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려요
 ```
 
