@@ -43,6 +43,28 @@ export type JiphyeonjeonSource = typeof JiphyeonjeonSource.Type
 
 const NameQuery = Schema.Struct({ ...LocationQuery.fields, name: Schema.String })
 
+// `default`: no copy of the user's; `custom`: the user's copy of the current version, which replaces the bundled
+// skill; `changed`: the user's copy of an older version of a bundled skill that has changed since.
+export const JabisuSkill = Schema.Struct({
+  name: Schema.String,
+  description: Schema.String,
+  status: Schema.Literals(["default", "custom", "changed"]),
+  // The user's copy, when there is one.
+  directory: Schema.optional(Schema.String),
+}).annotate({ identifier: "JabisuSkill" })
+export type JabisuSkill = typeof JabisuSkill.Type
+
+export const JabisuSkillList = Schema.Struct({
+  // The user's skills folder, where copies go and updates never write.
+  folder: Schema.String,
+  // Where copies the user stopped using are moved.
+  backups: Schema.String,
+  skills: Schema.Array(JabisuSkill),
+}).annotate({ identifier: "JabisuSkillList" })
+export type JabisuSkillList = typeof JabisuSkillList.Type
+
+const SkillName = Schema.Struct({ name: Schema.String })
+
 export const JabisuGroup = HttpApiGroup.make("server.jabisu")
   .add(
     HttpApiEndpoint.get("jabisu.transcription.get", "/api/jabisu/transcription", {
@@ -153,6 +175,68 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           summary: "Suggest a 집현전's instructions",
           description:
             "Write instructions in P-C-T-F form from the 집현전's sources, with OpenRouter when asked or else the default model, without saving them.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.skills.list", "/api/jabisu/skills", {
+      query: LocationQuery,
+      success: JabisuSkillList,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.skills.list",
+          summary: "List bundled skills",
+          description: "Return each bundled skill and whether the user's own copy replaces it.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.skills.copy", "/api/jabisu/skills/copy", {
+      query: LocationQuery,
+      payload: SkillName,
+      success: JabisuSkillList,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.skills.copy",
+          summary: "Copy a bundled skill",
+          description: "Copy a bundled skill into the user's skills folder, where it replaces the bundled one.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.skills.keep", "/api/jabisu/skills/keep", {
+      query: LocationQuery,
+      payload: SkillName,
+      success: JabisuSkillList,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.skills.keep",
+          summary: "Keep a copied skill",
+          description: "Keep the user's copy after its bundled skill changed, so the change is not offered again.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.skills.reset", "/api/jabisu/skills/reset", {
+      query: LocationQuery,
+      payload: SkillName,
+      success: Schema.Struct({ backup: Schema.String, list: JabisuSkillList }),
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.skills.reset",
+          summary: "Use a bundled skill again",
+          description: "Move the user's copy of a bundled skill into the backup folder, so the bundled one is used.",
         }),
       ),
   )

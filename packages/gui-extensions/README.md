@@ -678,6 +678,7 @@ export const builtins = Extension.compose(
   transcription,
   jiphyeonjeon,
   { ...support, main: () => import("./support/main") },
+  bundledSkills,
 )
 ```
 
@@ -708,6 +709,7 @@ export const builtins = Extension.compose(
   { ...transcription, renderer: eager(transcriptionRenderer) },
   { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
   { ...support, renderer: eager(supportRenderer) },
+  { ...bundledSkills, renderer: eager(bundledSkillsRenderer) },
 )
 ```
 

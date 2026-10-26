@@ -2,6 +2,7 @@ import { Generate } from "@opencode/core/generate"
 import { Integration } from "@opencode/core/integration"
 import { Plugin } from "@opencode/core/plugin"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
+import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { OpenRouter } from "@opencode/core/tool/openrouter"
 import { Transcribe } from "@opencode/core/tool/transcribe"
 import { InvalidRequestError } from "@opencode/protocol/errors"
@@ -84,6 +85,28 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
             Effect.mapError(invalid("jabisu_jiphyeonjeon")),
           )
           return { instructions }
+        }),
+      )
+      .handle("jabisu.skills.list", () => JabisuSkills.list({ fs, global }))
+      .handle("jabisu.skills.copy", (ctx) =>
+        JabisuSkills.copy({ fs, global }, ctx.payload.name).pipe(
+          Effect.andThen(JabisuSkills.list({ fs, global })),
+          Effect.mapError(invalid("jabisu_skills")),
+        ),
+      )
+      .handle("jabisu.skills.keep", (ctx) =>
+        JabisuSkills.keep({ fs, global }, ctx.payload.name).pipe(
+          Effect.andThen(JabisuSkills.list({ fs, global })),
+          Effect.mapError(invalid("jabisu_skills")),
+        ),
+      )
+      .handle(
+        "jabisu.skills.reset",
+        Effect.fn("server.jabisu.skills.reset")(function* (ctx) {
+          const backup = yield* JabisuSkills.reset({ fs, global }, ctx.payload.name, new Date()).pipe(
+            Effect.mapError(invalid("jabisu_skills")),
+          )
+          return { backup, list: yield* JabisuSkills.list({ fs, global }) }
         }),
       )
   }),

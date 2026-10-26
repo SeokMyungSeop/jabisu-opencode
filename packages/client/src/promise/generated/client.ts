@@ -293,6 +293,14 @@ import type {
   JabisuJiphyeonjeonSourcesOutput,
   JabisuJiphyeonjeonSuggestInput,
   JabisuJiphyeonjeonSuggestOutput,
+  JabisuSkillsListInput,
+  JabisuSkillsListOutput,
+  JabisuSkillsCopyInput,
+  JabisuSkillsCopyOutput,
+  JabisuSkillsKeepInput,
+  JabisuSkillsKeepOutput,
+  JabisuSkillsResetInput,
+  JabisuSkillsResetOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2433,6 +2441,59 @@ export function make(options: ClientOptions) {
               path: `/api/jabisu/jiphyeonjeon/suggest`,
               query: { location: input["location"] },
               body: { name: input["name"], openrouter: input["openrouter"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      skills: {
+        list: (input?: JabisuSkillsListInput, requestOptions?: RequestOptions) =>
+          request<JabisuSkillsListOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/skills`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        copy: (input: JabisuSkillsCopyInput, requestOptions?: RequestOptions) =>
+          request<JabisuSkillsCopyOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/skills/copy`,
+              query: { location: input["location"] },
+              body: { name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        keep: (input: JabisuSkillsKeepInput, requestOptions?: RequestOptions) =>
+          request<JabisuSkillsKeepOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/skills/keep`,
+              query: { location: input["location"] },
+              body: { name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        reset: (input: JabisuSkillsResetInput, requestOptions?: RequestOptions) =>
+          request<JabisuSkillsResetOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/skills/reset`,
+              query: { location: input["location"] },
+              body: { name: input["name"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,

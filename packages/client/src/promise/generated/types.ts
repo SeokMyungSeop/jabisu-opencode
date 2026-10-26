@@ -330,6 +330,13 @@ export type JiphyeonjeonSource = {
   reason?: string | undefined
 }
 
+export type JabisuSkill = {
+  name: string
+  description: string
+  status: "default" | "custom" | "changed"
+  directory?: string | undefined
+}
+
 export type LocationPublicRef = { directory: AbsolutePath }
 
 export type FileSystemWrite = { path: AbsolutePath }
@@ -881,6 +888,8 @@ export type ConfigModelCapabilities = {
 }
 
 export type JiphyeonjeonList = { root: string; items: Array<Jiphyeonjeon>; openrouter: boolean; suggestModel: string }
+
+export type JabisuSkillList = { folder: string; backups: string; skills: Array<JabisuSkill> }
 
 export type SessionMessageLocationSwitched = {
   id: SessionMessageID
@@ -6117,3 +6126,30 @@ export type JabisuJiphyeonjeonSuggestInput = {
 }
 
 export type JabisuJiphyeonjeonSuggestOutput = { instructions: string }
+
+export type JabisuSkillsListInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuSkillsListOutput = JabisuSkillList
+
+export type JabisuSkillsCopyInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string }["name"]
+}
+
+export type JabisuSkillsCopyOutput = JabisuSkillList
+
+export type JabisuSkillsKeepInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string }["name"]
+}
+
+export type JabisuSkillsKeepOutput = JabisuSkillList
+
+export type JabisuSkillsResetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string }["name"]
+}
+
+export type JabisuSkillsResetOutput = { backup: string; list: JabisuSkillList }

@@ -1,0 +1,28 @@
+export default {
+  section: "기본 스킬",
+  intro:
+    "자비수에 들어 있는 스킬입니다. 고쳐 쓰려면 「내 스킬로 복사」를 누르고 내 스킬 폴더의 파일을 고치세요. 같은 이름이면 내 스킬이 기본 스킬 대신 쓰이고, 업데이트해도 그대로 남습니다. 나중에 자비수가 그 스킬을 바꾸면 계속 쓸지 물어봅니다.",
+  "folder.title": "내 스킬 폴더",
+  "folder.description": "{{folder}}",
+  "status.default": "기본",
+  "status.custom": "내 스킬 사용 중",
+  "status.changed": "새 기본판 있음",
+  "action.copy": "내 스킬로 복사",
+  "action.keep": "계속 쓰기",
+  "action.reset": "기본으로 되돌리기",
+  "action.open": "폴더 열기",
+  "copied.title": "내 스킬 폴더에 복사했습니다",
+  "copied.description": "{{name}} 폴더의 SKILL.md를 고쳐 쓰세요. 이제 이 복사본이 쓰입니다.",
+  "reset.title": "기본 스킬로 되돌렸습니다",
+  "reset.description": "고친 스킬은 {{backup}}에 옮겨 두었습니다.",
+  failed: "스킬을 바꾸지 못했습니다",
+  "prompt.title": "기본 스킬이 새로 바뀌었습니다",
+  "prompt.description": "고쳐 쓰던 스킬의 기본판이 이번 업데이트에서 바뀌었습니다: {{names}}",
+  "prompt.keep": "고친 스킬 계속 쓰기(추천): 내가 고친 내용이 그대로 쓰입니다. 새 기본판의 개선은 들어오지 않습니다.",
+  "prompt.reset":
+    "새 기본 스킬로 바꾸기: 새 기본판을 씁니다. 고친 스킬은 {{backups}}에 옮겨 두니 나중에 다시 꺼낼 수 있습니다.",
+  "prompt.settings": "설정 → 일반 → 기본 스킬에서 하나씩 고를 수도 있습니다.",
+  "prompt.later": "나중에",
+  "prompt.useNew": "새 기본 스킬로 바꾸기",
+  "prompt.keepAll": "고친 스킬 계속 쓰기 (추천)",
+}

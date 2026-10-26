@@ -6,6 +6,7 @@ import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
+import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { Location } from "@opencode/core/location"
 import { AbsolutePath } from "@opencode/core/schema"
@@ -22,11 +23,18 @@ const it = testEffect(AppNodeBuilder.build(LayerNode.group([Skill.node, FSUtil.n
 
 // Runs the plugin on one channel over the given configured MCP servers, with its cache in a temporary directory, at
 // the given Location directory or the host's default one.
-const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>, directory?: string) =>
+const run = (
+  channel: string,
+  servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>,
+  directory?: string,
+  folders: { readonly cache?: string; readonly config?: string } = {},
+) =>
   Effect.gen(function* () {
     const skill = yield* Skill.Service
-    const cache = (yield* tmpdirScoped()).path
+    const cache = folders.cache ?? (yield* tmpdirScoped()).path
     const data = (yield* tmpdirScoped()).path
+    // The plugin reads the user's skills folder under config, so the test never sees the real one.
+    const config = folders.config ?? (yield* tmpdirScoped()).path
     const base = host()
     const tools: string[] = []
 
@@ -79,10 +87,12 @@ const run = (channel: string, servers: Record<string, Types.DeepMutable<Mcp.Serv
             }),
         },
       }),
-    ).pipe(Effect.provideService(Global.Service, Global.make({ cache, data })))
+    ).pipe(Effect.provideService(Global.Service, Global.make({ cache, data, config })))
 
-    return { skills: yield* skill.list(), servers, data, tools }
+    return { skills: yield* skill.list(), servers, data, cache, config, tools }
   })
+
+const runWithCache = (cache?: string, config?: string) => run("jabisu", {}, undefined, { cache, config })
 
 const source = (file: string) => path.join(import.meta.dirname, "../../src/plugin/jabisu", file)
 
@@ -209,6 +219,47 @@ describe("JabisuPlugin.Plugin", () => {
 
       expect(servers.filmcraft).toBeUndefined()
       expect(yield* Effect.promise(() => fs.access(FilmCraft.tokenFile(data)).then(() => true, () => false))).toBe(false)
+    }),
+  )
+
+  it.live("removes earlier versions' skill folders a day after they were written", () =>
+    Effect.gen(function* () {
+      const cache = (yield* tmpdirScoped()).path
+      const old = path.join(cache, "skills", "jabisu-old")
+      const recent = path.join(cache, "skills", "jabisu-recent")
+      const other = path.join(cache, "skills", "someone-else")
+
+      for (const directory of [old, recent, other])
+        yield* Effect.promise(() => fs.mkdir(directory, { recursive: true }))
+      const twoDaysAgo = new Date(Date.now() - 2 * 86_400_000)
+      yield* Effect.promise(() => fs.utimes(old, twoDaysAgo, twoDaysAgo))
+      yield* Effect.promise(() => fs.utimes(other, twoDaysAgo, twoDaysAgo))
+
+      yield* runWithCache(cache)
+      const left = (yield* Effect.promise(() => fs.readdir(path.join(cache, "skills")))).toSorted()
+
+      expect(left.filter((name) => name !== "jabisu-old")).toEqual(left)
+      expect(left).toContain("jabisu-recent")
+      expect(left).toContain("someone-else")
+      expect(left.filter((name) => name.startsWith("jabisu-")).length).toBe(2)
+    }),
+  )
+
+  it.live("keeps configured copies of bundled skills and records their base version", () =>
+    Effect.gen(function* () {
+      const config = (yield* tmpdirScoped()).path
+      const copy = path.join(config, "skills", "docx", "SKILL.md")
+
+      yield* Effect.promise(() => fs.mkdir(path.dirname(copy), { recursive: true }))
+      yield* Effect.promise(() => fs.writeFile(copy, "---\nname: docx\ndescription: my own\n---\n\n내 워드 스킬\n"))
+      const { data } = yield* runWithCache(undefined, config)
+
+      const base = yield* Effect.promise(() => fs.readFile(path.join(path.dirname(copy), JabisuSkills.BASE), "utf8"))
+      const bundled = JabisuSkills.bundled(
+        yield* JabisuSkills.files({ fs: yield* FSUtil.Service, global: Global.make({ config, data }) }),
+      )
+
+      expect(base).toBe(bundled.find((skill) => skill.name === "docx")?.version ?? "")
     }),
   )
 

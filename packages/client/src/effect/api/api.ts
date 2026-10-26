@@ -2445,6 +2445,78 @@ export type JabisuJiphyeonjeonSuggestOperation<E = never> = (
   input: JabisuJiphyeonjeonSuggestInput,
 ) => Effect.Effect<JabisuJiphyeonjeonSuggestOutput, E>
 
+export type JabisuSkillsListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type JabisuSkillsListOutput = {
+  readonly folder: string
+  readonly backups: string
+  readonly skills: ReadonlyArray<{
+    readonly name: string
+    readonly description: string
+    readonly status: "default" | "custom" | "changed"
+    readonly directory?: string | undefined
+  }>
+}
+export type JabisuSkillsListOperation<E = never> = (
+  input?: JabisuSkillsListInput,
+) => Effect.Effect<JabisuSkillsListOutput, E>
+
+export type JabisuSkillsCopyInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+}
+export type JabisuSkillsCopyOutput = {
+  readonly folder: string
+  readonly backups: string
+  readonly skills: ReadonlyArray<{
+    readonly name: string
+    readonly description: string
+    readonly status: "default" | "custom" | "changed"
+    readonly directory?: string | undefined
+  }>
+}
+export type JabisuSkillsCopyOperation<E = never> = (
+  input: JabisuSkillsCopyInput,
+) => Effect.Effect<JabisuSkillsCopyOutput, E>
+
+export type JabisuSkillsKeepInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+}
+export type JabisuSkillsKeepOutput = {
+  readonly folder: string
+  readonly backups: string
+  readonly skills: ReadonlyArray<{
+    readonly name: string
+    readonly description: string
+    readonly status: "default" | "custom" | "changed"
+    readonly directory?: string | undefined
+  }>
+}
+export type JabisuSkillsKeepOperation<E = never> = (
+  input: JabisuSkillsKeepInput,
+) => Effect.Effect<JabisuSkillsKeepOutput, E>
+
+export type JabisuSkillsResetInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+}
+export type JabisuSkillsResetOutput = {
+  readonly backup: string
+  readonly list: {
+    readonly folder: string
+    readonly backups: string
+    readonly skills: ReadonlyArray<{
+      readonly name: string
+      readonly description: string
+      readonly status: "default" | "custom" | "changed"
+      readonly directory?: string | undefined
+    }>
+  }
+}
+export type JabisuSkillsResetOperation<E = never> = (
+  input: JabisuSkillsResetInput,
+) => Effect.Effect<JabisuSkillsResetOutput, E>
+
 export interface JabisuApi<E = never> {
   readonly transcription: {
     readonly get: JabisuTranscriptionGetOperation<E>
@@ -2456,6 +2528,12 @@ export interface JabisuApi<E = never> {
     readonly instruct: JabisuJiphyeonjeonInstructOperation<E>
     readonly sources: JabisuJiphyeonjeonSourcesOperation<E>
     readonly suggest: JabisuJiphyeonjeonSuggestOperation<E>
+  }
+  readonly skills: {
+    readonly list: JabisuSkillsListOperation<E>
+    readonly copy: JabisuSkillsCopyOperation<E>
+    readonly keep: JabisuSkillsKeepOperation<E>
+    readonly reset: JabisuSkillsResetOperation<E>
   }
 }
 

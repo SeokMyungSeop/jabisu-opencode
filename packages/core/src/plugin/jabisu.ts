@@ -7,23 +7,21 @@ import { define } from "@opencode/plugin/effect/plugin"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
 import { Hash } from "@opencode/util/hash"
-import { Effect } from "effect"
+import { Effect, Option } from "effect"
 import path from "path"
 import { SkillFile } from "../config/plugin/skill-file.js"
-import { JabisuBundle } from "./jabisu/bundle.js"
 import { FilmCraft } from "./jabisu/filmcraft.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
+import { JabisuSkills } from "./jabisu/skills.js"
 import { SourceSearch } from "./jabisu/source-search.js"
-import pythonHelper from "./jabisu/python/jabisu_python.py" with { type: "text" }
-import pythonSetup from "./jabisu/python/python-setup.md" with { type: "text" }
 
 // 자비수(諮備秀) ships six of Matt Pocock's skills (mattpocock/skills 1.3.1, MIT — jabisu/LICENSE.mattpocock-skills),
 // the hwpx skill (jkf87/hwpx-skill, MIT — jabisu/LICENSE.hwpx-skill), its own docx, xlsx, pptx and craft-apps skills,
 // and offers Context7, and FilmCraft when it is installed, as MCP servers that stay off until the user turns them on.
 // Other channels get none of these.
 
-// The document skills share one Python package folder, which outlives the skill folder each update rewrites.
-const PYTHON_SKILLS = ["docx", "hwpx", "pptx", "xlsx"]
+// A folder another 자비수 version wrote may still be in use by that version for a while.
+const STALE_MS = 86_400_000
 
 export const Plugin = define({
   id: "jabisu.defaults",
@@ -31,28 +29,11 @@ export const Plugin = define({
     if (ctx.app.channel !== "jabisu") return
     const fs = yield* FSUtil.Service
     const global = yield* Global.Service
-    const helper = pythonHelper.replace("__JABISU_PYTHON__", path.join(global.data, "jabisu", "python"))
-    const filmcraftToken = FilmCraft.tokenFile(global.data)
-    const contents = [
-      // Binary files are embedded in the CLI, so failing to read one is a build defect.
-      ...(yield* Effect.forEach(JabisuBundle.files, (file) =>
-        Effect.gen(function* () {
-          return {
-            path: file.path,
-            content: "text" in file ? file.text : yield* fs.readFile(file.file).pipe(Effect.orDie),
-          }
-        }),
-      )),
-      ...PYTHON_SKILLS.flatMap((skill) => [
-        { path: `${skill}/scripts/jabisu_python.py`, content: helper },
-        { path: `${skill}/python-setup.md`, content: pythonSetup },
-      ]),
-      { path: "craft-apps/scripts/start-filmcraft.ps1", content: FilmCraft.launcher(filmcraftToken) },
-    ]
+    const contents = yield* JabisuSkills.files({ fs, global })
     // Skills point at their sibling files by relative path, so the bundle is written out once per content version.
+    const parent = path.join(global.cache, "skills")
     const root = path.join(
-      global.cache,
-      "skills",
+      parent,
       `jabisu-${Hash.fast(contents.map((file) => `${file.path}\0${Hash.fast(Buffer.from(file.content))}`).join("\0"))}`,
     )
 
@@ -64,6 +45,26 @@ export const Plugin = define({
         .writeWithDirs(target, file.content)
         .pipe(Effect.catchCause((cause) => Effect.logWarning("failed to write bundled skill file", { target, cause })))
     }
+
+    // Earlier versions' folders are no longer used once a day has passed since they were written.
+    const now = Date.now()
+    const entries = yield* fs.readDirectoryEntries(parent).pipe(Effect.orElseSucceed(() => []))
+
+    yield* Effect.forEach(
+      entries.filter((entry) => entry.type === "directory" && entry.name.startsWith("jabisu-")),
+      (entry) =>
+        Effect.gen(function* () {
+          const directory = path.join(parent, entry.name)
+
+          if (directory === root) return
+          const written = Option.getOrUndefined((yield* fs.stat(directory)).mtime)?.getTime() ?? now
+
+          if (now - written > STALE_MS) yield* fs.remove(directory, { recursive: true })
+        }).pipe(Effect.ignore),
+    )
+
+    // Copies the user made by hand count as made from this version, so a later change of that skill is noticed.
+    yield* JabisuSkills.baseline({ fs, global }, JabisuSkills.bundled(contents))
 
     const skills = contents.flatMap((file) => {
       if (path.posix.basename(file.path) !== "SKILL.md" || typeof file.content !== "string") return []
@@ -79,7 +80,7 @@ export const Plugin = define({
     // FilmCraft's remote control needs its token, which is made only once FilmCraft is installed.
     const filmcraft = FilmCraft.cli(process.env.ProgramFiles ?? "C:\\Program Files")
     const filmcraftServer = (yield* fs.exists(filmcraft).pipe(Effect.orElseSucceed(() => false)))
-      ? yield* FilmCraft.token(fs, filmcraftToken).pipe(
+      ? yield* FilmCraft.token(fs, FilmCraft.tokenFile(global.data)).pipe(
           Effect.map((token) => FilmCraft.server(filmcraft, token)),
           Effect.catchCause((cause) =>
             Effect.logWarning("failed to prepare FilmCraft's remote control", { cause }).pipe(Effect.as(undefined)),

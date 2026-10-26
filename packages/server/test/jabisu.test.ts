@@ -161,3 +161,44 @@ it.live("makes, lists and instructs a 집현전 in the home's documents", () =>
     expect(unconnected.body).toMatchObject({ message: "OpenRouter is not connected; connect it in Settings → Providers" })
   }),
 )
+
+it.live("copies a bundled skill for the user, and moves the copy aside to use the bundled skill again", () =>
+  Effect.gen(function* () {
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-jabisu-skills-")))
+    const global = path.join(tmp.path, "global")
+    const project = path.join(tmp.path, "project")
+    yield* Effect.promise(() =>
+      Promise.all([fs.mkdir(global, { recursive: true }), fs.mkdir(project, { recursive: true })]),
+    )
+    const server = yield* startServer(global)
+    const request = (route: string, body?: object) =>
+      Effect.promise(async () => {
+        const url = new URL(route, server.base)
+        url.searchParams.set("location[directory]", project)
+        const response = await fetch(url, {
+          method: body ? "POST" : "GET",
+          headers: { ...server.headers, "content-type": "application/json" },
+          body: body ? JSON.stringify(body) : undefined,
+        })
+        return { status: response.status, body: await response.json() }
+      })
+    const status = (list: { skills: { name: string; status: string }[] }, name: string) =>
+      list.skills.find((skill) => skill.name === name)?.status
+
+    const listed = yield* request("/api/jabisu/skills")
+    expect(listed.status).toBe(200)
+    expect(listed.body.folder).toBe(path.join(global, "skills"))
+    expect(status(listed.body, "docx")).toBe("default")
+
+    const copied = yield* request("/api/jabisu/skills/copy", { name: "docx" })
+    expect(status(copied.body, "docx")).toBe("custom")
+    expect(yield* Effect.promise(() => fs.readFile(path.join(global, "skills", "docx", "SKILL.md"), "utf8"))).toContain(
+      "name: docx",
+    )
+    expect((yield* request("/api/jabisu/skills/copy", { name: "docx" })).body).toMatchObject({ kind: "jabisu_skills" })
+
+    const reset = yield* request("/api/jabisu/skills/reset", { name: "docx" })
+    expect(reset.body.backup.startsWith(path.join(global, "skills-backup", "docx-"))).toBe(true)
+    expect(status(reset.body.list, "docx")).toBe("default")
+  }),
+)

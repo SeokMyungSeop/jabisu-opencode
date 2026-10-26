@@ -295,6 +295,14 @@ import type {
   JabisuJiphyeonjeonSourcesOutput,
   JabisuJiphyeonjeonSuggestInput,
   JabisuJiphyeonjeonSuggestOutput,
+  JabisuSkillsListInput,
+  JabisuSkillsListOutput,
+  JabisuSkillsCopyInput,
+  JabisuSkillsCopyOutput,
+  JabisuSkillsKeepInput,
+  JabisuSkillsKeepOutput,
+  JabisuSkillsResetInput,
+  JabisuSkillsResetOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1750,6 +1758,32 @@ const EndpointJabisuJiphyeonjeonSuggest =
       }).pipe(Effect.mapError(mapClientError)),
     )
 
+const EndpointJabisuSkillsList = (raw: RawClient["server.jabisu"]) => (input?: JabisuSkillsListInput) =>
+  preserveEffect<JabisuSkillsListOutput>()(
+    raw["jabisu.skills.list"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuSkillsCopy = (raw: RawClient["server.jabisu"]) => (input: JabisuSkillsCopyInput) =>
+  preserveEffect<JabisuSkillsCopyOutput>()(
+    raw["jabisu.skills.copy"]({ query: { location: input["location"] }, payload: { name: input["name"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
+const EndpointJabisuSkillsKeep = (raw: RawClient["server.jabisu"]) => (input: JabisuSkillsKeepInput) =>
+  preserveEffect<JabisuSkillsKeepOutput>()(
+    raw["jabisu.skills.keep"]({ query: { location: input["location"] }, payload: { name: input["name"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
+const EndpointJabisuSkillsReset = (raw: RawClient["server.jabisu"]) => (input: JabisuSkillsResetInput) =>
+  preserveEffect<JabisuSkillsResetOutput>()(
+    raw["jabisu.skills.reset"]({ query: { location: input["location"] }, payload: { name: input["name"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
 const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   transcription: { get: EndpointJabisuTranscriptionGet(raw), update: EndpointJabisuTranscriptionUpdate(raw) },
   jiphyeonjeon: {
@@ -1758,6 +1792,12 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
     instruct: EndpointJabisuJiphyeonjeonInstruct(raw),
     sources: EndpointJabisuJiphyeonjeonSources(raw),
     suggest: EndpointJabisuJiphyeonjeonSuggest(raw),
+  },
+  skills: {
+    list: EndpointJabisuSkillsList(raw),
+    copy: EndpointJabisuSkillsCopy(raw),
+    keep: EndpointJabisuSkillsKeep(raw),
+    reset: EndpointJabisuSkillsReset(raw),
   },
 })
 
