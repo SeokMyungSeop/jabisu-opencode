@@ -1,5 +1,4 @@
 import { createSignal, onCleanup, type Accessor } from "solid-js"
-import type { ServerRef, Servers } from "../sdk"
 
 /** A 집현전's name and source paths, as the engine lists them. */
 export interface Listed {
@@ -128,14 +127,8 @@ function same(a: Map<string, Set<string>>, b: Map<string, Set<string>>) {
   return true
 }
 
-/** The desktop's own server, which keeps the 집현전 folders on this PC. */
-export const builtin = (servers: Servers) =>
-  servers
-    .list()
-    .map((id) => servers.get(id))
-    .find((item) => item?.builtin)
-
-export const locationOf = (server: ServerRef) => ({ directory: server.data.location.default().directory })
+// The desktop's own server keeps the 집현전 folders on this PC.
+export { builtin, locationOf } from "../builtin-server"
 
 const comparable = (value: string) => value.replaceAll("\\", "/").replace(/\/+$/, "").toLowerCase()
 

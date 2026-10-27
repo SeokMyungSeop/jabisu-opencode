@@ -3,6 +3,7 @@ import { createEffect, createMemo, createResource, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Option, Schema, SchemaGetter } from "effect"
 import { createSimpleContext } from "@opencode/ui/context"
+import { JABISU } from "@opencode/ui/logo"
 import {
   I18nProvider,
   type UiI18n,
@@ -106,7 +107,10 @@ const merge = (app: Promise<Source>, ui: Promise<Source>) =>
 const loaders: Record<Exclude<Locale, "en">, () => Promise<Dictionary>> = {
   zh: () => merge(import("@/runtime/i18n/zh"), import("@opencode/ui/i18n/zh")),
   zht: () => merge(import("@/runtime/i18n/zht"), import("@opencode/ui/i18n/zht")),
-  ko: () => merge(import("@/runtime/i18n/ko"), import("@opencode/ui/i18n/ko")),
+  ko: () =>
+    merge(import("@/runtime/i18n/ko"), import("@opencode/ui/i18n/ko")).then(async (dict) =>
+      JABISU ? (await import("@/runtime/i18n/jabisu-ko")).jabisuKorean(dict) : dict,
+    ),
   de: () => merge(import("@/runtime/i18n/de"), import("@opencode/ui/i18n/de")),
   es: () => merge(import("@/runtime/i18n/es"), import("@opencode/ui/i18n/es")),
   fr: () => merge(import("@/runtime/i18n/fr"), import("@opencode/ui/i18n/fr")),

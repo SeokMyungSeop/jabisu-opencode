@@ -17,6 +17,8 @@ import transcription from "./transcription"
 import jiphyeonjeon from "./jiphyeonjeon"
 import support from "./support"
 import bundledSkills from "./bundled-skills"
+import work from "./work"
+import law from "./law"
 
 /**
  * Built-in extensions with their main entries. Lists every built-in so their ids stay reserved. `builtins.typecheck.ts`
@@ -41,4 +43,6 @@ export const builtins = Extension.compose(
   jiphyeonjeon,
   { ...support, main: () => import("./support/main") },
   bundledSkills,
+  work,
+  law,
 )

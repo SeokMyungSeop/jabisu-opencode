@@ -1,12 +1,13 @@
 import { showToast } from "@opencode/ui/toast"
-import { Show } from "solid-js"
+import { lazy, Show, Suspense } from "solid-js"
 import { Command, Slot, type SessionFailure, type Setup } from "../sdk"
 import { deliberate } from "./advice"
 import { environment, formUrl, system, type ReportKind } from "./form"
+import { Guide } from "./guide"
 import { ErrorHelp } from "./help"
 import type definition from "./index"
 
-const GUIDE = "https://github.com/SeokMyungSeop/jabisu-opencode#readme"
+const HomeTutorial = lazy(() => import("./tutorial"))
 
 // Long enough for the command palette's closing animation.
 const CLOSE_MS = 300
@@ -66,12 +67,26 @@ const setup: Setup<typeof definition> = (ctx) => {
     run: () => open("feedback"),
   }))
 
+  // The guide opens inside the app, since a work PC may not reach the web.
+  const guide = () => void ctx.dialogs.open(() => <Guide />)
+
   ctx.add(Command, () => ({
     id: "guide",
     title: ctx.t("command.guide"),
     group: ctx.t("command.group"),
-    run: () => ctx.system.openExternal(GUIDE),
+    run: guide,
   }))
+
+  // The first things to try, on the desktop where the work folders and the profile live.
+  if (ctx.desktop)
+    ctx.add(Slot, {
+      at: "home.projects.top",
+      render: () => (
+        <Suspense>
+          <HomeTutorial guide={guide} />
+        </Suspense>
+      ),
+    })
 }
 
 export default setup

@@ -19,7 +19,9 @@ const setup: MainSetup<typeof definition> = (ctx) => {
 
       await mkdir(folder, { recursive: true })
       await writeFile(file, png)
-      await clipboard.write([new ClipboardItem({ "image/png": new Blob([new Uint8Array(png)], { type: "image/png" }) })])
+      await clipboard.write([
+        new ClipboardItem({ "image/png": new Blob([new Uint8Array(png)], { type: "image/png" }) }),
+      ])
 
       return file
     },

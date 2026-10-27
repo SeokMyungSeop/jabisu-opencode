@@ -1,6 +1,7 @@
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Icon } from "@opencode/ui/icon"
+import { JABISU } from "@opencode/ui/logo"
 import { Show, createMemo, createSignal } from "solid-js"
 import { Schema } from "effect"
 import createPresence from "solid-presence"
@@ -72,14 +73,17 @@ export function NewSessionView(props: {
               <Show when={props.project.selected()}>
                 <div class="flex min-h-7 min-w-0 flex-row flex-wrap items-center justify-center gap-0 text-v2-text-text-faint">
                   <PromptProjectSelector controller={props.project} placement="bottom" />
+                  {/* 자비수 is for office work, so it shows neither git status nor git workspaces. */}
                   <Show
-                    when={props.workspace.bar.visible()}
+                    when={!JABISU && props.workspace.bar.visible()}
                     fallback={
-                      <PromptGitStatus
-                        branch={props.workspace.bar.branch()}
-                        noGit={!props.workspace.project.git()}
-                        class="ms-1"
-                      />
+                      <Show when={!JABISU}>
+                        <PromptGitStatus
+                          branch={props.workspace.bar.branch()}
+                          noGit={!props.workspace.project.git()}
+                          class="ms-1"
+                        />
+                      </Show>
                     }
                   >
                     <PromptWorkspaceSelector
@@ -105,6 +109,7 @@ export function NewSessionView(props: {
           selection={props.composer.model.selection}
           onDone={props.composer.restoreFocus}
           workspaceEligible={
+            !JABISU &&
             !!props.project.selected() &&
             props.workspace.bar.visible() &&
             props.workspace.selection.value() !== "create" &&

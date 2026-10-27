@@ -679,6 +679,8 @@ export const builtins = Extension.compose(
   jiphyeonjeon,
   { ...support, main: () => import("./support/main") },
   bundledSkills,
+  work,
+  law,
 )
 ```
 
@@ -707,9 +709,12 @@ export const builtins = Extension.compose(
   { ...microsoftOffice, renderer: eager(microsoftOfficeRenderer) },
   { ...documentText, renderer: eager(documentTextRenderer) },
   { ...transcription, renderer: eager(transcriptionRenderer) },
-  { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
+  // The 따라하기 card shows above the 집현전 on the home screen, for someone using 자비수 the first time.
   { ...support, renderer: eager(supportRenderer) },
+  { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
   { ...bundledSkills, renderer: eager(bundledSkillsRenderer) },
+  { ...work, renderer: eager(workRenderer) },
+  { ...law, renderer: eager(lawRenderer) },
 )
 ```
 

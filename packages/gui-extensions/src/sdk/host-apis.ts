@@ -795,6 +795,15 @@ export interface Layout {
    * @param directory - Opens this directory on the server instead of asking for one.
    */
   project(server: string, title: string, directory?: string): void
+  /**
+   * Opens a new draft in a directory on a server without adding the directory to the project list, for a place your
+   * extension lists itself. Waits until the server is listed.
+   *
+   * @param server - The server's `ServerRef.id`.
+   * @param directory - The directory the draft works in.
+   * @param prompt - Text to start the draft's prompt with, for the user to finish and send.
+   */
+  draft(server: string, directory: string, prompt?: string): void
 }
 
 /**
@@ -946,6 +955,13 @@ export interface Desktop {
    * @param app - The app's name.
    */
   installed(app: string): Promise<boolean>
+  /**
+   * Asks the user to choose a folder with the system's folder picker.
+   *
+   * @param title - The picker's title.
+   * @returns The folder's absolute path, or undefined when the user cancelled.
+   */
+  chooseFolder(title: string): Promise<string | undefined>
 }
 
 /** The interface language and its writing direction. */

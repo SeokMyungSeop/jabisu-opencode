@@ -73,7 +73,15 @@ export function createPromptProjectController(input: {
     )
   }
 
-  const selected = () => current() ?? input.controls().available[0]
+  // A draft can work in a folder the project list leaves out, such as a 집현전; it names that folder, not another.
+  const selected = (): PromptProject | undefined => {
+    const controls = input.controls()
+
+    return (
+      current() ??
+      (controls.directory ? { id: controls.projectID, worktree: controls.directory } : controls.available[0])
+    )
+  }
 
   const projects = () => {
     const search = store.search.trim().toLowerCase()

@@ -9,7 +9,8 @@ const DEFAULT_LIMIT = 40
 
 export const Input = Schema.Struct({
   query: Schema.String.check(Schema.isMinLength(1, { message: "Query must not be empty" })).annotate({
-    description: "Words to look for, separated by spaces. Lines with more of the words come first.",
+    description:
+      "Words to look for, separated by spaces; a line matches by containing them as written. Lines with more of the words come first. Use the sources' own terms and short core words, and try other wordings before deciding something is not in the sources.",
   }),
   limit: Schema.optional(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 200 }))).annotate({
     description: `Maximum number of matching lines to return (default: ${DEFAULT_LIMIT})`,
@@ -29,6 +30,7 @@ export const Output = Schema.Struct({
     }),
   ),
   skipped: Schema.Array(Schema.Struct({ file: Schema.String, reason: Schema.String })),
+  partial: Schema.Array(Schema.Struct({ file: Schema.String, pages: Schema.Array(Schema.Number) })),
   unsearched: Schema.Number,
 })
 
@@ -52,10 +54,14 @@ export function toModelContent(result: typeof Output.Type) {
     ...matches.map((match) => `  ${match.location ? `${match.location}, ` : ""}line ${match.line}: ${match.text}`),
   ])
   const skipped = result.skipped.map((item) => `- ${item.file}: ${item.reason}`)
+  const partial = result.partial.map((item) => `- ${item.file}: pages ${item.pages.join(", ")}`)
   return [
     head,
     ...body,
     ...(skipped.length ? ["", "Not searched:", ...skipped] : []),
+    ...(partial.length
+      ? ["", "Pages without text, probably scanned images, so not searched; say they were not checked:", ...partial]
+      : []),
     ...(result.unsearched ? ["", `${result.unsearched} more files were not searched; the first 1000 were.`] : []),
   ].join("\n")
 }

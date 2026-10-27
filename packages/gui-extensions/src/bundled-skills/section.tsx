@@ -5,7 +5,7 @@ import { showToast } from "@opencode/ui/toast"
 import { useMutation } from "@tanstack/solid-query"
 import { useExtension } from "../sdk"
 import type definition from "./index"
-import { builtin, locationOf } from "./server"
+import { builtin, locationOf } from "../builtin-server"
 
 const BADGE: Record<JabisuSkill["status"], string> = {
   default: "bg-v2-background-bg-layer-01 text-v2-text-text-muted",
@@ -26,7 +26,7 @@ export default function SkillsSection() {
   )
 
   const act = useMutation(() => ({
-    mutationFn: async (input: { action: "copy" | "keep" | "reset"; skill: JabisuSkill }) => {
+    mutationFn: async (input: { action: "turn" | "copy" | "keep" | "reset"; skill: JabisuSkill }) => {
       const current = builtin(ctx.servers)
 
       if (!current) return
@@ -34,9 +34,19 @@ export default function SkillsSection() {
       const location = locationOf(current)
       const name = input.skill.name
 
+      if (input.action === "turn") {
+        mutate(await current.client.jabisu.skills.turn({ location, name, on: !input.skill.on }))
+
+        return
+      }
+
       if (input.action === "copy") {
         mutate(await current.client.jabisu.skills.copy({ location, name }))
-        showToast({ variant: "success", title: ctx.t("copied.title"), description: ctx.t("copied.description", { name }) })
+        showToast({
+          variant: "success",
+          title: ctx.t("copied.title"),
+          description: ctx.t("copied.description", { name }),
+        })
 
         return
       }
@@ -81,14 +91,32 @@ export default function SkillsSection() {
         <For each={list.latest?.skills ?? []}>
           {(skill) => (
             <Row
-              title={skill.name}
+              title={skill.title ? `${skill.name} · ${skill.title}` : skill.name}
               description={
-                skill.description.length > DESCRIPTION_CHARS
+                skill.summary ??
+                (skill.description.length > DESCRIPTION_CHARS
                   ? `${skill.description.slice(0, DESCRIPTION_CHARS)}…`
-                  : skill.description
+                  : skill.description)
               }
             >
-              <div data-action={`settings-bundled-skill-${skill.name}`} class="flex flex-wrap items-center justify-end gap-2">
+              <div
+                data-action={`settings-bundled-skill-${skill.name}`}
+                class="flex flex-wrap items-center justify-end gap-2"
+              >
+                <Button
+                  type="button"
+                  size="small"
+                  variant={skill.on ? "ghost" : "neutral"}
+                  disabled={act.isPending}
+                  onClick={() => act.mutate({ action: "turn", skill })}
+                >
+                  {ctx.t(skill.on ? "action.turnOff" : "action.turnOn")}
+                </Button>
+                <Show when={!skill.on}>
+                  <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${BADGE.default}`}>
+                    {ctx.t("status.off")}
+                  </span>
+                </Show>
                 <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${BADGE[skill.status]}`}>
                   {ctx.t(`status.${skill.status}`)}
                 </span>

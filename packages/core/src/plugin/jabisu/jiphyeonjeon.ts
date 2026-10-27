@@ -1,14 +1,13 @@
 export * as Jiphyeonjeon from "./jiphyeonjeon.js"
 
 import path from "path"
-import { Effect, Option, Result, Schema } from "effect"
+import { Effect, Option, Schema } from "effect"
 import { artifactKind } from "@opencode/util/artifact"
 import { DocumentText } from "@opencode/util/document-text"
 import type { FSUtil } from "@opencode/util/fs-util"
 import type { Global } from "@opencode/util/global"
-import { Mime } from "../../mime.js"
-import { ReadDocument } from "../../tool/read-document.js"
 import { Transcribe } from "../../tool/transcribe.js"
+import { DocumentExtract } from "./document-extract.js"
 
 // 자비수 집현전(集賢殿): a folder of sources the user asks about, like a NotebookLM notebook kept on the PC. Each one is
 // `<Documents>/자비수 집현전/<name>/` with the sources under `자료/` and an AGENTS.md that OpenCode loads as the
@@ -44,7 +43,10 @@ export function agents(name: string, instructions: string) {
     "- 자료는 source_search 도구로 찾고, 필요하면 read 도구로 그 줄 앞뒤를 읽는다. 자료를 보려고 셸이나 파이썬으로 파일을 풀거나 변환하지 않는다.",
     "- 프로그램이나 패키지를 설치해야 하면 설치하기 전에 사용자에게 묻는다.",
     "- 자료에 있는 내용으로 답하고, 근거가 되는 문장 끝에 source_search가 알려 준 꼴의 출처 링크를 단다. 예: [사업계획서.pdf · 3쪽](<자료/사업계획서.pdf>). 위치는 도구가 알려 준 쪽·장·조·슬라이드·시트·시각을 쓰고, 그것이 없을 때만 줄을 쓴다.",
-    '- 자료에서 찾지 못하면 "자료에 없습니다"라고 답하고, 웹에서 찾아볼지 사용자에게 묻는다. 사용자가 원할 때만 웹을 찾고, 그 내용은 자료 밖이라고 밝힌다.',
+    "- 출처를 달 수 없는 문장은 쓰지 않는다. 낱말 풀이처럼 자료 밖 설명이 꼭 필요하면 그 문장 끝에 「(자료 밖)」이라고 쓴다.",
+    "- 자료에 없는 해석·평가·추측을 덧붙이지 않는다. 자료의 말을 바꾸어 쓸 때도 뜻을 넓히거나 좁히지 않고, 숫자·날짜·이름·조항은 자료에 적힌 그대로 쓴다.",
+    "- 자료끼리 다르게 말하면 한쪽을 고르지 말고 둘 다 출처와 함께 보여 준다.",
+    '- "자료에 없습니다"라고 하기 전에 자료에 쓰였을 법한 말, 비슷한 말, 줄인 말로 source_search를 두세 번 더 찾는다. 그래도 없으면 "자료에 없습니다"라고 답하고, 검색하지 못한 자료나 글자 없는 쪽이 있으면 그것은 확인하지 못했다고 함께 알린다. 웹에서 찾아볼지 사용자에게 묻고, 사용자가 원할 때만 웹을 찾으며, 그 내용은 자료 밖이라고 밝힌다.',
     "- 녹음 파일은 read 도구로 한 번 읽어야 받아쓰기가 만들어지고, 그다음부터 검색된다.",
     `- \`${SOURCES}\` 폴더의 파일은 지우거나 고치지 않는다. 새로 만드는 문서는 \`결과\` 폴더에 둔다.`,
     "",
@@ -174,14 +176,15 @@ const MAX_LINE = 300
 const CACHED_TEXTS = 256
 
 // Converted text by file version, so repeated searches skip the conversion. Insertion order is the eviction order.
-const texts = new Map<string, string>()
+const texts = new Map<string, { readonly text: string; readonly blank: readonly number[] }>()
 
 /**
- * A source as search sees it: its text, or why there is none. `pending` is a recording not transcribed yet,
- * `unsupported` a file that is neither text nor a document, and `unreadable` a document that could not be converted.
+ * A source as search sees it: its text with the PDF pages that have none, or why there is no text. `pending` is a
+ * recording not transcribed yet, `unsupported` a file that is neither text nor a document, and `unreadable` a document
+ * that could not be converted.
  */
 export type Converted =
-  | { readonly status: "ready"; readonly text: string }
+  | { readonly status: "ready"; readonly text: string; readonly blank: readonly number[] }
   | { readonly status: "pending" | "unsupported" | "unreadable"; readonly reason: string }
 
 const sourceText = Effect.fn("Jiphyeonjeon.sourceText")(function* (
@@ -197,33 +200,23 @@ const sourceText = Effect.fn("Jiphyeonjeon.sourceText")(function* (
     const transcript = yield* Transcribe.existing(deps, file)
     if (transcript === undefined)
       return { status: "pending", reason: "not transcribed yet; read it once with the read tool" }
-    return { status: "ready", text: transcript }
+    return { status: "ready", text: transcript, blank: [] }
   }
 
   if (info.value.size > DocumentText.MAX_DOCUMENT_BYTES)
     return { status: "unreadable", reason: `larger than ${DocumentText.MAX_DOCUMENT_BYTES / 1024 / 1024} MiB` }
   const key = `${file}\0${info.value.size}\0${Option.getOrUndefined(info.value.mtime)?.getTime() ?? 0}`
   const hit = texts.get(key)
-  if (hit !== undefined) return { status: "ready", text: hit }
+  if (hit !== undefined) return { status: "ready", ...hit }
 
   const bytes = yield* deps.fs.readFile(file).pipe(Effect.option)
   if (Option.isNone(bytes)) return { status: "unreadable", reason: "it cannot be read" }
-  const format = Mime.detect(bytes.value) === "application/pdf" ? "pdf" : DocumentText.detect(file, bytes.value)
-  if (!format && bytes.value.includes(0)) return { status: "unsupported", reason: "not a document or text file" }
-  const text = format
-    ? yield* Effect.tryPromise({
-        try: () => ReadDocument.text(format, bytes.value),
-        catch: (cause) =>
-          cause instanceof DocumentText.Unreadable
-            ? cause.message
-            : `the ${ReadDocument.LABELS[format]} could not be converted`,
-      }).pipe(Effect.result)
-    : Result.succeed(new TextDecoder().decode(bytes.value))
-  if (Result.isFailure(text)) return { status: "unreadable", reason: text.failure }
+  const extracted = yield* DocumentExtract.fromBytes(file, bytes.value)
+  if (extracted.status !== "ready") return extracted
 
-  texts.set(key, text.success)
+  texts.set(key, { text: extracted.text, blank: extracted.blank })
   if (texts.size > CACHED_TEXTS) texts.delete(texts.keys().next().value ?? key)
-  return { status: "ready", text: text.success }
+  return extracted
 })
 
 /** Each source of a 집현전 with whether search can read it, for the app's list. */
@@ -239,7 +232,11 @@ export const sources = Effect.fn("Jiphyeonjeon.sources")(function* (
       sourceText(deps, file).pipe(
         Effect.map((result) =>
           result.status === "ready"
-            ? { path: sourcePath(item.directory, file), status: result.status }
+            ? {
+                path: sourcePath(item.directory, file),
+                status: result.status,
+                ...(result.blank.length ? { blank: result.blank } : {}),
+              }
             : { path: sourcePath(item.directory, file), status: result.status, reason: result.reason },
         ),
       ),
@@ -362,6 +359,10 @@ export const search = Effect.fn("Jiphyeonjeon.search")(function* (
       .map((match): Match => ({ file: match.file, location: match.location, line: match.line, text: match.text })),
     skipped: converted.flatMap(({ file, result }) =>
       result.status === "ready" ? [] : [{ file: name(file), reason: result.reason }],
+    ),
+    // PDF pages without text, probably scanned images, which no search can find anything on.
+    partial: converted.flatMap(({ file, result }) =>
+      result.status === "ready" && result.blank.length ? [{ file: name(file), pages: result.blank }] : [],
     ),
     unsearched: every.length - files.length,
   }

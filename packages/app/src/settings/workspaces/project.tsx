@@ -1,4 +1,5 @@
 import { Icon } from "@opencode/ui/icon"
+import { JABISU } from "@opencode/ui/logo"
 import {
   displayName,
   getProjectAvatarVariant,
@@ -163,28 +164,31 @@ export const SettingsProjectGeneral: Component<{
 
           <AutoAcceptPermissionsSetting project={props.project} server={props.server} />
 
-          <div class="project-settings-startup">
-            <div class="project-settings-startup-copy">
-              <span class="project-settings-startup-title">{language.t("dialog.project.edit.worktree.startup")}</span>
-              <span class="project-settings-startup-description">
-                {language.t("project.settings.worktree.startup.description")}
-              </span>
+          {/* A workspace startup script is for developers; 자비수 leaves it out. */}
+          <Show when={!JABISU}>
+            <div class="project-settings-startup">
+              <div class="project-settings-startup-copy">
+                <span class="project-settings-startup-title">{language.t("dialog.project.edit.worktree.startup")}</span>
+                <span class="project-settings-startup-description">
+                  {language.t("project.settings.worktree.startup.description")}
+                </span>
+              </div>
+              <Textarea
+                class="!w-full [&_[data-slot=textarea-v2-textarea]]:font-mono"
+                rows={5}
+                value={model.store.startup}
+                placeholder={language.t("dialog.project.edit.worktree.startup.placeholder")}
+                aria-label={language.t("dialog.project.edit.worktree.startup")}
+                spellcheck={false}
+                onInput={(event) => model.setStore("startup", event.currentTarget.value)}
+                onBlur={model.saveStartup}
+              />
+              <div class="project-settings-startup-hint flex flex-col">
+                <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.base"))}</span>
+                <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.new"))}</span>
+              </div>
             </div>
-            <Textarea
-              class="!w-full [&_[data-slot=textarea-v2-textarea]]:font-mono"
-              rows={5}
-              value={model.store.startup}
-              placeholder={language.t("dialog.project.edit.worktree.startup.placeholder")}
-              aria-label={language.t("dialog.project.edit.worktree.startup")}
-              spellcheck={false}
-              onInput={(event) => model.setStore("startup", event.currentTarget.value)}
-              onBlur={model.saveStartup}
-            />
-            <div class="project-settings-startup-hint flex flex-col">
-              <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.base"))}</span>
-              <span>{inlineVariables(language.t("project.settings.worktree.startup.hint.new"))}</span>
-            </div>
-          </div>
+          </Show>
         </SettingsList>
       </div>
     </>

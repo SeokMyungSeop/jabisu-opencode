@@ -38,6 +38,8 @@ export const JiphyeonjeonSource = Schema.Struct({
   // that could not be converted, with `reason` saying why.
   status: Schema.Literals(["ready", "pending", "unsupported", "unreadable"]),
   reason: Schema.optional(Schema.String),
+  // PDF pages (from 1) of a searchable source that have no text, probably scanned images, so search skips them.
+  blank: Schema.optional(Schema.Array(Schema.Number)),
 }).annotate({ identifier: "JiphyeonjeonSource" })
 export type JiphyeonjeonSource = typeof JiphyeonjeonSource.Type
 
@@ -49,6 +51,12 @@ export const JabisuSkill = Schema.Struct({
   name: Schema.String,
   description: Schema.String,
   status: Schema.Literals(["default", "custom", "changed"]),
+  // Whether the model is offered the skill; one that is off stays installed and is suggested when a request needs it.
+  on: Schema.Boolean,
+  // The Korean name, summary and search words 자비수 gives it.
+  title: Schema.optional(Schema.String),
+  summary: Schema.optional(Schema.String),
+  keywords: Schema.optional(Schema.Array(Schema.String)),
   // The user's copy, when there is one.
   directory: Schema.optional(Schema.String),
 }).annotate({ identifier: "JabisuSkill" })
@@ -64,6 +72,47 @@ export const JabisuSkillList = Schema.Struct({
 export type JabisuSkillList = typeof JabisuSkillList.Type
 
 const SkillName = Schema.Struct({ name: Schema.String })
+
+// A folder the work index follows, with how much of it the index holds: its files, the documents among them, and how
+// many documents' text is indexed or still waiting.
+export const JabisuWorkFolder = Schema.Struct({
+  path: Schema.String,
+  files: Schema.Number,
+  documents: Schema.Number,
+  ready: Schema.Number,
+  pending: Schema.Number,
+}).annotate({ identifier: "JabisuWorkFolder" })
+export type JabisuWorkFolder = typeof JabisuWorkFolder.Type
+
+// The folders the user chooses, by what they hold.
+const JabisuWorkChoice = Schema.Struct({
+  // Where received files land, such as the downloads folder and messenger folders.
+  received: Schema.Array(Schema.String),
+  // Where the user files their work.
+  saved: Schema.Array(Schema.String),
+})
+
+export const JabisuWork = Schema.Struct({
+  // 자비수's own work folder, always indexed; it holds the work profile.
+  jabisu: JabisuWorkFolder,
+  received: Schema.Array(JabisuWorkFolder),
+  saved: Schema.Array(JabisuWorkFolder),
+  // Received-file folders on this PC the app offers to add: the downloads folder and messenger folders.
+  candidates: Schema.Array(Schema.Struct({ path: Schema.String, kind: Schema.Literals(["downloads", "messenger"]) })),
+  // The user's work profile file, which every session reads as instructions.
+  profile: Schema.Struct({ path: Schema.String, exists: Schema.Boolean }),
+}).annotate({ identifier: "JabisuWork" })
+export type JabisuWork = typeof JabisuWork.Type
+
+// The key for 법제처's law database that the law tools use; the key itself stays on the server.
+export const JabisuLaw = Schema.Struct({
+  configured: Schema.Boolean,
+  // The saved key with most of it hidden, for the user to recognise it.
+  masked: Schema.optional(Schema.String),
+  // Where the user applies for a key.
+  apply: Schema.String,
+}).annotate({ identifier: "JabisuLaw" })
+export type JabisuLaw = typeof JabisuLaw.Type
 
 export const JabisuGroup = HttpApiGroup.make("server.jabisu")
   .add(
@@ -237,6 +286,85 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           identifier: "jabisu.skills.reset",
           summary: "Use a bundled skill again",
           description: "Move the user's copy of a bundled skill into the backup folder, so the bundled one is used.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.skills.turn", "/api/jabisu/skills/turn", {
+      query: LocationQuery,
+      payload: Schema.Struct({ name: Schema.String, on: Schema.Boolean }),
+      success: JabisuSkillList,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.skills.turn",
+          summary: "Turn a bundled skill on or off",
+          description: "Choose whether the model is offered a bundled skill in every chat from now.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.work.get", "/api/jabisu/work", {
+      query: LocationQuery,
+      success: JabisuWork,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.work.get",
+          summary: "Get the work assistant's folders",
+          description:
+            "Return 자비수's work folder and the chosen received-file and saved-work folders with their index coverage, folders to suggest, and the work profile.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.put("jabisu.work.update", "/api/jabisu/work", {
+      query: LocationQuery,
+      payload: JabisuWorkChoice,
+      success: JabisuWork,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.work.update",
+          summary: "Choose the work folders",
+          description:
+            "Replace the received-file and saved-work folders the work index follows; each must be an existing folder.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.law.get", "/api/jabisu/law", {
+      query: LocationQuery,
+      success: JabisuLaw,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.law.get",
+          summary: "Get the law database key",
+          description: "Return whether a key for 법제처's law database is saved, and where to apply for one.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.put("jabisu.law.update", "/api/jabisu/law", {
+      query: LocationQuery,
+      payload: Schema.Struct({ key: Schema.String }),
+      success: JabisuLaw,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.law.update",
+          summary: "Save the law database key",
+          description:
+            "Check the key with one search of 법제처's law database and save it; an empty key removes the saved one.",
         }),
       ),
   )

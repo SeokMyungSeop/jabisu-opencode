@@ -3,7 +3,7 @@ import { showToast } from "@opencode/ui/toast"
 import { createKeyed, SettingsPage, type ServerRef, type Setup } from "../sdk"
 import type definition from "./index"
 import { ChangedSkills, type Answer } from "./prompt"
-import { builtin, locationOf } from "./server"
+import { builtin, locationOf } from "../builtin-server"
 
 const SkillsSection = lazy(() => import("./section"))
 

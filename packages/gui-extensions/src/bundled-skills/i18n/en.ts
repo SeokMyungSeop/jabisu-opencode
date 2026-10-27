@@ -1,12 +1,15 @@
 export default {
   section: "Bundled skills",
   intro:
-    "Skills that come with Jabisu. To change one, copy it to your skills and edit the files there: a skill of yours with the same name is used instead, and updates leave it alone. If Jabisu later changes that skill, you are asked whether to keep yours.",
+    "Skills that come with Jabisu. To change one, copy it to your skills and edit the files there: a skill of yours with the same name is used instead, and updates leave it alone. If Jabisu later changes that skill, you are asked whether to keep yours. A skill that is off is installed only, and the AI asks to turn it on when a chat needs it.",
   "folder.title": "Your skills folder",
   "folder.description": "{{folder}}",
   "status.default": "Bundled",
   "status.custom": "Using yours",
   "status.changed": "New version available",
+  "status.off": "Off",
+  "action.turnOn": "Turn on",
+  "action.turnOff": "Turn off",
   "action.copy": "Copy to my skills",
   "action.keep": "Keep mine",
   "action.reset": "Use bundled",
@@ -20,9 +23,8 @@ export default {
   "prompt.description": "This update changed bundled skills you use your own copy of: {{names}}",
   "prompt.keep":
     "Keep mine (recommended): your changes keep working. The improvements in the new version do not come in.",
-  "prompt.reset":
-    "Use the new version: your copy is moved to {{backups}}, so you can bring it back later.",
-  "prompt.settings": "You can also choose one by one in Settings → General → Bundled skills.",
+  "prompt.reset": "Use the new version: your copy is moved to {{backups}}, so you can bring it back later.",
+  "prompt.settings": "You can also choose one by one in Settings → Preferences → Bundled skills.",
   "prompt.later": "Later",
   "prompt.useNew": "Use the new version",
   "prompt.keepAll": "Keep mine (recommended)",

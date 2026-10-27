@@ -33,7 +33,7 @@ import { VcsHandler } from "./handlers/vcs"
 import { EventFeed } from "./event-feed"
 import { MigrationHandler } from "./handlers/migration"
 import { ConfigHandler } from "./handlers/config"
-import { JabisuHandler } from "./handlers/jabisu"
+import { JabisuHandler, JabisuWorkIndexer } from "./handlers/jabisu"
 
 export const handlers = Layer.mergeAll(
   ServerHandler,
@@ -69,4 +69,6 @@ export const handlers = Layer.mergeAll(
   ConfigHandler,
   // The settings file is read and written with the shared filesystem helpers, which no application service exports.
   JabisuHandler.pipe(Layer.provide(LayerNode.compile(FSUtil.node))),
+  // 자비수's work index follows the folders the user chose while the server runs.
+  JabisuWorkIndexer.pipe(Layer.provide(LayerNode.compile(FSUtil.node))),
 )

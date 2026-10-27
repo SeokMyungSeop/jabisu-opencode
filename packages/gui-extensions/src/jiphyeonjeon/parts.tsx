@@ -11,12 +11,18 @@ import type definition from "./index"
 import { freeName } from "./names"
 import { builtin, locationOf, type Sync } from "./state"
 
-const BADGE: Record<JiphyeonjeonSource["status"], string> = {
+// A searchable source with pages search cannot read is shown as partly searchable.
+type Shown = JiphyeonjeonSource["status"] | "partial"
+
+const BADGE: Record<Shown, string> = {
   ready: "bg-v2-state-bg-success text-v2-state-fg-success",
+  partial: "bg-v2-state-bg-warning text-v2-state-fg-warning",
   pending: "bg-v2-state-bg-info text-v2-state-fg-info",
   unsupported: "bg-v2-state-bg-warning text-v2-state-fg-warning",
   unreadable: "bg-v2-state-bg-danger text-v2-state-fg-danger",
 }
+
+const shown = (source: JiphyeonjeonSource): Shown => (source.blank?.length ? "partial" : source.status)
 
 function useFailed() {
   const ctx = useExtension<typeof definition>()
@@ -256,15 +262,19 @@ export function Sources(props: {
                 <button
                   type="button"
                   class="flex w-full items-center gap-2 rounded-[6px] px-1.5 py-1 text-left hover:bg-surface-raised-base-hover"
-                  title={status().get(source)?.reason ?? source}
+                  title={
+                    status().get(source)?.blank?.length
+                      ? ctx.t("status.blank", { pages: status().get(source)?.blank?.join(", ") ?? "" })
+                      : (status().get(source)?.reason ?? source)
+                  }
                   onClick={() => props.onOpen(`${props.item.directory}/자료/${source}`)}
                 >
                   <FileIcon node={{ path: source, type: "file" }} class="size-4 shrink-0" />
                   <span class="min-w-0 flex-1 truncate text-13-regular text-text-base">{source}</span>
                   <Show when={status().get(source)}>
                     {(found) => (
-                      <span class={`shrink-0 rounded-[4px] px-1.5 text-11-regular ${BADGE[found().status]}`}>
-                        {ctx.t(`status.${found().status}`)}
+                      <span class={`shrink-0 rounded-[4px] px-1.5 text-11-regular ${BADGE[shown(found())]}`}>
+                        {ctx.t(`status.${shown(found())}`)}
                       </span>
                     )}
                   </Show>

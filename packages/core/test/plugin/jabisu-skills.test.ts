@@ -35,6 +35,40 @@ describe("JabisuSkills", () => {
     }),
   )
 
+  it.live("gives every bundled skill a Korean name, summary and search words, and keeps the user's on and off", () =>
+    Effect.gen(function* () {
+      const { deps } = yield* setup
+      const before = yield* JabisuSkills.list(deps)
+
+      expect(before.skills.filter((skill) => !skill.title || !skill.summary || !skill.keywords?.length)).toEqual([])
+      expect(before.skills.find((skill) => skill.name === "hwpx")?.on).toBe(true)
+      expect(before.skills.find((skill) => skill.name === "tdd")?.on).toBe(false)
+
+      yield* JabisuSkills.turn(deps, "tdd", true)
+      yield* JabisuSkills.turn(deps, "pptx", false)
+      const after = yield* JabisuSkills.list(deps)
+
+      expect(after.skills.find((skill) => skill.name === "tdd")?.on).toBe(true)
+      expect(after.skills.find((skill) => skill.name === "pptx")?.on).toBe(false)
+
+      const unknown = yield* JabisuSkills.turn(deps, "없는-스킬", true).pipe(Effect.flip)
+      expect(unknown.reason).toContain("not a bundled skill")
+    }),
+  )
+
+  it.live("gives the profile skill the exact file the engine reads as the profile", () =>
+    Effect.gen(function* () {
+      const home = (yield* tmpdirScoped()).path
+      const { config } = yield* setup
+      const global = Global.make({ config, home })
+      const all = yield* JabisuSkills.files({ fs: yield* FSUtil.Service, global })
+      const skill = all.find((file) => file.path === "work-profile/SKILL.md")?.content
+
+      expect(skill).toContain(path.join(home, "Documents", "자비수 업무", "내 업무.md"))
+      expect(skill).not.toContain("__JABISU_WORK_PROFILE__")
+    }),
+  )
+
   it.live("copies a skill with all its files and its base version, once", () =>
     Effect.gen(function* () {
       const { config, deps } = yield* setup
@@ -79,7 +113,14 @@ describe("JabisuSkills", () => {
 
       expect(backup).toBe(path.join(config, "skills-backup", "xlsx-20261026-101500"))
       expect(yield* Effect.promise(() => fs.readFile(path.join(backup, "SKILL.md"), "utf8"))).toContain("내 것")
-      expect(yield* Effect.promise(() => fs.access(directory).then(() => true, () => false))).toBe(false)
+      expect(
+        yield* Effect.promise(() =>
+          fs.access(directory).then(
+            () => true,
+            () => false,
+          ),
+        ),
+      ).toBe(false)
       expect(yield* statusOf(deps, "xlsx")).toBe("default")
     }),
   )

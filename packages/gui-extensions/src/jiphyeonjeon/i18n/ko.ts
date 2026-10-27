@@ -21,6 +21,8 @@ export default {
   "status.pending": "받아쓰기 전",
   "status.unsupported": "못 읽는 형식",
   "status.unreadable": "글자 없음",
+  "status.partial": "일부만 검색됨",
+  "status.blank": "{{pages}}쪽은 글자가 없어(스캔 이미지로 보임) 검색되지 않습니다",
   "action.chat": "새 대화",
   "action.folder": "폴더 열기",
   "action.add": "넣기",

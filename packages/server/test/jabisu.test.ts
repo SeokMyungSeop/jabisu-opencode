@@ -4,6 +4,9 @@ import { expect } from "bun:test"
 import { Effect } from "effect"
 import { tmpdir } from "../../core/test/fixture/tmpdir"
 import { it } from "../../core/test/lib/effect"
+import { WorkIndex } from "@opencode/core/plugin/jabisu/work/index"
+import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
+import { Global } from "@opencode/util/global"
 import { startServer } from "./fixture/server"
 
 const DEFAULT_MODEL = "xiaomi/mimo-v2.6-flash"
@@ -200,5 +203,66 @@ it.live("copies a bundled skill for the user, and moves the copy aside to use th
     const reset = yield* request("/api/jabisu/skills/reset", { name: "docx" })
     expect(reset.body.backup.startsWith(path.join(global, "skills-backup", "docx-"))).toBe(true)
     expect(status(reset.body.list, "docx")).toBe("default")
+  }),
+)
+
+it.live("indexes 자비수's work folder and the folders the user chooses, and reports their coverage", () =>
+  Effect.gen(function* () {
+    const tmp = yield* Effect.acquireDisposable(Effect.promise(() => tmpdir("opencode-jabisu-work-")))
+    const global = path.join(tmp.path, "global")
+    const project = path.join(tmp.path, "project")
+    const home = path.join(tmp.path, "home")
+    const jabisu = WorkProfile.folder({ home })
+    const folder = path.join(tmp.path, "업무")
+    yield* withHome(home)
+    yield* Effect.promise(() =>
+      Promise.all([
+        fs.mkdir(global, { recursive: true }),
+        fs.mkdir(project, { recursive: true }),
+        fs.mkdir(jabisu, { recursive: true }),
+        fs.mkdir(folder, { recursive: true }),
+      ]),
+    )
+    yield* Effect.promise(() => fs.writeFile(path.join(jabisu, "사무분장.txt"), "바이오산업팀 사무분장"))
+    yield* Effect.promise(() => fs.writeFile(path.join(folder, "실증사업 계획.txt"), "디지털헬스케어 실증사업 추진 계획"))
+    // The test server keeps the real data folder, so the index this config makes there is removed after the server.
+    const index = WorkIndex.file(Global.make({ config: global }))
+    yield* Effect.addFinalizer(() =>
+      Effect.promise(() =>
+        Promise.all(["", "-wal", "-shm"].map((suffix) => fs.rm(`${index}${suffix}`, { force: true }))),
+      ),
+    )
+    const server = yield* startServer(global)
+    const request = (body?: object) =>
+      Effect.promise(async () => {
+        const url = new URL("/api/jabisu/work", server.base)
+        url.searchParams.set("location[directory]", project)
+        const response = await fetch(url, {
+          method: body ? "PUT" : "GET",
+          headers: { ...server.headers, "content-type": "application/json" },
+          body: body ? JSON.stringify(body) : undefined,
+        })
+        return { status: response.status, body: await response.json() }
+      })
+
+    const before = yield* request()
+    expect(before.body.jabisu.path).toBe(jabisu)
+    expect(before.body).toMatchObject({ received: [], saved: [], profile: { exists: false } })
+    expect(path.dirname(before.body.profile.path)).toBe(jabisu)
+
+    const refused = yield* request({ received: [path.join(tmp.path, "없는 폴더")], saved: [] })
+    expect(refused.status).toBe(400)
+
+    const chosen = yield* request({ received: [], saved: [folder] })
+    expect(chosen.body.saved.map((item: { path: string }) => item.path)).toEqual([folder])
+
+    // The indexer looks at the settings every two seconds and then reads the documents' text.
+    let indexed = { jabisu: { ready: 0 }, saved: [{ ready: 0 }] }
+    for (let attempt = 0; attempt < 40 && (indexed.jabisu.ready === 0 || indexed.saved[0]?.ready === 0); attempt++) {
+      yield* Effect.sleep("250 millis")
+      indexed = (yield* request()).body
+    }
+    expect(indexed.jabisu).toMatchObject({ path: jabisu, files: 1, documents: 1, ready: 1, pending: 0 })
+    expect(indexed.saved[0]).toMatchObject({ path: folder, files: 1, documents: 1, ready: 1, pending: 0 })
   }),
 )

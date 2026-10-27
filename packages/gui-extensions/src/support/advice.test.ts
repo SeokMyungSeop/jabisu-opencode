@@ -3,21 +3,38 @@ import type { SessionFailure } from "../sdk"
 import { advise, deliberate, type Advice } from "./advice"
 
 const cases: Array<[SessionFailure, Advice]> = [
-  [{ type: "provider.auth", status: 401, message: "User not found." }, { id: "auth.openrouter", settings: "providers" }],
+  [
+    { type: "provider.auth", status: 401, message: "User not found." },
+    { id: "auth.openrouter", settings: "providers" },
+  ],
   [
     { type: "provider.auth", status: 401, message: "Unauthorized", provider: "openrouter", model: "x" },
     { id: "auth.openrouter", settings: "providers" },
   ],
-  [{ type: "provider.auth", message: "invalid x-api-key", provider: "anthropic" }, { id: "auth", settings: "providers" }],
   [
-    { type: "provider.no-route", status: 404, message: "No endpoints found matching your data policy (Free model training)." },
+    { type: "provider.auth", message: "invalid x-api-key", provider: "anthropic" },
+    { id: "auth", settings: "providers" },
+  ],
+  [
+    {
+      type: "provider.no-route",
+      status: 404,
+      message: "No endpoints found matching your data policy (Free model training).",
+    },
     { id: "privacy" },
   ],
   [
-    { type: "provider.invalid-request", status: 400, message: "This endpoint's maximum context length is 131072 tokens." },
+    {
+      type: "provider.invalid-request",
+      status: 400,
+      message: "This endpoint's maximum context length is 131072 tokens.",
+    },
     { id: "context" },
   ],
-  [{ type: "provider.invalid-request", status: 400, message: "No endpoints found that support image input" }, { id: "image" }],
+  [
+    { type: "provider.invalid-request", status: 400, message: "No endpoints found that support image input" },
+    { id: "image" },
+  ],
   [{ type: "provider.invalid-request", status: 404, message: "No endpoints found for some/model." }, { id: "model" }],
   [{ type: "provider.quota", status: 402, message: "Insufficient credits" }, { id: "credits" }],
   [{ type: "provider.rate-limit", status: 429, message: "Rate limit exceeded: free-models-per-day" }, { id: "rate" }],

@@ -1,6 +1,7 @@
 import { useCommand, type CommandOption } from "@/shell/commands/command"
 import { adjacentTabKey } from "@/shell/titlebar/tab-order"
 import { useDialog } from "@opencode/ui/context/dialog"
+import { JABISU } from "@opencode/ui/logo"
 import { previewSelectedLines } from "@opencode/session-ui/pierre/selection-bridge"
 import { useFile, selectionFromLines, type FileSelection } from "@/workspaces/files/model"
 import { useLanguage } from "@/runtime/i18n/language"
@@ -426,14 +427,18 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
     ].filter((v) => !!v)
   }
 
-  const projectCmds = () => [
-    projectCommand({
-      id: "project.copyID",
-      title: language.t("command.project.copyID"),
-      disabled: !actions.session.data.info()?.projectID,
-      onSelect: copyProjectID,
-    }),
-  ]
+  // A project's ID is for developers; 자비수 leaves the command out.
+  const projectCmds = () =>
+    JABISU
+      ? []
+      : [
+          projectCommand({
+            id: "project.copyID",
+            title: language.t("command.project.copyID"),
+            disabled: !actions.session.data.info()?.projectID,
+            onSelect: copyProjectID,
+          }),
+        ]
 
   const contextCmds = () => [
     contextCommand({

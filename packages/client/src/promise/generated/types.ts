@@ -328,14 +328,23 @@ export type JiphyeonjeonSource = {
   path: string
   status: "ready" | "pending" | "unsupported" | "unreadable"
   reason?: string | undefined
+  blank?: Array<number> | undefined
 }
 
 export type JabisuSkill = {
   name: string
   description: string
   status: "default" | "custom" | "changed"
+  on: boolean
+  title?: string | undefined
+  summary?: string | undefined
+  keywords?: Array<string> | undefined
   directory?: string | undefined
 }
+
+export type JabisuWorkFolder = { path: string; files: number; documents: number; ready: number; pending: number }
+
+export type JabisuLaw = { configured: boolean; masked?: string | undefined; apply: string }
 
 export type LocationPublicRef = { directory: AbsolutePath }
 
@@ -890,6 +899,14 @@ export type ConfigModelCapabilities = {
 export type JiphyeonjeonList = { root: string; items: Array<Jiphyeonjeon>; openrouter: boolean; suggestModel: string }
 
 export type JabisuSkillList = { folder: string; backups: string; skills: Array<JabisuSkill> }
+
+export type JabisuWork = {
+  jabisu: JabisuWorkFolder
+  received: Array<JabisuWorkFolder>
+  saved: Array<JabisuWorkFolder>
+  candidates: Array<{ path: string; kind: "downloads" | "messenger" }>
+  profile: { path: string; exists: boolean }
+}
 
 export type SessionMessageLocationSwitched = {
   id: SessionMessageID
@@ -6153,3 +6170,38 @@ export type JabisuSkillsResetInput = {
 }
 
 export type JabisuSkillsResetOutput = { backup: string; list: JabisuSkillList }
+
+export type JabisuSkillsTurnInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string; readonly on: boolean }["name"]
+  readonly on: { readonly name: string; readonly on: boolean }["on"]
+}
+
+export type JabisuSkillsTurnOutput = JabisuSkillList
+
+export type JabisuWorkGetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuWorkGetOutput = JabisuWork
+
+export type JabisuWorkUpdateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly received: { readonly received: ReadonlyArray<string>; readonly saved: ReadonlyArray<string> }["received"]
+  readonly saved: { readonly received: ReadonlyArray<string>; readonly saved: ReadonlyArray<string> }["saved"]
+}
+
+export type JabisuWorkUpdateOutput = JabisuWork
+
+export type JabisuLawGetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuLawGetOutput = JabisuLaw
+
+export type JabisuLawUpdateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly key: { readonly key: string }["key"]
+}
+
+export type JabisuLawUpdateOutput = JabisuLaw

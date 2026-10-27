@@ -58,11 +58,12 @@ type Attached = {
   scope: (server: string) => ServerScope
   /** Records a session-scoped store so layout pruning drops it with the session. */
   scoped: (name: string) => void
-  layout: Omit<Layout, "narrow" | "settings" | "project" | "stored"> & {
+  layout: Omit<Layout, "narrow" | "settings" | "project" | "draft" | "stored"> & {
     stored(extension: string, session: SessionRef): readonly string[]
   }
   settings: (page?: string) => void
   project: (server: string, title: string, directory?: string) => void
+  draft: (server: string, directory: string, prompt?: string) => void
   open: (server: string, session: string) => void
   font: Accessor<string>
   routing: Accessor<boolean>
@@ -246,6 +247,10 @@ export function createHostApis() {
             reveal: (path) => platform.revealPath?.(path) ?? Promise.resolve(false),
             installed: (app) => platform.checkAppExists?.(app) ?? Promise.resolve(false),
             forceFocus: (enabled) => platform.setForceFocus?.(enabled) ?? Promise.resolve(),
+            chooseFolder: (title) =>
+              platform
+                .openDirectoryPickerDialog({ title })
+                .then((picked) => (Array.isArray(picked) ? picked[0] : (picked ?? undefined))),
           }
         : undefined,
     build: () => ({
@@ -320,6 +325,7 @@ export function createHostApis() {
       },
       settings: (page) => write((value) => value.settings(page)),
       project: (server, title, directory) => write((value) => value.project(server, title, directory)),
+      draft: (server, directory, prompt) => write((value) => value.draft(server, directory, prompt)),
     }),
     embeds: () => embeds,
   }
@@ -723,9 +729,12 @@ export function createExtensionAttachment(apis: HostApis) {
     return sideOpened(session) ? "visible" : "active"
   }
 
-  // Open-project requests wait until their server is listed (e.g. an SSH server that just connected).
+  // Open-project requests wait until their server is listed (e.g. an SSH server that just connected). A draft request
+  // opens a directory without adding it to the project list.
   const picker = useDirectoryPicker()
-  const [projects, setProjects] = createSignal<readonly { server: string; title: string; directory?: string }[]>([])
+  const [projects, setProjects] = createSignal<
+    readonly { server: string; title: string; directory?: string; listed: boolean; prompt?: string }[]
+  >([])
   createEffect(() => {
     const pending = projects()
 
@@ -741,8 +750,9 @@ export function createExtensionAttachment(apis: HostApis) {
       ready.forEach(({ request, server }) => {
         const open = (directory: string) => {
           const key = ServerConnection.key(server)
-          servers.projects.forServer(key).open(directory)
-          void tabs.newDraft({ server: key, directory })
+
+          if (request.listed) servers.projects.forServer(key).open(directory)
+          void tabs.newDraft({ server: key, directory }, request.prompt)
         }
 
         if (request.directory) return open(request.directory)
@@ -799,7 +809,10 @@ export function createExtensionAttachment(apis: HostApis) {
     screen,
     scope,
     scoped: layout.sessionState.track,
-    project: (server, title, directory) => setProjects((pending) => [...pending, { server, title, directory }]),
+    project: (server, title, directory) =>
+      setProjects((pending) => [...pending, { server, title, directory, listed: true }]),
+    draft: (server, directory, prompt) =>
+      setProjects((pending) => [...pending, { server, title: "", directory, listed: false, prompt }]),
     open: (server, id) => {
       const conn = servers.list.find((item) => ServerConnection.key(item) === server)
 

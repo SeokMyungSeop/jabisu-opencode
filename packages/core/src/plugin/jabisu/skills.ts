@@ -3,13 +3,15 @@ export * as JabisuSkills from "./skills.js"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
 import { Hash } from "@opencode/util/hash"
-import { Data, Effect } from "effect"
+import { Data, Effect, Schema } from "effect"
 import path from "path"
 import { SkillFile } from "../../config/plugin/skill-file.js"
 import { JabisuBundle } from "./bundle.js"
 import { FilmCraft } from "./filmcraft.js"
+import { SkillCatalog } from "./skill-catalog.js"
 import pythonHelper from "./python/jabisu_python.py" with { type: "text" }
 import pythonSetup from "./python/python-setup.md" with { type: "text" }
+import { WorkProfile } from "./work/profile.js"
 
 // 자비수's bundled skills, and the user's own copies of them. A copy in the user's skills folder with a bundled
 // skill's folder name replaces it, and updates never touch that folder, so a copy keeps the user's changes. Each copy
@@ -40,7 +42,7 @@ export type Status = "default" | "custom" | "changed"
 export class SkillsError extends Data.TaggedError("JabisuSkillsError")<{ readonly reason: string }> {}
 
 // The document skills share one Python package folder, which outlives the skill folder each update rewrites.
-const PYTHON_SKILLS = ["docx", "hwpx", "pptx", "xlsx"]
+const PYTHON_SKILLS = ["admin-docs", "docx", "hwpx", "pptx", "xlsx"]
 
 /** The file in a user's copy that names the bundled version it started from. */
 export const BASE = ".jabisu-base"
@@ -51,15 +53,38 @@ export const folder = (global: Pick<Global.Interface, "config">) => path.join(gl
 /** Where copies the user stopped using are moved, outside the skills folder so they no longer load. */
 export const backups = (global: Pick<Global.Interface, "config">) => path.join(global.config, "skills-backup")
 
+/** The user's choices of which bundled skills are on, where they differ from the catalog's defaults. */
+export const switches = (global: Pick<Global.Interface, "config">) => path.join(global.config, "jabisu-skills.json")
+
+const decodeSwitches = Schema.decodeUnknownOption(
+  Schema.fromJsonString(Schema.Struct({ on: Schema.Record(Schema.String, Schema.Boolean) })),
+)
+
+/** The bundled skills the user turned on or off; none when the file is missing or unreadable. */
+export const chosen = Effect.fn("JabisuSkills.chosen")(function* (deps: Pick<Dependencies, "fs" | "global">) {
+  const text = yield* deps.fs.readFileStringSafe(switches(deps.global)).pipe(Effect.orElseSucceed(() => undefined))
+  const parsed = text === undefined ? undefined : decodeSwitches(text)
+
+  return parsed?._tag === "Some" ? parsed.value.on : {}
+})
+
 /** Every bundled skill file, with the files 자비수 fills in for this PC. */
 export const files = Effect.fn("JabisuSkills.files")(function* (deps: Dependencies) {
   const helper = pythonHelper.replace("__JABISU_PYTHON__", path.join(deps.global.data, "jabisu", "python"))
+  // The profile skill must write the one file the engine reads as the profile, not a path the model works out.
+  // The admin-docs builder finds the bundled hwpx skill through the bundles folder when it runs from a user's copy.
+  const filled: Readonly<Record<string, (text: string) => string>> = {
+    "work-profile/SKILL.md": (text) => text.replaceAll("__JABISU_WORK_PROFILE__", WorkProfile.file(deps.global)),
+    "admin-docs/scripts/make_admin_doc.py": (text) =>
+      text.replaceAll("__JABISU_BUNDLES__", path.join(deps.global.cache, "skills")),
+  }
+  const text = (file: { path: string; text: string }) => filled[file.path]?.(file.text) ?? file.text
   const embedded = yield* Effect.forEach(JabisuBundle.files, (file) =>
     Effect.gen(function* () {
       // Binary files are embedded in the CLI, so failing to read one is a build defect.
       return {
         path: file.path,
-        content: "text" in file ? file.text : yield* deps.fs.readFile(file.file).pipe(Effect.orDie),
+        content: "text" in file ? text(file) : yield* deps.fs.readFile(file.file).pipe(Effect.orDie),
       } satisfies File
     }),
   )
@@ -114,8 +139,7 @@ const readBase = (deps: Dependencies, name: string) =>
     Effect.orElseSucceed(() => undefined),
   )
 
-const hasCopy = (deps: Dependencies, name: string) =>
-  deps.fs.existsSafe(path.join(copyOf(deps, name), "SKILL.md"))
+const hasCopy = (deps: Dependencies, name: string) => deps.fs.existsSafe(path.join(copyOf(deps, name), "SKILL.md"))
 
 const status = Effect.fn("JabisuSkills.status")(function* (deps: Dependencies, skill: Bundled) {
   if (!(yield* hasCopy(deps, skill.name))) return "default" as const
@@ -125,9 +149,13 @@ const status = Effect.fn("JabisuSkills.status")(function* (deps: Dependencies, s
   return base === undefined || base === skill.version ? ("custom" as const) : ("changed" as const)
 })
 
-/** Each bundled skill with whether the user has their own copy, and the folders the app shows. */
+/**
+ * Each bundled skill with whether the user has their own copy and whether it is on, its Korean name, summary and
+ * search words, and the folders the app shows.
+ */
 export const list = Effect.fn("JabisuSkills.list")(function* (deps: Dependencies) {
   const skills = bundled(yield* files(deps))
+  const choices = yield* chosen(deps)
 
   return {
     folder: folder(deps.global),
@@ -135,16 +163,29 @@ export const list = Effect.fn("JabisuSkills.list")(function* (deps: Dependencies
     skills: yield* Effect.forEach(skills, (skill) =>
       Effect.gen(function* () {
         const state = yield* status(deps, skill)
+        const entry = SkillCatalog.ENTRIES[skill.name]
 
         return {
           name: skill.name,
           description: skill.description,
           status: state,
+          on: SkillCatalog.isOn(skill.name, choices),
+          ...(entry ? { title: entry.title, summary: entry.summary, keywords: entry.keywords } : {}),
           ...(state === "default" ? {} : { directory: copyOf(deps, skill.name) }),
         }
       }),
     ),
   }
+})
+
+/** Turns a bundled skill on or off for every chat from now on. */
+export const turn = Effect.fn("JabisuSkills.turn")(function* (deps: Dependencies, name: string, on: boolean) {
+  yield* find(deps, name)
+  const choices = yield* chosen(deps)
+
+  yield* deps.fs
+    .writeWithDirs(switches(deps.global), JSON.stringify({ on: { ...choices, [name]: on } }, null, 2))
+    .pipe(Effect.mapError(() => new SkillsError({ reason: `${switches(deps.global)} cannot be written` })))
 })
 
 const find = Effect.fn("JabisuSkills.find")(function* (deps: Dependencies, name: string) {

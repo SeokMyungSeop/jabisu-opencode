@@ -48,6 +48,7 @@ import { settingsViewRedirect } from "./route"
 import { pageIcons } from "./pages"
 import { revealSettingsSearch } from "./search-reveal"
 import { ExtensionSettingsPages } from "@/runtime/extension/settings-page-view"
+import { JABISU } from "@opencode/ui/logo"
 import "@/settings/settings.css"
 
 const GuiExtensionsSettings = import.meta.env.DEV
@@ -91,6 +92,10 @@ const nestedProjectTabs = [
   { value: "workspaces", icon: pageIcons.workspaces, label: "settings.tab.workspaces" },
   { value: "extensions", icon: pageIcons.extensions, label: "settings.tab.extensions" },
 ] as const
+
+// 자비수 is for office work, so it leaves out git workspaces, a developer tool.
+const listed = <T extends { readonly value: string }>(tabs: readonly T[]) =>
+  JABISU ? tabs.filter((tab) => tab.value !== "workspaces") : tabs
 
 export function SettingsScreen() {
   const surface = useSettingsSurface()
@@ -309,7 +314,7 @@ function RootSettings() {
       : [
           {
             items: [
-              ...serverTabs.map((item) => ({
+              ...listed(serverTabs).map((item) => ({
                 ...item,
                 label: language.t(item.label),
                 disabled: !single(),
@@ -448,7 +453,7 @@ function ServerSettings(props: { entry: SettingsServer }) {
 
   const groups = createMemo<SettingsNavGroup[]>(() => [
     {
-      items: nestedServerTabs.map((item) => ({
+      items: listed(nestedServerTabs).map((item) => ({
         ...item,
         label: item.value === "general" ? props.entry.name : language.t(item.label),
         disabled: item.value !== "general" && !props.entry.connection,
@@ -540,7 +545,7 @@ function ProjectSettings(props: { server: ServerConnection.Any; project: LocalPr
 
   const groups: SettingsNavGroup[] = [
     {
-      items: nestedProjectTabs.map((item) => ({
+      items: listed(nestedProjectTabs).map((item) => ({
         ...item,
         label: language.t(item.label),
         onPrefetch: item.value === "workspaces" ? prefetchWorkspaces : undefined,

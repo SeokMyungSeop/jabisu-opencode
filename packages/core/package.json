@@ -72,6 +72,13 @@
       "node": "./src/database/v1-migration.noop.ts",
       "workerd": "./src/database/v1-migration.noop.ts",
       "default": "./src/database/v1-migration.noop.ts"
+    },
+    "#jabisu-work-database": {
+      "types": "./src/plugin/jabisu/work/database.bun.ts",
+      "bun": "./src/plugin/jabisu/work/database.bun.ts",
+      "node": "./src/plugin/jabisu/work/database.none.ts",
+      "workerd": "./src/plugin/jabisu/work/database.none.ts",
+      "default": "./src/plugin/jabisu/work/database.none.ts"
     }
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import type { useLanguage } from "@/runtime/i18n/language"
 import type { SettingsProjectTab, SettingsRootTab, SettingsServerTab } from "./surface"
+import { JABISU } from "@opencode/ui/logo"
 
 type Label = Parameters<ReturnType<typeof useLanguage>["t"]>[0]
 
@@ -15,7 +16,13 @@ type Entry<Tab> = {
   available?: "desktop" | "browser" | "mobile"
 }
 
-export const clientSettings: Entry<SettingsRootTab>[] = [
+// 자비수 leaves out git workspaces, so search does not lead to them either.
+const listed = <Tab>(entries: Entry<Tab>[]) =>
+  JABISU
+    ? entries.filter((entry) => entry.tab !== "workspaces" && entry.target !== "settings-workspace-destination")
+    : entries
+
+export const clientSettings: Entry<SettingsRootTab>[] = listed<SettingsRootTab>([
   { tab: "general", label: "settings.tab.preferences" },
   { tab: "appearance", label: "settings.general.section.appearance" },
   { tab: "notifications", label: "settings.tab.notifications" },
@@ -152,9 +159,9 @@ export const clientSettings: Entry<SettingsRootTab>[] = [
     description: "settings.general.sounds.errors.description",
     keywords: "sound audio errors",
   },
-]
+])
 
-export const serverSettings: Entry<SettingsServerTab>[] = [
+export const serverSettings: Entry<SettingsServerTab>[] = listed<SettingsServerTab>([
   { tab: "projects", label: "settings.tab.projects" },
   { tab: "workspaces", label: "settings.tab.workspaces", keywords: "workspaces disk usage cleanup delete" },
   { tab: "providers", label: "settings.providers.title", keywords: "connect api key credentials" },
@@ -182,9 +189,9 @@ export const serverSettings: Entry<SettingsServerTab>[] = [
     description: "settings.server.preferences.websearch.description",
     keywords: "web search provider",
   },
-]
+])
 
-export const projectSettings: Entry<SettingsProjectTab>[] = [
+export const projectSettings: Entry<SettingsProjectTab>[] = listed<SettingsProjectTab>([
   { tab: "general", label: "project.settings.name.title", target: "settings-project-name", keywords: "rename" },
   { tab: "general", label: "dialog.project.edit.icon", target: "settings-project-icon" },
   { tab: "general", label: "dialog.project.edit.color", target: "settings-project-color" },
@@ -205,4 +212,4 @@ export const projectSettings: Entry<SettingsProjectTab>[] = [
   { tab: "extensions", subtab: "plugins", label: "settings.extensions.tab.plugins" },
   { tab: "extensions", subtab: "skills", label: "settings.extensions.tab.skills" },
   { tab: "extensions", subtab: "lsps", label: "project.settings.extensions.tab.lsps", keywords: "language servers" },
-]
+])

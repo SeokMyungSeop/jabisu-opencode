@@ -301,6 +301,16 @@ import type {
   JabisuSkillsKeepOutput,
   JabisuSkillsResetInput,
   JabisuSkillsResetOutput,
+  JabisuSkillsTurnInput,
+  JabisuSkillsTurnOutput,
+  JabisuWorkGetInput,
+  JabisuWorkGetOutput,
+  JabisuWorkUpdateInput,
+  JabisuWorkUpdateOutput,
+  JabisuLawGetInput,
+  JabisuLawGetOutput,
+  JabisuLawUpdateInput,
+  JabisuLawUpdateOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2494,6 +2504,73 @@ export function make(options: ClientOptions) {
               path: `/api/jabisu/skills/reset`,
               query: { location: input["location"] },
               body: { name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        turn: (input: JabisuSkillsTurnInput, requestOptions?: RequestOptions) =>
+          request<JabisuSkillsTurnOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/skills/turn`,
+              query: { location: input["location"] },
+              body: { name: input["name"], on: input["on"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      work: {
+        get: (input?: JabisuWorkGetInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkGetOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/work`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        update: (input: JabisuWorkUpdateInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkUpdateOutput>(
+            {
+              method: "PUT",
+              path: `/api/jabisu/work`,
+              query: { location: input["location"] },
+              body: { received: input["received"], saved: input["saved"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      law: {
+        get: (input?: JabisuLawGetInput, requestOptions?: RequestOptions) =>
+          request<JabisuLawGetOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/law`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        update: (input: JabisuLawUpdateInput, requestOptions?: RequestOptions) =>
+          request<JabisuLawUpdateOutput>(
+            {
+              method: "PUT",
+              path: `/api/jabisu/law`,
+              query: { location: input["location"] },
+              body: { key: input["key"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,

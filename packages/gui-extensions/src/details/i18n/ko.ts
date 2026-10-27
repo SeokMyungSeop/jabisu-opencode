@@ -2,6 +2,8 @@ export default {
   title: "세션 세부 정보",
   tooltip: "요약",
   "command.toggle": "요약 전환",
+  context: "컨텍스트",
+  "panel.open": "옆 패널로 열기",
   noBranch: "브랜치 없음",
   "move.title": "작업 공간으로 이동",
   "move.menu": "세션 이동 위치",

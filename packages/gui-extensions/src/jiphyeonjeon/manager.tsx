@@ -161,7 +161,8 @@ function Detail(props: { item: Jiphyeonjeon; writer: Writer; sync: Sync; dialog:
 
     if (!server) return
 
-    ctx.layout.project(server.id, props.item.name, props.item.directory)
+    // The home screen lists 집현전 in their own section, so they stay out of the project list.
+    ctx.layout.draft(server.id, props.item.directory)
     props.dialog.close()
   }
 

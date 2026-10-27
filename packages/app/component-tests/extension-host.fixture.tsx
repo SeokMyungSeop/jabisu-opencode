@@ -73,6 +73,7 @@ const layout: Layout = {
   scroll: { get: () => undefined, set() {} },
   settings() {},
   project() {},
+  draft() {},
 }
 
 const build: Build = { version: "", channel: "dev", platform: "desktop", packaged: false }
@@ -342,6 +343,7 @@ function standIn(overrides: Partial<Interface>): Interface {
     },
     settings() {},
     project() {},
+    draft() {},
     open() {},
     font: () => "fixture mono",
     routing: () => false,

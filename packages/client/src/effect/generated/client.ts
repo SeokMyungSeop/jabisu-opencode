@@ -303,6 +303,16 @@ import type {
   JabisuSkillsKeepOutput,
   JabisuSkillsResetInput,
   JabisuSkillsResetOutput,
+  JabisuSkillsTurnInput,
+  JabisuSkillsTurnOutput,
+  JabisuWorkGetInput,
+  JabisuWorkGetOutput,
+  JabisuWorkUpdateInput,
+  JabisuWorkUpdateOutput,
+  JabisuLawGetInput,
+  JabisuLawGetOutput,
+  JabisuLawUpdateInput,
+  JabisuLawUpdateOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1784,6 +1794,39 @@ const EndpointJabisuSkillsReset = (raw: RawClient["server.jabisu"]) => (input: J
     ),
   )
 
+const EndpointJabisuSkillsTurn = (raw: RawClient["server.jabisu"]) => (input: JabisuSkillsTurnInput) =>
+  preserveEffect<JabisuSkillsTurnOutput>()(
+    raw["jabisu.skills.turn"]({
+      query: { location: input["location"] },
+      payload: { name: input["name"], on: input["on"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuWorkGet = (raw: RawClient["server.jabisu"]) => (input?: JabisuWorkGetInput) =>
+  preserveEffect<JabisuWorkGetOutput>()(
+    raw["jabisu.work.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuWorkUpdate = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkUpdateInput) =>
+  preserveEffect<JabisuWorkUpdateOutput>()(
+    raw["jabisu.work.update"]({
+      query: { location: input["location"] },
+      payload: { received: input["received"], saved: input["saved"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuLawGet = (raw: RawClient["server.jabisu"]) => (input?: JabisuLawGetInput) =>
+  preserveEffect<JabisuLawGetOutput>()(
+    raw["jabisu.law.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuLawUpdate = (raw: RawClient["server.jabisu"]) => (input: JabisuLawUpdateInput) =>
+  preserveEffect<JabisuLawUpdateOutput>()(
+    raw["jabisu.law.update"]({ query: { location: input["location"] }, payload: { key: input["key"] } }).pipe(
+      Effect.mapError(mapClientError),
+    ),
+  )
+
 const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   transcription: { get: EndpointJabisuTranscriptionGet(raw), update: EndpointJabisuTranscriptionUpdate(raw) },
   jiphyeonjeon: {
@@ -1798,7 +1841,10 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
     copy: EndpointJabisuSkillsCopy(raw),
     keep: EndpointJabisuSkillsKeep(raw),
     reset: EndpointJabisuSkillsReset(raw),
+    turn: EndpointJabisuSkillsTurn(raw),
   },
+  work: { get: EndpointJabisuWorkGet(raw), update: EndpointJabisuWorkUpdate(raw) },
+  law: { get: EndpointJabisuLawGet(raw), update: EndpointJabisuLawUpdate(raw) },
 })
 
 const adaptClient = (raw: RawClient) => ({

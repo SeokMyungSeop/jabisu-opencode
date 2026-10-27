@@ -2430,6 +2430,7 @@ export type JabisuJiphyeonjeonSourcesOutput = ReadonlyArray<{
   readonly path: string
   readonly status: "ready" | "pending" | "unsupported" | "unreadable"
   readonly reason?: string | undefined
+  readonly blank?: ReadonlyArray<number> | undefined
 }>
 export type JabisuJiphyeonjeonSourcesOperation<E = never> = (
   input: JabisuJiphyeonjeonSourcesInput,
@@ -2453,6 +2454,10 @@ export type JabisuSkillsListOutput = {
     readonly name: string
     readonly description: string
     readonly status: "default" | "custom" | "changed"
+    readonly on: boolean
+    readonly title?: string | undefined
+    readonly summary?: string | undefined
+    readonly keywords?: ReadonlyArray<string> | undefined
     readonly directory?: string | undefined
   }>
 }
@@ -2471,6 +2476,10 @@ export type JabisuSkillsCopyOutput = {
     readonly name: string
     readonly description: string
     readonly status: "default" | "custom" | "changed"
+    readonly on: boolean
+    readonly title?: string | undefined
+    readonly summary?: string | undefined
+    readonly keywords?: ReadonlyArray<string> | undefined
     readonly directory?: string | undefined
   }>
 }
@@ -2489,6 +2498,10 @@ export type JabisuSkillsKeepOutput = {
     readonly name: string
     readonly description: string
     readonly status: "default" | "custom" | "changed"
+    readonly on: boolean
+    readonly title?: string | undefined
+    readonly summary?: string | undefined
+    readonly keywords?: ReadonlyArray<string> | undefined
     readonly directory?: string | undefined
   }>
 }
@@ -2509,6 +2522,10 @@ export type JabisuSkillsResetOutput = {
       readonly name: string
       readonly description: string
       readonly status: "default" | "custom" | "changed"
+      readonly on: boolean
+      readonly title?: string | undefined
+      readonly summary?: string | undefined
+      readonly keywords?: ReadonlyArray<string> | undefined
       readonly directory?: string | undefined
     }>
   }
@@ -2516,6 +2533,112 @@ export type JabisuSkillsResetOutput = {
 export type JabisuSkillsResetOperation<E = never> = (
   input: JabisuSkillsResetInput,
 ) => Effect.Effect<JabisuSkillsResetOutput, E>
+
+export type JabisuSkillsTurnInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly on: boolean
+}
+export type JabisuSkillsTurnOutput = {
+  readonly folder: string
+  readonly backups: string
+  readonly skills: ReadonlyArray<{
+    readonly name: string
+    readonly description: string
+    readonly status: "default" | "custom" | "changed"
+    readonly on: boolean
+    readonly title?: string | undefined
+    readonly summary?: string | undefined
+    readonly keywords?: ReadonlyArray<string> | undefined
+    readonly directory?: string | undefined
+  }>
+}
+export type JabisuSkillsTurnOperation<E = never> = (
+  input: JabisuSkillsTurnInput,
+) => Effect.Effect<JabisuSkillsTurnOutput, E>
+
+export type JabisuWorkGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type JabisuWorkGetOutput = {
+  readonly jabisu: {
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }
+  readonly received: ReadonlyArray<{
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }>
+  readonly saved: ReadonlyArray<{
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }>
+  readonly candidates: ReadonlyArray<{ readonly path: string; readonly kind: "downloads" | "messenger" }>
+  readonly profile: { readonly path: string; readonly exists: boolean }
+}
+export type JabisuWorkGetOperation<E = never> = (input?: JabisuWorkGetInput) => Effect.Effect<JabisuWorkGetOutput, E>
+
+export type JabisuWorkUpdateInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly received: ReadonlyArray<string>
+  readonly saved: ReadonlyArray<string>
+}
+export type JabisuWorkUpdateOutput = {
+  readonly jabisu: {
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }
+  readonly received: ReadonlyArray<{
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }>
+  readonly saved: ReadonlyArray<{
+    readonly path: string
+    readonly files: number
+    readonly documents: number
+    readonly ready: number
+    readonly pending: number
+  }>
+  readonly candidates: ReadonlyArray<{ readonly path: string; readonly kind: "downloads" | "messenger" }>
+  readonly profile: { readonly path: string; readonly exists: boolean }
+}
+export type JabisuWorkUpdateOperation<E = never> = (
+  input: JabisuWorkUpdateInput,
+) => Effect.Effect<JabisuWorkUpdateOutput, E>
+
+export type JabisuLawGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type JabisuLawGetOutput = {
+  readonly configured: boolean
+  readonly masked?: string | undefined
+  readonly apply: string
+}
+export type JabisuLawGetOperation<E = never> = (input?: JabisuLawGetInput) => Effect.Effect<JabisuLawGetOutput, E>
+
+export type JabisuLawUpdateInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly key: string
+}
+export type JabisuLawUpdateOutput = {
+  readonly configured: boolean
+  readonly masked?: string | undefined
+  readonly apply: string
+}
+export type JabisuLawUpdateOperation<E = never> = (
+  input: JabisuLawUpdateInput,
+) => Effect.Effect<JabisuLawUpdateOutput, E>
 
 export interface JabisuApi<E = never> {
   readonly transcription: {
@@ -2534,7 +2657,10 @@ export interface JabisuApi<E = never> {
     readonly copy: JabisuSkillsCopyOperation<E>
     readonly keep: JabisuSkillsKeepOperation<E>
     readonly reset: JabisuSkillsResetOperation<E>
+    readonly turn: JabisuSkillsTurnOperation<E>
   }
+  readonly work: { readonly get: JabisuWorkGetOperation<E>; readonly update: JabisuWorkUpdateOperation<E> }
+  readonly law: { readonly get: JabisuLawGetOperation<E>; readonly update: JabisuLawUpdateOperation<E> }
 }
 
 export interface AppApi<E = never> {

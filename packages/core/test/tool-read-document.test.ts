@@ -1,9 +1,11 @@
-import { describe, expect } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import path from "path"
 import { deflateRawSync } from "zlib"
 import { Environment } from "@opencode/core/environment/index"
 import { AbsolutePath } from "@opencode/core/schema"
 import { ReadToolFileSystem } from "@opencode/core/tool/read-filesystem"
+import { ReadDocument } from "@opencode/core/tool/read-document"
+import { DocumentText } from "@opencode/util/document-text"
 import { CrossSpawnSpawner } from "@opencode/util/cross-spawn-spawner"
 import { LayerNodePlatform } from "@opencode/util/effect/app-node-platform"
 import { LayerNode } from "@opencode/util/effect/layer-node"
@@ -275,6 +277,44 @@ describe("ReadTool documents", () => {
       expect(error).toBeInstanceOf(ReadToolFileSystem.BinaryFileError)
     }),
   )
+})
+
+describe("ReadDocument text to search", () => {
+  test("names the PDF pages without text, such as a scanned page with only its number", async () => {
+    const page = (content: string, id: number) => [
+      `${id} 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Contents ${id + 1} 0 R /Resources << /Font << /F1 9 0 R >> >> >> endobj`,
+      `${id + 1} 0 obj << /Length ${content.length} >> stream`,
+      content,
+      "endstream endobj",
+    ]
+    const pdf = Buffer.from(
+      [
+        "%PDF-1.4",
+        "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
+        "2 0 obj << /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >> endobj",
+        ...page(PDF_TEXT, 3),
+        ...page("BT /F1 10 Tf 140 10 Td (2) Tj ET", 5),
+        "9 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj",
+        "trailer << /Root 1 0 R >>",
+        "%%EOF",
+      ].join("\n"),
+    )
+    const converted = await ReadDocument.convert("pdf", pdf)
+
+    expect(converted.blank).toEqual([2])
+    expect(converted.text).toContain("Hello PDF")
+    expect(converted.text).toContain("(no text on this page; it may be a scanned image)")
+  })
+
+  test("finds no text in a document of pictures only, but keeps a short one with words", async () => {
+    const word = (body: string) =>
+      zip({ "word/document.xml": xml(`<w:document ${W}><w:body>${body}</w:body></w:document>`) })
+
+    expect(ReadDocument.convert("docx", word("<w:p><w:r><w:drawing/></w:r></w:p>"))).rejects.toBeInstanceOf(
+      DocumentText.Unreadable,
+    )
+    expect((await ReadDocument.convert("docx", word("<w:p><w:r><w:t>확인</w:t></w:r></w:p>"))).text).toBe("확인")
+  })
 })
 
 const W = `xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"`

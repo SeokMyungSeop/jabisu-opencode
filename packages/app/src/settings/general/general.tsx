@@ -2,6 +2,7 @@ import { Component, Show, createMemo, createResource } from "solid-js"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Select } from "@opencode/ui/select"
 import { Switch } from "@opencode/ui/switch"
+import { JABISU } from "@opencode/ui/logo"
 import { TimelineDetailControl } from "@/settings/timeline-detail"
 import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
@@ -245,7 +246,10 @@ export const SettingsGeneral: Component = () => {
         <LanguageSetting />
         <TabLayoutSetting />
 
-        <WorkspaceDestinationSetting />
+        {/* Where new sessions start only matters with git workspaces, which 자비수 leaves out. */}
+        <Show when={!JABISU}>
+          <WorkspaceDestinationSetting />
+        </Show>
         <AutoApprovePermissionsSetting />
 
         <SettingsRow

@@ -21,6 +21,8 @@ export default {
   "status.pending": "Not transcribed",
   "status.unsupported": "Not readable",
   "status.unreadable": "No text",
+  "status.partial": "Partly searchable",
+  "status.blank": "Pages {{pages}} have no text (probably scanned images), so search skips them",
   "action.chat": "New chat",
   "action.folder": "Open folder",
   "action.add": "Add",

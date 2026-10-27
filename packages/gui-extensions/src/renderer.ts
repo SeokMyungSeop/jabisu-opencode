@@ -35,6 +35,10 @@ import support from "./support"
 import supportRenderer from "./support/renderer"
 import bundledSkills from "./bundled-skills"
 import bundledSkillsRenderer from "./bundled-skills/renderer"
+import work from "./work"
+import workRenderer from "./work/renderer"
+import law from "./law"
+import lawRenderer from "./law/renderer"
 
 // The window renders once every built-in is active, so the small renderer entries load with the app, like the
 // features they replaced. Heavy UI stays behind `lazy()` inside them.
@@ -61,7 +65,10 @@ export const builtins = Extension.compose(
   { ...microsoftOffice, renderer: eager(microsoftOfficeRenderer) },
   { ...documentText, renderer: eager(documentTextRenderer) },
   { ...transcription, renderer: eager(transcriptionRenderer) },
-  { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
+  // The 따라하기 card shows above the 집현전 on the home screen, for someone using 자비수 the first time.
   { ...support, renderer: eager(supportRenderer) },
+  { ...jiphyeonjeon, renderer: eager(jiphyeonjeonRenderer) },
   { ...bundledSkills, renderer: eager(bundledSkillsRenderer) },
+  { ...work, renderer: eager(workRenderer) },
+  { ...law, renderer: eager(lawRenderer) },
 )
