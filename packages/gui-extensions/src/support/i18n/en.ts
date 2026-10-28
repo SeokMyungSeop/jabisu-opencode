@@ -98,5 +98,5 @@ export default {
     "Before the AI changes a file outside the workroom, or deletes or moves files, you are asked. Allow once, or always for this workroom.\nIf you refuse, the AI stops instead of finding another way, and tells you how to do it yourself.\nWhat you ask and the files the AI reads go to the company of the model you chose; check sensitive material first.",
   "guide.more.title": "More",
   "guide.more.body":
-    "Attach a recording or video to have it transcribed with times and speakers; turn it on in Settings → Preferences → Transcription.\nCosts show in won. The donut in Session details shows how much of the context each part uses.\nWhen something fails, follow the advice under the error, or send a report.",
+    "Attach a recording or video to have it transcribed with times and speakers; turn it on in Settings → Preferences → Transcription. Missing parts and doubtful lines are marked (확인 필요); if it stopped partway, read the same file again to transcribe only the missing parts.\nCosts show in won. The donut in Session details shows how much of the context each part uses.\nWhen something fails, follow the advice under the error, or send a report.",
 }

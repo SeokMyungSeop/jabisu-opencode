@@ -9,7 +9,7 @@ import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { Global } from "@opencode/util/global"
 import { startServer } from "./fixture/server"
 
-const DEFAULT_MODEL = "xiaomi/mimo-v2.6-flash"
+const DEFAULT_MODEL = "openai/gpt-audio-mini"
 
 // The settings route falls back to this variable when OpenRouter has no stored connection.
 const withoutOpenRouterKey = Effect.acquireRelease(

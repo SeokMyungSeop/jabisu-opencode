@@ -14,7 +14,7 @@ import { DocumentExtract } from "./document-extract.js"
 // instructions of every session opened there: fixed rules for answering from the sources, then the user's own.
 
 export const MARKER = "<!-- jabisu:jiphyeonjeon -->"
-// Writes suggested instructions on OpenRouter in a few seconds for well under a won; the model transcription uses.
+// Writes suggested instructions on OpenRouter in a few seconds for well under a won.
 export const SUGGEST_MODEL = "xiaomi/mimo-v2.6-flash"
 export const SOURCES = "자료"
 const HEADING = "## 지침"
