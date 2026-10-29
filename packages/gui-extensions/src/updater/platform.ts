@@ -19,7 +19,8 @@ export const make = Effect.fn("Updater.platform")(function* (channel: string) {
   updateClient.channel = "latest"
   updateClient.requestHeaders = { "User-Agent": userAgent }
   updateClient.allowPrerelease = false
-  updateClient.allowDowngrade = true
+  // 자비수's alpha builds are newer than its latest release, which must not replace them with the older version.
+  updateClient.allowDowngrade = channel !== "jabisu"
   updateClient.autoDownload = false
   updateClient.autoInstallOnAppQuit = process.platform === "darwin"
   yield* Effect.logInfo("auto updater configured", {

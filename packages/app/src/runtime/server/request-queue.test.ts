@@ -227,3 +227,47 @@ describe("createRequestQueue", () => {
     expect(input.logs).toHaveLength(2)
   })
 })
+
+describe("createRequestQueue while the engine restarts", () => {
+  // A fetch that finds no engine for the first `failures` calls, then answers.
+  const engine = (failures: number) => {
+    const calls: string[] = []
+    const fetch = Object.assign(
+      async (resource: RequestInfo | URL, init?: RequestInit) => {
+        const request = new Request(resource, init)
+        calls.push(request.method)
+
+        if (calls.length <= failures) throw new TypeError("Failed to fetch")
+
+        return new Response("ok")
+      },
+      { preconnect() {} },
+    )
+
+    return { calls, queue: createRequestQueue({ fetch, retryDelaysMs: [1, 1, 1], log: () => {} }) }
+  }
+
+  test("sends a read again until the engine answers", async () => {
+    const input = engine(2)
+    const response = await input.queue.fetch("http://server/api/session")
+    expect(await response.text()).toBe("ok")
+    expect(input.calls).toEqual(["GET", "GET", "GET"])
+    expect(input.queue.inflight()).toBe(0)
+  })
+
+  test("never sends a write twice", async () => {
+    const input = engine(1)
+    await expect(input.queue.fetch("http://server/api/session", { method: "POST", body: "{}" })).rejects.toBeInstanceOf(
+      TypeError,
+    )
+    expect(input.calls).toEqual(["POST"])
+    expect(input.queue.inflight()).toBe(0)
+  })
+
+  test("gives up on a read once the waits are used up", async () => {
+    const input = engine(10)
+    await expect(input.queue.fetch("http://server/api/session")).rejects.toBeInstanceOf(TypeError)
+    expect(input.calls).toHaveLength(4)
+    expect(input.queue.inflight()).toBe(0)
+  })
+})

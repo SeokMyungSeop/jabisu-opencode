@@ -25,12 +25,40 @@ export const requestHeadersTimeoutMs = 60_000
 // kills the script midway and leaves a registered but half-initialised worktree behind.
 export const setupRequestHeadersTimeoutMs = 10 * 60_000
 
+// The desktop app restarts its background engine when the event stream drops, and a request sent while the old
+// engine stops and the new one starts gets no response at all. A read is safe to send again, so it waits for the
+// engine this many times, about 11 seconds in all, before failing; a write is never sent twice.
+export const requestRetryDelaysMs = [500, 1_000, 2_000, 4_000, 4_000]
+
 function isSlowRequest(pathname: string) {
   return slowRequestPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 
 function isSetupRequest(method: string, pathname: string) {
   return method === "POST" && pathname === "/api/worktree"
+}
+
+function isRead(method: string) {
+  return method === "GET" || method === "HEAD"
+}
+
+// fetch rejects with a TypeError when no response arrives, as when the connection is refused or reset.
+function isConnectionFailure(error: unknown) {
+  return error instanceof TypeError
+}
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms)
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer)
+        reject(signal.reason)
+      },
+      { once: true },
+    )
+  })
 }
 
 export function createRequestQueue(input: {
@@ -40,6 +68,7 @@ export function createRequestQueue(input: {
   stallMs?: number
   headersTimeoutMs?: number
   setupHeadersTimeoutMs?: number
+  retryDelaysMs?: readonly number[]
   log?: (message: string, data: Record<string, unknown>) => void
   now?: () => number
 }) {
@@ -48,6 +77,7 @@ export function createRequestQueue(input: {
   const stallMs = input.stallMs ?? requestStallMs
   const headersTimeoutMs = input.headersTimeoutMs ?? requestHeadersTimeoutMs
   const setupHeadersTimeoutMs = input.setupHeadersTimeoutMs ?? setupRequestHeadersTimeoutMs
+  const retryDelaysMs = input.retryDelaysMs ?? requestRetryDelaysMs
   // Call the browser fetch unbound; `input.fetch(...)` would make `this` the options object.
   const base = input.fetch
   const now = input.now ?? Date.now
@@ -141,7 +171,22 @@ export function createRequestQueue(input: {
         isSetupRequest(request.method, pathname) ? setupHeadersTimeoutMs : headersTimeoutMs,
       )
 
-      return base(new Request(request, { signal: controller.signal })).finally(() => {
+      const send = () => base(new Request(request, { signal: controller.signal }))
+
+      const attempt = async () => {
+        for (const delay of isRead(request.method) ? retryDelaysMs : []) {
+          try {
+            return await send()
+          } catch (error) {
+            if (!isConnectionFailure(error) || controller.signal.aborted) throw error
+            await wait(delay, controller.signal)
+          }
+        }
+
+        return send()
+      }
+
+      return attempt().finally(() => {
         clearTimeout(timer)
         release(entry)
       })
