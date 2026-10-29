@@ -17,7 +17,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.4.9-x64.exe`)를 내려받아요.
+1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.5.0-x64.exe`)를 내려받아요.
 2. 내려받은 파일을 실행하면 바로 설치되고, 바탕화면과 시작 메뉴에 **자비수**가 생겨요.
 
 - Windows 10/11 64비트용이에요. 관리자 권한 없이 내 사용자 폴더에 설치돼요.
@@ -33,8 +33,8 @@
 | 브라우저 미리보기 | 만든 웹 앱의 개발 서버를 띄우고 앱 안의 브라우저로 바로 열어요 |
 | 작업 알림 | 다른 창을 보는 동안 대화가 끝나거나 권한이 필요하면 알려 줘요. 제목은 대화 이름, 본문은 답변 첫 줄이에요 |
 | 워크트리 다듬기 | 설정의 `worktree.branch_prefix`로 브랜치를 만들고, `.worktreeinclude`에 적은 파일을 함께 복사해요 |
-| 세션 정보 패널 | 컨텍스트를 얼마나 썼는지 도넛 그래프로, 항목별(시스템 프롬프트·도구·스킬·지침·메시지)로는 토큰과 % 로 보여 줘요. 「스킬」을 누르면 검색되는 스킬 목록(내 스킬·기본 스킬·그 밖)이 열려요. 옆 패널로 열 수 있어요 |
-| 세션 보관 | 보관하면 다 쓴 워크트리 폴더를 알아서 정리해요 |
+| 대화 정보 패널 | 컨텍스트를 얼마나 썼는지 도넛 그래프로, 항목별(시스템 프롬프트·도구·스킬·지침·메시지)로는 토큰과 % 로 보여 줘요. 「스킬」을 누르면 검색되는 스킬 목록(내 스킬·기본 스킬·그 밖)이 열려요. 옆 패널로 열 수 있어요 |
+| 대화 보관 | 보관하면 다 쓴 워크트리 폴더를 알아서 정리해요 |
 | 새 창으로 열기 · 분할 화면 | 위쪽 탭을 오른쪽 클릭해서 대화를 새 창이나 옆 화면에 열어요 |
 | 문서 읽기 | AI가 한글(.hwp, .hwpx), 워드(.docx, .doc), 엑셀(.xlsx, .xls), 파워포인트(.pptx, .ppt) 파일을 바로 읽어요. 한글 문서는 합쳐진 칸과 자동 번호까지 정확히 읽어요(kordoc). PDF를 못 읽는 모델에는 PDF의 글자를 뽑아 줘요 |
 | 문서 미리보기 | 파일 보기에서 한글 파일과 옛 오피스 파일(.doc, .xls, .ppt)의 내용을 글과 표로 보여 줘요 |
@@ -48,7 +48,11 @@
 | 업무 비서 (1단계) | 자비수가 업무 파일을 찾아볼 폴더를 세 가지로 나눠 이 PC 안에서만 색인해요. **자비수 업무 폴더**(`문서\자비수 업무`, 자비수를 켜면 생기는 고정 폴더로 내 업무 프로필과 사무분장표 같은 기준 문서를 둬요), **받은 파일 폴더**(다운로드, 메신저 받은 파일 등), **업무 저장 폴더**(업무 문서를 정리해 두는 곳)예요. 뒤의 두 가지는 **설정 → 환경 설정 → 업무 비서**에서 골라요. "지난주 받은 실증사업 공문 찾아 줘"처럼 말하면 파일 이름과 **문서 내용**(한글·워드·엑셀·파워포인트·PDF)까지 빠르게 찾아요. AI 모델에는 폴더 전체가 아니라 찾은 결과만 가요. 사무분장표를 첨부하고 "내 업무 프로필 만들어 줘"라고 하면 `문서\자비수 업무\내 업무.md`가 생기고, 그 내용이 모든 대화에 함께 가서 자비수가 담당 업무를 알고 시작해요 |
 | 행정 문서 양식 | "이 내용으로 결과보고서 만들어 줘", "회의록 만들어 줘", "보도자료 초안 써 줘"처럼 말하면 보고서·결과보고·계획(안)·메모보고·회의록·출장결과보고·보도자료를 기관 양식의 한글 파일로 만들어요. 제목 상자, □ ○ - 개조식과 내어쓰기, 개요 표, 보도자료 머리표가 갖춰지고, 날짜·시간·금액 표기와 다듬을 행정 용어를 자동으로 검사해요. 자료에 없는 숫자·발언·참석자는 지어내지 않고 `(확인 필요)`로 남겨 물어요 |
 | 법령 찾기 | **설정 → 환경 설정 → 법령 찾기**에 법제처 인증키(open.law.go.kr에서 무료로 받아요. 신청할 때 이 PC의 공인 IP 주소를 등록해야 해요)를 넣으면, AI가 법령·자치법규·행정규칙(고시·훈령·예규)·판례·법령해석례를 국가법령정보센터 원문에서 찾아 근거로 답해요. 답과 보고서에 인용한 「법령명」 제N조 제M항 제K호가 실제로 있는지 원문과 대조해 없는 조문·항·호를 알려 줘요. 찾는 낱말은 법제처로 보내져요 |
-| 작업실 | OpenCode의 「프로젝트」를 「작업실」이라고 불러요. 대화가 일하고 만든 파일을 저장하는 폴더예요(처음 켜면 `문서\기본 작업실`). 개발자용 항목(작업 공간, Git 상태, 시작 스크립트, ID 복사)은 숨겼고, 집현전은 홈의 「집현전」 칸에만 나와요 |
+| 작업실 | OpenCode의 「프로젝트」를 「작업실」, 「세션」을 「대화」(새로 여는 것은 「새 대화창」)라고 불러요. 작업실은 대화가 일하고 만든 파일을 저장하는 폴더예요(처음 켜면 `문서\기본 작업실`). 개발자용 항목(작업 공간, Git 상태, 시작 스크립트, ID 복사)은 숨겼고, 집현전은 홈의 「집현전」 칸에만 나와요 |
+| 새 작업실 | 왼쪽 맨 위 햇살색 **새 작업실**을 누르면 새 대화창이 열려요. 첫 메시지를 보내면 `문서\자비수 작업실` 안에 작업실 폴더가 생기고, 이름은 첫 파일 이름(녹음기의 날짜·시각은 빼고)이나 요청 내용(「…만들어 줘」 앞부분)에서 저절로 정해져요. 같은 이름이 있으면 「(2)」를 붙여요. 대화창 이름은 첫 대화 뒤 AI가 붙여요. 대화는 왼쪽 세로 목록에 쌓여요(**설정 → 환경 설정 → 탭**에서 가로로 바꿀 수 있어요) |
+| 진행 흐름 | 여러 단계로 일하는 동안 입력창 위에 「자료 읽기 → 계산 → 보고서 작성 → 점검」처럼 단계를 가로로 보여 줘요. 끝난 단계, 진행 중인 단계, 허락이 필요한 단계, 문제가 생긴 단계를 색으로 구분하고, 걸린 시간도 보여 줘요. 단계는 AI가 쓴 할 일 목록에서 가져오고, 목록이 없으면 AI가 쓴 도구(파일 읽기·찾아보기·법령 확인·파일 만들기·작업 실행)를 묶어 만들어요. 접어 두면 한 줄로 줄어요 |
+| OpenRouter 먼저 | 처음 켰을 때 AI 모델이 연결되어 있지 않으면 OpenRouter 키를 넣는 창이 바로 떠요. 설정 → 공급자, 모델 고르기에서도 OpenRouter가 맨 위에 「추천」으로 나와요(키 하나로 여러 회사 모델을 쓰고, 음성 받아쓰기에도 필요해요) |
+| 산울 디자인 | 크림빛 바탕, 짙은 숲색, 햇살색 「새 작업실」 단추의 기본 테마 「산울」과 Pretendard 글꼴을 써요. **설정 → 환경 설정**에서 다른 테마로 바꿀 수 있어요 |
 | 안전 장치 | AI가 작업실 밖 파일을 고치거나 만들 때, 파일을 지우거나 옮기거나 쓰는 명령(Remove-Item, del, Move-Item, Set-Content, `> C:\…` 등)을 쓸 때는 먼저 물어봐요. 다른 프로그램으로 감싼 명령(`powershell -Command …`, `cmd /c del …`)도 물어보고, 거절하면 다른 방법으로 우회하지 않아요. 파일을 찾을 때는 업무 폴더와 작업실에서만 찾고 개인 폴더 전체를 뒤지지 않아요. 읽기와 작업실 안에서 고치기는 바로 해요. 원본 OpenCode는 기본으로 모두 허용이에요 |
 
 ## 기본으로 들어 있는 스킬과 MCP
@@ -140,6 +144,7 @@ MCP 서버도 두 개 들어 있지만 둘 다 **꺼진 상태**예요. 켜 두�
 | 업무 폴더 색인 | `%USERPROFILE%\.local\share\opencode\jabisu\work` |
 | 법령 찾기 인증키 | `%USERPROFILE%\.config\opencode\jabisu-law.json` |
 | 자비수 업무 폴더 (자비수를 켜면 생겨요) | `%USERPROFILE%\Documents\자비수 업무` |
+| 새 작업실이 생기는 곳 | `%USERPROFILE%\Documents\자비수 작업실` |
 | 내 업무 프로필 | `%USERPROFILE%\Documents\자비수 업무\내 업무.md` |
 
 지울 때는 **설정 → 앱 → 설치된 앱 → 자비수 → 제거**를 눌러요. 대화 기록 파일은 지워지지 않고 남아요.
@@ -153,7 +158,7 @@ git clone -b jabisu https://github.com/SeokMyungSeop/jabisu-opencode.git
 cd jabisu-opencode
 bun install
 
-export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.4.9
+export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.5.0
 export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 
 # 1. 엔진(CLI): 앱이 구형 CPU 호환판을 넣어요
@@ -163,7 +168,7 @@ export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 cd packages/desktop
 bun ./scripts/prepare.ts            # 엔진·아이콘을 넣고 package.json 버전을 바꿔요
 ./node_modules/.bin/electron-vite build
-bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.4.9-x64.exe
+bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.5.0-x64.exe
 git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려요
 ```
 
@@ -179,6 +184,7 @@ git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려�
 - OpenCode는 Anomaly Innovations, Inc.의 등록 상표예요. 자비수는 공식 OpenCode가 아니며, OpenCode 팀과 관계없이 개인이 만든 배포판이에요.
 - 기본 스킬 6개는 [mattpocock/skills](https://github.com/mattpocock/skills)(MIT, © Matt Pocock)에서 가져왔어요. 설치 폴더에 그 라이선스(`LICENSE.mattpocock-skills.txt`)가 함께 들어 있어요.
 - `hwpx` 스킬은 jkf87의 hwpx-skill(MIT)을 Windows와 자비수에 맞게 고친 것이에요(`LICENSE.hwpx-skill.txt`).
+- 글꼴 [Pretendard](https://github.com/orioncactus/pretendard)(SIL Open Font License 1.1, © Kil Hyung-jin)를 넣었어요(`LICENSE.pretendard.txt`). 기본 테마 「산울」은 산울동 행정복지센터 예시 사이트의 디자인 문서를 바탕으로 했어요.
 - 문서 읽기에는 [SheetJS](https://sheetjs.com)(Apache-2.0), [unpdf](https://github.com/unjs/unpdf)(MIT)와 그 안의 PDF.js(Apache-2.0), 한글 문서용 [kordoc](https://github.com/chrisryugj/kordoc)(MIT, © chrisryugj)을 써요(`LICENSE.document-libraries.txt`).
 - 법령 찾기는 법제처의 [국가법령정보 공동활용](https://open.law.go.kr) Open API로 국가법령정보센터(law.go.kr)의 원문을 읽어요. 법령 정보의 이용 조건은 법제처를 따르고, AI의 답은 법적 판단이 아니라 검토 자료예요.
 - Craft 앱(FilmCraft, PdfCraft 등)은 Learning Machines LLC의 별도 제품이에요. 자비수에 들어 있지 않고, 사용자가 설치한 앱의 명령줄 도구를 불러 쓸 뿐이에요.
