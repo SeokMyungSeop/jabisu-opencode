@@ -311,6 +311,10 @@ import type {
   JabisuLawGetOutput,
   JabisuLawUpdateInput,
   JabisuLawUpdateOutput,
+  JabisuWorkroomRootInput,
+  JabisuWorkroomRootOutput,
+  JabisuWorkroomCreateInput,
+  JabisuWorkroomCreateOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2571,6 +2575,33 @@ export function make(options: ClientOptions) {
               path: `/api/jabisu/law`,
               query: { location: input["location"] },
               body: { key: input["key"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      workroom: {
+        root: (input?: JabisuWorkroomRootInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomRootOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/workroom`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        create: (input: JabisuWorkroomCreateInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomCreateOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom`,
+              query: { location: input["location"] },
+              body: { text: input["text"], files: input["files"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,

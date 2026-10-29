@@ -2,6 +2,7 @@ import { produce, reconcile, unwrap } from "solid-js/store"
 import { createEffect, createMemo } from "solid-js"
 import { Effect, Option, Predicate, Schema, SchemaGetter } from "effect"
 import { createSimpleContext } from "@opencode/ui/context"
+import { JABISU } from "@opencode/ui/logo"
 import { timelinePresets, type TimelineCategory, type TimelineDetail } from "@opencode/session-ui/timeline/detail"
 import { persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
@@ -44,7 +45,8 @@ const terminalFallback =
 
 const monoBase = monoFallback
 
-const sansBase = sansFallback
+// 자비수 sets its text in Pretendard, which it brings along (jabisu.css).
+const sansBase = JABISU ? `"Pretendard", ${sansFallback}` : sansFallback
 
 const terminalBase = terminalFallback
 
@@ -284,7 +286,8 @@ export const defaultSettings: Settings = {
     terminalPlacement: "side",
     followUpBehavior: "steer",
   },
-  appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: "horizontal" },
+  // 자비수 lists conversations down the left side, under its 「새 작업실」 button.
+  appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: JABISU ? "vertical" : "horizontal" },
   keybinds: {},
   permissions: { autoApprove: false, autoApproveProjects: {} },
   workspaces: { defaultDestination: "last-used", lastUsed: {} },

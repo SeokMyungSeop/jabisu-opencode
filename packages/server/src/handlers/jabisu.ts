@@ -9,6 +9,7 @@ import { WorkIndex } from "@opencode/core/plugin/jabisu/work/index"
 import { WorkIndexer } from "@opencode/core/plugin/jabisu/work/indexer"
 import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { WorkSettings } from "@opencode/core/plugin/jabisu/work/settings"
+import { Workroom } from "@opencode/core/plugin/jabisu/workroom"
 import { OpenRouter } from "@opencode/core/tool/openrouter"
 import { Transcribe } from "@opencode/core/tool/transcribe"
 import { InvalidRequestError } from "@opencode/protocol/errors"
@@ -185,14 +186,28 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
             yield* LawApi.search(LawApi.transport(http, key), { kind: "law", query: "민법", limit: 1 }).pipe(
               Effect.mapError(
                 (error) =>
-                  new InvalidRequestError({ message: `법제처에 이 인증키로 연결하지 못했습니다: ${error.reason}`, kind: "jabisu_law" }),
+                  new InvalidRequestError({
+                    message: `법제처에 이 인증키로 연결하지 못했습니다: ${error.reason}`,
+                    kind: "jabisu_law",
+                  }),
               ),
             )
           yield* LawSettings.write({ fs, global }, key).pipe(
-            Effect.mapError(() => new InvalidRequestError({ message: "인증키를 저장하지 못했습니다", kind: "jabisu_law" })),
+            Effect.mapError(
+              () => new InvalidRequestError({ message: "인증키를 저장하지 못했습니다", kind: "jabisu_law" }),
+            ),
           )
           return yield* law
         }),
+      )
+      .handle("jabisu.workroom.root", () =>
+        Workroom.ensureRoot({ fs, global }).pipe(
+          Effect.map((root) => ({ root })),
+          Effect.mapError(invalid("jabisu_workroom")),
+        ),
+      )
+      .handle("jabisu.workroom.create", (ctx) =>
+        Workroom.create({ fs, global }, ctx.payload).pipe(Effect.mapError(invalid("jabisu_workroom"))),
       )
       .handle("jabisu.skills.list", () => JabisuSkills.list({ fs, global }))
       .handle("jabisu.skills.copy", (ctx) =>

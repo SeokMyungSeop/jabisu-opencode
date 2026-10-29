@@ -301,6 +301,11 @@ export function getConfig() {
             from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.document-libraries"),
             to: "LICENSE.document-libraries.txt",
           },
+          // Pretendard, the typeface of 자비수's text (SIL Open Font License).
+          {
+            from: path.join(rootDir, "packages/app/src/assets/fonts/jabisu/LICENSE.pretendard.txt"),
+            to: "LICENSE.pretendard.txt",
+          },
         ],
         nsis: { ...base.nsis, shortcutName: "자비수", uninstallDisplayName: "자비수" },
       }

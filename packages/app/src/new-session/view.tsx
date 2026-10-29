@@ -2,7 +2,7 @@ import { useDialog } from "@opencode/ui/context/dialog"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { Icon } from "@opencode/ui/icon"
 import { JABISU } from "@opencode/ui/logo"
-import { Show, createMemo, createSignal } from "solid-js"
+import { Show, createEffect, createMemo, createSignal } from "solid-js"
 import { Schema } from "effect"
 import createPresence from "solid-presence"
 import { Composer } from "@/composer/composer"
@@ -35,11 +35,19 @@ export const ProviderTipSchema = Persistence.struct({
 
 export const WorkspaceTipSchema = ProviderTipSchema
 
+export const FirstConnectSchema = Persistence.struct({
+  shown: Schema.Boolean,
+})
+
 export function NewSessionView(props: {
   composer: ComposerModel
   project: PromptProjectController
   workspace: NewSessionWorkspaceController
+  /** 자비수's 「새 작업실」: greet instead of the wordmark, and name the 작업실 still to be made. */
+  workroom?: boolean
 }) {
+  const language = useLanguage()
+
   const [onboarding, setOnboarding, , onboardingReady] = persisted(
     Persist.global("workspace-onboarding"),
     WorkspaceOnboardingSchema,
@@ -64,13 +72,31 @@ export function NewSessionView(props: {
         />
         <div class="absolute inset-x-0 top-[25.375%] flex justify-center px-6">
           <div class={NEW_SESSION_CONTENT_WIDTH}>
-            <NewSessionWordmark />
+            <Show when={props.workroom} fallback={<NewSessionWordmark />}>
+              <div data-component="new-workroom" class="mx-auto flex max-w-[560px] flex-col items-center text-center">
+                <h1
+                  class="m-0 text-[34px] font-[800] leading-[1.14] tracking-[-0.05em] text-v2-text-text-base"
+                  style={{ "font-family": '"Nanum Myeongjo", Batang, "바탕", serif' }}
+                >
+                  {language.t("jabisu.workroom.hero.title")}
+                </h1>
+                <p class="mt-3 max-w-[480px] text-[15px] leading-[1.75] text-v2-text-text-muted">
+                  {language.t("jabisu.workroom.hero.lead")}
+                </p>
+              </div>
+            </Show>
             <div class="mt-8 flex flex-col gap-8">
               <Composer model={props.composer} />
-              <Show when={props.project.empty()}>
+              <Show when={props.workroom}>
+                <div class="flex min-h-7 items-center justify-center gap-1.5 text-[13px] text-v2-text-text-faint">
+                  <Icon name="folder" size="small" />
+                  {language.t("jabisu.workroom.pending")}
+                </div>
+              </Show>
+              <Show when={!props.workroom && props.project.empty()}>
                 <PromptProjectAddButton controller={props.project} />
               </Show>
-              <Show when={props.project.selected()}>
+              <Show when={!props.workroom && props.project.selected()}>
                 <div class="flex min-h-7 min-w-0 flex-row flex-wrap items-center justify-center gap-0 text-v2-text-text-faint">
                   <PromptProjectSelector controller={props.project} placement="bottom" />
                   {/* 자비수 is for office work, so it shows neither git status nor git workspaces. */}
@@ -185,12 +211,37 @@ function NewSessionTips(props: {
       return
     }
 
-    void import("@/providers/connect/dialog").then(({ DialogConnectProvider }) => {
+    openConnect()
+  }
+
+  // 자비수 opens OpenRouter's key form first; the dialog's back button lists every provider.
+  const openConnect = () =>
+    void import("@/providers/connect/dialog").then(({ DialogConnectProvider, useProviderConnectController }) => {
+      const controller = useProviderConnectController()
+
+      if (JABISU) controller.select("openrouter")
       void dialog.show(() => (
-        <DialogConnectProvider directory={sdk().directory} selection={props.selection} onDone={props.onDone} />
+        <DialogConnectProvider
+          directory={sdk().directory}
+          controller={controller}
+          selection={props.selection}
+          onDone={props.onDone}
+        />
       ))
     })
-  }
+
+  // On 자비수's first start with no provider connected, the connect dialog opens by itself, once.
+  const [firstConnect, setFirstConnect, , firstConnectReady] = persisted(
+    Persist.global("jabisu.first-connect"),
+    FirstConnectSchema,
+    { shown: false },
+  )
+
+  createEffect(() => {
+    if (!JABISU || !firstConnectReady() || firstConnect.shown || providers.anyConnection() !== false) return
+    setFirstConnect("shown", true)
+    openConnect()
+  })
 
   const dismiss = () => {
     const current = tip()

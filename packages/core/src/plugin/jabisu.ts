@@ -17,6 +17,7 @@ import { FilmCraft } from "./jabisu/filmcraft.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
 import { LawTools } from "./jabisu/law/tools.js"
 import { JabisuSafety } from "./jabisu/safety.js"
+import { JabisuWorkflow } from "./jabisu/workflow.js"
 import { SkillCatalog } from "./jabisu/skill-catalog.js"
 import { SkillTurnOn } from "./jabisu/skill-turn-on.js"
 import { JabisuSkills } from "./jabisu/skills.js"
@@ -201,6 +202,16 @@ export const Plugin = define({
     yield* discovery.transform((editor) => {
       if (offered.content) editor.add(new InstructionDiscovery.File({ path: switchesFile, content: offered.content }))
     })
+
+    // The to-do list the 진행 흐름 draws.
+    yield* discovery.transform((editor) =>
+      editor.add(
+        new InstructionDiscovery.File({
+          path: path.join(global.config, "jabisu-workflow"),
+          content: JabisuWorkflow.INSTRUCTIONS,
+        }),
+      ),
+    )
 
     // What a command can do that no permission rule sees, such as working around a refusal, is ruled out in words.
     yield* discovery.transform((editor) =>

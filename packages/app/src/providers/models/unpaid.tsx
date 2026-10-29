@@ -12,10 +12,14 @@ import { useIntegrations } from "@/providers/catalog/integrations"
 import { decode64 } from "@/runtime/persistence/base64"
 import { useLanguage } from "@/runtime/i18n/language"
 import { ModelTooltip } from "./tooltip"
+import { JABISU } from "@opencode/ui/logo"
 
 type ModelState = ModelSelection
 
-const featuredProviders = ["opencode-go", "opencode", "openai", "anthropic", "google", "github-copilot"]
+// 자비수 offers OpenRouter first.
+const featuredProviders = JABISU
+  ? ["openrouter", "openai", "google", "anthropic", "github-copilot", "opencode", "opencode-go"]
+  : ["opencode-go", "opencode", "openai", "anthropic", "google", "github-copilot"]
 
 const displayModelName = (name: string) => name.replace(/\s+(?:\(free\)|free)$/i, "")
 

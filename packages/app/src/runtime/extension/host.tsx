@@ -23,6 +23,7 @@ import { createStore } from "solid-js/store"
 import { Predicate } from "effect"
 import { resolveTemplate } from "@solid-primitives/i18n"
 import { useDialog } from "@opencode/ui/context/dialog"
+import { JABISU } from "@opencode/ui/logo"
 import { pluralCategory } from "@opencode/ui/context/i18n"
 import {
   ExtensionContext,
@@ -944,5 +945,14 @@ async function loadMessages(catalog: Catalog | undefined, locale: string): Promi
         )
       : source
 
-  return { ...english, ...loaded }
+  if (!JABISU || locale !== "ko") return { ...english, ...loaded }
+
+  // 자비수 renames words in extension strings by the same rules as in the app's own Korean strings.
+  // SAFETY: a locale module's default export is the extension's messages, as `Catalog` types its loaders.
+  const { jabisuWords } = await import("@/runtime/i18n/jabisu-ko")
+
+  return {
+    ...english,
+    ...Object.fromEntries(Object.entries(loaded as Messages).map(([key, value]) => [key, jabisuWords(value)])),
+  }
 }

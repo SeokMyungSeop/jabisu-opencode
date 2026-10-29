@@ -28,6 +28,7 @@ import orngThemeJson from "./themes/orng.json"
 import osakaJadeThemeJson from "./themes/osaka-jade.json"
 import palenightThemeJson from "./themes/palenight.json"
 import rosepineThemeJson from "./themes/rosepine.json"
+import sanulThemeJson from "./themes/sanul.json"
 import shadesOfPurpleThemeJson from "./themes/shadesofpurple.json"
 import solarizedThemeJson from "./themes/solarized.json"
 import synthwave84ThemeJson from "./themes/synthwave84.json"
@@ -94,6 +95,8 @@ export const palenightTheme = palenightThemeJson as DesktopTheme
 
 export const rosepineTheme = rosepineThemeJson as DesktopTheme
 
+export const sanulTheme = sanulThemeJson as DesktopTheme
+
 export const shadesOfPurpleTheme = shadesOfPurpleThemeJson as DesktopTheme
 
 export const solarizedTheme = solarizedThemeJson as DesktopTheme
@@ -138,6 +141,7 @@ export const DEFAULT_THEMES: Record<string, DesktopTheme> = {
   "osaka-jade": osakaJadeTheme,
   palenight: palenightTheme,
   rosepine: rosepineTheme,
+  sanul: sanulTheme,
   shadesofpurple: shadesOfPurpleTheme,
   solarized: solarizedTheme,
   synthwave84: synthwave84Theme,

@@ -31,6 +31,8 @@ import { useData } from "@/runtime/server/current"
 import { useGlobal } from "@/runtime/server/runtime"
 import { ServerConnection } from "@/runtime/server/registry"
 import { useProviders } from "@/providers/catalog/providers"
+import { popularProviders, recommendedProviders } from "@/providers/catalog/order"
+import { JABISU } from "@opencode/ui/logo"
 import { consoleProviderGroup, consoleProviderName } from "@/providers/catalog/console"
 import { useIntegrations } from "@/providers/catalog/integrations"
 import { CustomProviderForm } from "@/providers/credentials/dialog"
@@ -237,7 +239,10 @@ function ProviderPicker(props: { directory?: string; onSelect: (provider: string
     filter: "",
   })
 
-  const featured = ["opencode-go", "opencode", "anthropic", "openai", "google", "openrouter", "vercel"]
+  const featured = JABISU
+    ? popularProviders
+    : ["opencode-go", "opencode", "anthropic", "openai", "google", "openrouter", "vercel"]
+
   const custom = () => ({ id: CUSTOM_ID, name: language.t("dialog.provider.custom.label") })
 
   const all = createMemo(() => {
@@ -368,6 +373,22 @@ function ProviderPicker(props: { directory?: string; onSelect: (provider: string
                                 ? "dialog.provider.opencode.tagline"
                                 : "dialog.provider.opencodeGo.tagline",
                             )}
+                          </span>
+                          <Show when={recommendedProviders.has(provider.id)}>
+                            <span class="flex h-4 shrink-0 items-center rounded-xs border-[0.5px] border-v2-border-border-base bg-v2-background-bg-layer-03 px-1 text-[11px] font-[530] leading-none tracking-[0.05px] text-v2-text-text-muted">
+                              {language.t("dialog.provider.tag.recommended")}
+                            </span>
+                          </Show>
+                        </Show>
+                        <Show
+                          when={
+                            provider.id === "openrouter" &&
+                            recommendedProviders.has(provider.id) &&
+                            accountCount(provider) === 0
+                          }
+                        >
+                          <span class="min-w-0 truncate font-[440] text-v2-text-text-muted">
+                            {language.t("dialog.provider.openrouter.note")}
                           </span>
                           <span class="flex h-4 shrink-0 items-center rounded-xs border-[0.5px] border-v2-border-border-base bg-v2-background-bg-layer-03 px-1 text-[11px] font-[530] leading-none tracking-[0.05px] text-v2-text-text-muted">
                             {language.t("dialog.provider.tag.recommended")}

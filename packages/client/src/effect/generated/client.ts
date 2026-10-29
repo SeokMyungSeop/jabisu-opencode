@@ -313,6 +313,10 @@ import type {
   JabisuLawGetOutput,
   JabisuLawUpdateInput,
   JabisuLawUpdateOutput,
+  JabisuWorkroomRootInput,
+  JabisuWorkroomRootOutput,
+  JabisuWorkroomCreateInput,
+  JabisuWorkroomCreateOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1827,6 +1831,19 @@ const EndpointJabisuLawUpdate = (raw: RawClient["server.jabisu"]) => (input: Jab
     ),
   )
 
+const EndpointJabisuWorkroomRoot = (raw: RawClient["server.jabisu"]) => (input?: JabisuWorkroomRootInput) =>
+  preserveEffect<JabisuWorkroomRootOutput>()(
+    raw["jabisu.workroom.root"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuWorkroomCreate = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkroomCreateInput) =>
+  preserveEffect<JabisuWorkroomCreateOutput>()(
+    raw["jabisu.workroom.create"]({
+      query: { location: input["location"] },
+      payload: { text: input["text"], files: input["files"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   transcription: { get: EndpointJabisuTranscriptionGet(raw), update: EndpointJabisuTranscriptionUpdate(raw) },
   jiphyeonjeon: {
@@ -1845,6 +1862,7 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   },
   work: { get: EndpointJabisuWorkGet(raw), update: EndpointJabisuWorkUpdate(raw) },
   law: { get: EndpointJabisuLawGet(raw), update: EndpointJabisuLawUpdate(raw) },
+  workroom: { root: EndpointJabisuWorkroomRoot(raw), create: EndpointJabisuWorkroomCreate(raw) },
 })
 
 const adaptClient = (raw: RawClient) => ({

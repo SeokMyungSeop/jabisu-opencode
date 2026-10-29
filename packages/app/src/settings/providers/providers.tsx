@@ -7,6 +7,7 @@ import { Menu } from "@opencode/ui/menu"
 import { OpenCodeLogo } from "@/providers/opencode-logo"
 import { showToast } from "@/shell/notifications/toast"
 import { popularProviders, useProviders } from "@/providers/catalog/providers"
+import { recommendedProviders } from "@/providers/catalog/order"
 import { consoleProviderGroup } from "@/providers/catalog/console"
 import { useIntegrations } from "@/providers/catalog/integrations"
 import { createEffect, createMemo, type Component, For, Show } from "solid-js"
@@ -552,7 +553,7 @@ export const SettingsProviders: Component<{
                         <span class="settings-provider-name">
                           {item.name}
                         </span>
-                        <Show when={item.id === "opencode" || item.id === "opencode-go"}>
+                        <Show when={recommendedProviders.has(item.id)}>
                           <Badge>{language.t("dialog.provider.tag.recommended")}</Badge>
                         </Show>
                       </div>

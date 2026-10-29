@@ -21,6 +21,8 @@ export const Draft = Persistence.struct({
   directory: Schema.String,
   worktree: Persistence.optional(Schema.String),
   branch: Persistence.optional(Schema.String),
+  // 자비수's 「새 작업실」: the draft opens in the folder that holds every 작업실, and its first message makes its own.
+  workroom: Persistence.optional(Schema.Boolean),
   mcp: Persistence.optional(Persistence.struct({ target: Schema.String, states: Persistence.record(Schema.Boolean) })),
 })
 

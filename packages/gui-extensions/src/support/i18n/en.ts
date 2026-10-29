@@ -18,6 +18,8 @@ export default {
   "advice.privacy":
     "OpenRouter's privacy settings block this model. Change them at openrouter.ai → Settings → Privacy or choose another model.",
   "advice.model": "The chosen model is not available now. Choose another model from the model list.",
+  "advice.opencode-free":
+    "OpenCode's free models do not work in Jabisu for now. Choose an OpenRouter model under the composer, or connect OpenRouter first in Settings → Providers.",
   "advice.unsupported": "This model does not support this feature. Choose another model.",
   "advice.output": "The model's answer came back broken. Send again or choose another model.",
   "advice.request": "The model refused the request. Send it again, and choose another model if it keeps failing.",
@@ -74,7 +76,7 @@ export default {
   "guide.web": "View on the web",
   "guide.start.title": "Getting started",
   "guide.start.body":
-    "Jabisu is an AI aide you give work to by chatting. Write what you need in the composer, in your own words.\nFirst connect an AI model in Settings → Providers (it needs an API key), then pick the model under the composer.\nA chat works in a workroom (a folder); files the AI makes are saved there unless you say otherwise.\nDrop files into the composer for the AI to read: Hangul, Word, Excel, PowerPoint and PDF.",
+    "Jabisu is an AI aide you give work to by chatting. Write what you need in the composer, in your own words.\nFirst connect an AI model in Settings → Providers (it needs an API key; OpenRouter, at the top, is recommended), then pick the model under the composer.\nA chat works in a workroom (a folder); files the AI makes are saved there unless you say otherwise. 「New workroom」 at the top left makes one in Documents\\자비수 작업실, named after your first message or file.\nWhile the AI works through several steps, the progress strip above the composer shows where it is.\nDrop files into the composer for the AI to read: Hangul, Word, Excel, PowerPoint and PDF.",
   "guide.work.title": "Work assistant",
   "guide.work.body":
     "Choose folders in Settings → Preferences → Work assistant. The Jabisu work folder (Documents\\자비수 업무) is always searched.\nAdd your downloads and messenger folders as received-file folders, and the folders you file work in as work storage folders.\nAsk “find the notice I received last week” and Jabisu finds it by name and by what the documents say.\nAttach your duty assignment table and ask for your work profile; every chat then knows your duties.",

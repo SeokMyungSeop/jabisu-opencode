@@ -17,6 +17,9 @@ import { showToast } from "@/shell/notifications/toast"
 import { SessionRouteKey, SessionStateKey } from "@/runtime/server/scope"
 import { createSessionMessageHandoff } from "@/session/handoff"
 import type { DraftMcpControls } from "./mcp"
+import { readPromptPresentation } from "@/composer/comment-note"
+import { useServers } from "@/runtime/server/registry"
+import type { SessionMessageUser } from "@opencode/client/promise"
 
 export function createNewSessionComposerAdapter(props: {
   draftID: string
@@ -34,6 +37,7 @@ export function createNewSessionComposerAdapter(props: {
   const tabs = useTabs()
   const location = useWorkspaceLocation()
   const language = useLanguage()
+  const servers = useServers()
   const model = createComposerModelSelection({ agent: () => local.agent.current() })
   const controls = createComposerControls({ model })
 
@@ -55,22 +59,26 @@ export function createNewSessionComposerAdapter(props: {
       const branch = props.branch()
       const mcp = props.mcp.capture()
       const id = Session.ID.create()
+      // 자비수's 「새 작업실」 makes its folder now, named after this first message.
+      const workroom = tabs.draft(draftID).workroom === true
 
       const pending =
-        worktree === "create"
+        worktree === "create" || workroom
           ? tabs.prepareSession(draftID, { server: server.key, sessionId: id }, { message, selection })
           : undefined
 
       await pending?.ready
 
-      const sessionDirectory = await resolveSessionDirectory({
-        projectDirectory,
-        worktree,
-        branch,
-        data,
-        serverSDK,
-        language,
-      })
+      const sessionDirectory = workroom
+        ? await createWorkroom({ message, serverSDK, language, servers, server: server.key })
+        : await resolveSessionDirectory({
+            projectDirectory,
+            worktree,
+            branch,
+            data,
+            serverSDK,
+            language,
+          })
 
       if (!sessionDirectory) {
         await pending?.rollback()
@@ -82,7 +90,7 @@ export function createNewSessionComposerAdapter(props: {
         if (!pending) return
         data.project.invalidate()
         await data.project.sync().catch(() => undefined)
-        await pending.rollback(sessionDirectory)
+        await pending.rollback(workroom ? undefined : sessionDirectory)
       }
 
       if (!(await props.mcp.prepare(sessionDirectory, mcp))) {
@@ -193,6 +201,36 @@ export function createNewSessionComposerAdapter(props: {
     model,
     ready: prompt.ready,
   }
+}
+
+/** Makes a 「새 작업실」 draft's 작업실, lists it among the 작업실, and says what it was named. */
+async function createWorkroom(input: {
+  message: SessionMessageUser
+  serverSDK: ReturnType<typeof useServerSDK>
+  language: ReturnType<typeof useLanguage>
+  servers: ReturnType<typeof useServers>
+  server: ReturnType<typeof useServer>["key"]
+}) {
+  const text = readPromptPresentation(input.message.metadata)?.displayText ?? input.message.text
+  const files = (input.message.files ?? []).flatMap((file) => (file.name ? [file.name] : []))
+
+  const created = await input.serverSDK.api.jabisu.workroom.create({ text, files }).catch((error: unknown) => {
+    showToast({
+      title: input.language.t("jabisu.workroom.createFailed"),
+      description: errorMessage(input.language, error),
+    })
+  })
+
+  if (!created) return
+
+  input.servers.projects.forServer(input.server).open(created.directory)
+  input.servers.projects.forServer(input.server).touch(created.directory)
+  showToast({
+    title: input.language.t("jabisu.workroom.named", { name: created.name }),
+    description: input.language.t("jabisu.workroom.named.description"),
+  })
+
+  return created.directory
 }
 
 async function resolveSessionDirectory(input: {

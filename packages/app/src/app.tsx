@@ -2,6 +2,7 @@ import "@/index.css"
 import { DialogProvider } from "@opencode/ui/context/dialog"
 import { FileComponentProvider } from "@opencode/ui/context/file"
 import { Font } from "@opencode/ui/font"
+import { JABISU } from "@opencode/ui/logo"
 import { ThemeProvider } from "@opencode/ui/theme/context"
 import { MetaProvider } from "@solidjs/meta"
 import { type BaseRouterProps, Router } from "@solidjs/router"
@@ -18,6 +19,9 @@ import { TabsProvider } from "@/shell/tabs/tabs"
 import { ErrorPage } from "@/shell/errors/error"
 import { AppRoutes, File, preloadRoute } from "@/shell/routes/routes"
 import { ExtensionRoot } from "@/runtime/extension/root"
+
+// 자비수 brings its own typeface.
+if (JABISU) void import("@/jabisu.css")
 
 export { preloadRoute }
 
@@ -56,6 +60,7 @@ export function AppBaseProviders(
     <MetaProvider>
       <Font />
       <ThemeProvider
+        defaultTheme={JABISU ? "sanul" : undefined}
         onThemeApplied={(_, mode, scheme) => {
           props.onThemeApplied?.(mode, scheme)
         }}

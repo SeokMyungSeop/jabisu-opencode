@@ -70,6 +70,7 @@ export {
   osakaJadeTheme,
   palenightTheme,
   rosepineTheme,
+  sanulTheme,
   shadesOfPurpleTheme,
   solarizedTheme,
   synthwave84Theme,

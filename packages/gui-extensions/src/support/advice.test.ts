@@ -44,6 +44,14 @@ const cases: Array<[SessionFailure, Advice]> = [
   [{ type: "provider.internal", status: 502, message: "Bad gateway" }, { id: "server" }],
   [{ type: "provider.content-filter", message: "flagged" }, { id: "content" }],
   [{ type: "provider.invalid-request", status: 400, message: "Bad request" }, { id: "request" }],
+  [
+    {
+      type: "provider.invalid-request",
+      status: 403,
+      message: "OpenCode 1.18.0 or newer is required to use the free tier",
+    },
+    { id: "opencode-free", settings: "providers" },
+  ],
 ]
 
 test.each(cases)("advises on %o", (failure, advice) => {

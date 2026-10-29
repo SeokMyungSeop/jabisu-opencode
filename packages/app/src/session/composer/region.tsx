@@ -27,6 +27,8 @@ import { syncPromptModel } from "../session-model-helpers"
 import type { SessionTimelineInteraction } from "../timeline/interaction"
 import { createSessionRevert } from "../revert"
 import { SessionComposerRegion } from "./session-composer-region"
+import { SessionWorkflow } from "@/session/workflow/strip"
+import { JABISU } from "@opencode/ui/logo"
 import { createSessionComposerController, type SessionComposerController } from "./controller"
 import { SessionQueuePanel } from "./queue-panel"
 import { resolveSessionComposerSelection } from "./selection"
@@ -350,6 +352,15 @@ export function ActiveSessionComposerRegion(props: {
   return (
     <SessionComposerRegion
       controller={props.model.region}
+      workflow={
+        <Show when={JABISU}>
+          <SessionWorkflow
+            messages={props.session.history.messages}
+            running={props.session.data.working}
+            permission={() => !!props.model.region.state.permissionRequest()}
+          />
+        </Show>
+      }
       composer={
         <Show
           when={missing()}

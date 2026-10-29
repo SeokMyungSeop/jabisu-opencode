@@ -18,6 +18,8 @@ export type SessionComposerRegionViewController = Pick<
 export function SessionComposerRegion(props: {
   controller: SessionComposerRegionViewController
   composer: JSX.Element
+  /** 자비수's 진행 흐름 of the latest request, above the requests and the composer. */
+  workflow?: JSX.Element
 }) {
   const language = useLanguage()
   const controller = props.controller
@@ -34,6 +36,7 @@ export function SessionComposerRegion(props: {
           "md:max-w-session md:mx-auto": controller.centered(),
         }}
       >
+        {props.workflow}
         <Show when={controller.state.websearch.request()}>
           <SessionWebSearchDock model={controller.state.websearch} onSubmit={controller.onResponseSubmit} />
         </Show>

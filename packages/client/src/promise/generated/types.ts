@@ -346,6 +346,10 @@ export type JabisuWorkFolder = { path: string; files: number; documents: number;
 
 export type JabisuLaw = { configured: boolean; masked?: string | undefined; apply: string }
 
+export type JabisuWorkroomRoot = { root: string }
+
+export type JabisuWorkroom = { directory: string; name: string }
+
 export type LocationPublicRef = { directory: AbsolutePath }
 
 export type FileSystemWrite = { path: AbsolutePath }
@@ -6205,3 +6209,17 @@ export type JabisuLawUpdateInput = {
 }
 
 export type JabisuLawUpdateOutput = JabisuLaw
+
+export type JabisuWorkroomRootInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuWorkroomRootOutput = JabisuWorkroomRoot
+
+export type JabisuWorkroomCreateInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly text: { readonly text: string; readonly files: ReadonlyArray<string> }["text"]
+  readonly files: { readonly text: string; readonly files: ReadonlyArray<string> }["files"]
+}
+
+export type JabisuWorkroomCreateOutput = JabisuWorkroom

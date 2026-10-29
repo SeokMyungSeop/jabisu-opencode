@@ -21,6 +21,8 @@ import { readSessionTabsRemovedDetail, SESSION_TABS_REMOVED_EVENT } from "@/shel
 import { useGlobal } from "@/runtime/server/runtime"
 import { ServerConnection } from "@/runtime/server/registry"
 import { tabKey, useTabs } from "@/shell/tabs/tabs"
+import { useNewWorkroom } from "@/new-session/workroom"
+import { JABISU } from "@opencode/ui/logo"
 import type { ComposerState } from "@/composer/persistence"
 import "./titlebar.css"
 import { TitlebarRightMount } from "@/shell/titlebar/right-slot"
@@ -445,6 +447,36 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
               </Show>
             )
 
+            const openWorkroom = useNewWorkroom()
+            const currentServer = () => currentTab()?.server
+
+            // 자비수's 「새 작업실」 heads the sidebar in its sun color, the one accent on screen.
+            const workroomButton = (vertical = false) => (
+              <button
+                type="button"
+                data-action="jabisu-new-workroom"
+                class="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#f5b942] font-[700] tracking-[-0.02em] text-[#0f2e21] hover:bg-[#f0a92e]"
+                classList={{
+                  "mb-2 h-9 w-full text-[14px]": vertical,
+                  "me-1 h-7 px-3 text-[13px]": !vertical,
+                }}
+                onClick={() => void openWorkroom(currentServer())}
+              >
+                <Icon name="plus" size="small" class="shrink-0" />
+                <span class="min-w-0 truncate">{language.t("jabisu.workroom.new")}</span>
+              </button>
+            )
+
+            if (JABISU)
+              command.register("jabisu-workroom", () => [
+                {
+                  id: "jabisu.workroom.new",
+                  title: language.t("jabisu.workroom.new"),
+                  category: language.t("command.category.session"),
+                  onSelect: () => void openWorkroom(currentServer()),
+                },
+              ])
+
             command.register("titlebar-home", () => [
               {
                 id: "home.toggle",
@@ -541,6 +573,7 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
                   <WindowsAppMenu command={command} platform={platform} />
                 </Show>
                 <Show when={!mobile() && !props.verticalTabs}>{homeButton()}</Show>
+                <Show when={JABISU && !mobile() && !props.verticalTabs}>{workroomButton()}</Show>
 
                 <Show
                   when={!mobile()}
@@ -725,6 +758,7 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
                             <Show when={!windows()}>
                               <ChannelIndicator sidebar />
                             </Show>
+                            <Show when={JABISU}>{workroomButton(true)}</Show>
                             {homeButton(true)}
                             <RecentlyClosedTabsMenu
                               vertical

@@ -114,6 +114,16 @@ export const JabisuLaw = Schema.Struct({
 }).annotate({ identifier: "JabisuLaw" })
 export type JabisuLaw = typeof JabisuLaw.Type
 
+// The folder 「새 작업실」 opens a conversation in, before its first message makes the 작업실 itself.
+export const JabisuWorkroomRoot = Schema.Struct({ root: Schema.String }).annotate({ identifier: "JabisuWorkroomRoot" })
+export type JabisuWorkroomRoot = typeof JabisuWorkroomRoot.Type
+
+// A 작업실 made for a conversation's first message.
+export const JabisuWorkroom = Schema.Struct({ directory: Schema.String, name: Schema.String }).annotate({
+  identifier: "JabisuWorkroom",
+})
+export type JabisuWorkroom = typeof JabisuWorkroom.Type
+
 export const JabisuGroup = HttpApiGroup.make("server.jabisu")
   .add(
     HttpApiEndpoint.get("jabisu.transcription.get", "/api/jabisu/transcription", {
@@ -365,6 +375,38 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           summary: "Save the law database key",
           description:
             "Check the key with one search of 법제처's law database and save it; an empty key removes the saved one.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.workroom.root", "/api/jabisu/workroom", {
+      query: LocationQuery,
+      success: JabisuWorkroomRoot,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.root",
+          summary: "Get the 작업실 folder",
+          description: "Make, if needed, and return the folder that holds every 작업실 made with 「새 작업실」.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.workroom.create", "/api/jabisu/workroom", {
+      query: LocationQuery,
+      payload: Schema.Struct({ text: Schema.String, files: Schema.Array(Schema.String) }),
+      success: JabisuWorkroom,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.create",
+          summary: "Make a 작업실",
+          description:
+            "Make a 작업실 folder named after a conversation's first message: its first attached file, else its request.",
         }),
       ),
   )

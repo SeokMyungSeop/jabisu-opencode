@@ -16,6 +16,7 @@ export type AdviceID =
   | "unsupported"
   | "output"
   | "request"
+  | "opencode-free"
 
 /** What to tell the user about a failure, and the settings page that fixes it, if one does. */
 export interface Advice {
@@ -25,7 +26,8 @@ export interface Advice {
 
 // The engine's failure type and HTTP status decide first. The message is read only for cases the engine does not
 // classify: an over-long context, image input, OpenRouter's privacy filter and its "User not found." for a bad key,
-// a vanished model, and network failures that reach the session as unknown errors.
+// a vanished model, network failures that reach the session as unknown errors, and OpenCode's free models, which turn
+// 자비수 away because it reports its own version, lower than the OpenCode version they ask for.
 const PATTERNS = {
   privacy: /data policy|privacy settings/i,
   context: /context (length|window)|maximum context|too many tokens|prompt is too long|token limit|reduce the length/i,
@@ -34,11 +36,14 @@ const PATTERNS = {
   model: /no endpoints found|model not found|not a valid model|model .* does not exist/i,
   network: /fetch failed|ECONNREFUSED|ECONNRESET|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|socket hang up|network error/i,
   openrouterKey: /user not found/i,
+  opencodeFree: /required to use the free tier/i,
 }
 
 /** Advice for a failure, or undefined when there is nothing useful to add. */
 export function advise(failure: SessionFailure): Advice | undefined {
   const { type, status, message } = failure
+
+  if (PATTERNS.opencodeFree.test(message)) return { id: "opencode-free", settings: "providers" }
 
   if (PATTERNS.privacy.test(message)) return { id: "privacy" }
 
