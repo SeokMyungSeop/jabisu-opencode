@@ -17,7 +17,7 @@
 
 ## 설치
 
-1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.5.0-x64.exe`)를 내려받아요.
+1. [Releases](https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest)에서 `Jabisu-Setup-<버전>-x64.exe`(예: `Jabisu-Setup-1.5.1-x64.exe`)를 내려받아요.
 2. 내려받은 파일을 실행하면 바로 설치되고, 바탕화면과 시작 메뉴에 **자비수**가 생겨요.
 
 - Windows 10/11 64비트용이에요. 관리자 권한 없이 내 사용자 폴더에 설치돼요.
@@ -158,7 +158,7 @@ git clone -b jabisu https://github.com/SeokMyungSeop/jabisu-opencode.git
 cd jabisu-opencode
 bun install
 
-export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.5.0
+export OPENCODE_CHANNEL=jabisu OPENCODE_VERSION=1.5.1
 export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 
 # 1. 엔진(CLI): 앱이 구형 CPU 호환판을 넣어요
@@ -168,7 +168,7 @@ export OPENCODE_CLI_DIST="$(cygpath -w "$PWD/packages/cli/dist")"
 cd packages/desktop
 bun ./scripts/prepare.ts            # 엔진·아이콘을 넣고 package.json 버전을 바꿔요
 ./node_modules/.bin/electron-vite build
-bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.5.0-x64.exe
+bun run package:win                 # → packages/desktop/dist/Jabisu-Setup-1.5.1-x64.exe
 git checkout -- package.json        # prepare.ts가 바꾼 버전을 되돌려요
 ```
 
