@@ -4,8 +4,8 @@ import type { MountedSession } from "../sdk"
 import { catalogModel, syncCatalog } from "./catalog"
 
 /**
- * The routed session's context use as the header indicator and the session details show it, loading the catalogs its
- * model's limit comes from.
+ * The routed session's context use as the header indicator, the session details and the Context tab show it, loading
+ * the catalogs its model's limit comes from.
  */
 export function createSessionUsage(session: Accessor<MountedSession>) {
   syncCatalog(session)
@@ -27,7 +27,8 @@ export function createSessionUsage(session: Accessor<MountedSession>) {
     const message = lastAssistantWithUsage(messages(), info()?.revert?.messageID)
 
     if (!message) return
-    const limit = catalogModel(session(), message.model)?.model?.limit.context
+    const entry = catalogModel(session(), message.model)
+    const limit = entry?.model?.limit.context
 
     const total =
       message.tokens.input +
@@ -36,7 +37,14 @@ export function createSessionUsage(session: Accessor<MountedSession>) {
       message.tokens.cache.read +
       message.tokens.cache.write
 
-    return { total, limit, usage: limit ? Math.round((total / limit) * 100) : null }
+    return {
+      message,
+      provider: entry?.provider.name ?? message.model.providerID,
+      model: entry?.model?.name ?? message.model.id,
+      total,
+      limit,
+      usage: limit ? Math.round((total / limit) * 100) : null,
+    }
   })
 
   // A root session's cost includes its subagent sessions, as in the TUI.
@@ -57,5 +65,7 @@ export function createSessionUsage(session: Accessor<MountedSession>) {
     return model.cost.some((cost) => cost.input > 0 || cost.output > 0 || cost.cache.read > 0 || cost.cache.write > 0)
   })
 
-  return { context, spent, showCost }
+  return { messages, info, context, spent, showCost }
 }
+
+export type SessionUsage = ReturnType<typeof createSessionUsage>

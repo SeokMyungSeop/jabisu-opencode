@@ -22,6 +22,7 @@ import { useGlobal } from "@/runtime/server/runtime"
 import { ServerConnection } from "@/runtime/server/registry"
 import { tabKey, useTabs } from "@/shell/tabs/tabs"
 import { useNewWorkroom } from "@/new-session/workroom"
+import type { WorkroomNavState } from "@/shell/nav/workroom-nav"
 import { JABISU } from "@opencode/ui/logo"
 import type { ComposerState } from "@/composer/persistence"
 import "./titlebar.css"
@@ -56,7 +57,7 @@ const macTrafficLightsTopClearance = 28
 // titlebar row stays 16px clear of it, as ChatGPT's phone header does. Without one, 8px matches the content gap below.
 const mobileTopClearance = "max(8px, min(16px, env(safe-area-inset-top, 0px) * 1000))"
 
-export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
+export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement }; nav?: WorkroomNavState }) {
   const platform = usePlatform()
   const command = useCommand()
   const language = useLanguage()
@@ -450,16 +451,12 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
             const openWorkroom = useNewWorkroom()
             const currentServer = () => currentTab()?.server
 
-            // 자비수's 「새 작업실」 heads the sidebar in its sun color, the one accent on screen.
-            const workroomButton = (vertical = false) => (
+            // 자비수's 「새 작업실」 in its sun color, the one accent on screen.
+            const workroomButton = () => (
               <button
                 type="button"
                 data-action="jabisu-new-workroom"
-                class="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#f5b942] font-[700] tracking-[-0.02em] text-[#0f2e21] hover:bg-[#f0a92e]"
-                classList={{
-                  "mb-2 h-9 w-full text-[14px]": vertical,
-                  "me-1 h-7 px-3 text-[13px]": !vertical,
-                }}
+                class="me-1 flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#f5b942] px-3 text-[13px] font-[700] tracking-[-0.02em] text-[#0f2e21] hover:bg-[#f0a92e]"
                 onClick={() => void openWorkroom(currentServer())}
               >
                 <Icon name="plus" size="small" class="shrink-0" />
@@ -572,8 +569,26 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
                 <Show when={windows() || linux()}>
                   <WindowsAppMenu command={command} platform={platform} />
                 </Show>
+                <Show when={props.nav}>
+                  {(nav) => (
+                    <Tooltip placement="bottom" value={language.t("jabisu.nav.toggle")} class="shrink-0">
+                      <IconButton
+                        type="button"
+                        variant="ghost-muted"
+                        size="large"
+                        class="!w-9 shrink-0"
+                        icon={<Icon name="sidebar-right" class="-scale-x-100" />}
+                        state={nav().open() ? "pressed" : undefined}
+                        onClick={nav().toggle}
+                        aria-label={language.t("jabisu.nav.toggle")}
+                        aria-pressed={nav().open()}
+                      />
+                    </Tooltip>
+                  )}
+                </Show>
                 <Show when={!mobile() && !props.verticalTabs}>{homeButton()}</Show>
-                <Show when={JABISU && !mobile() && !props.verticalTabs}>{workroomButton()}</Show>
+                {/* With the 작업실 list closed, its 「새 작업실」 button moves up here. */}
+                <Show when={JABISU && !mobile() && !props.verticalTabs && !props.nav?.open()}>{workroomButton()}</Show>
 
                 <Show
                   when={!mobile()}
@@ -758,7 +773,6 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement } }) {
                             <Show when={!windows()}>
                               <ChannelIndicator sidebar />
                             </Show>
-                            <Show when={JABISU}>{workroomButton(true)}</Show>
                             {homeButton(true)}
                             <RecentlyClosedTabsMenu
                               vertical

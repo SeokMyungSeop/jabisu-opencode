@@ -11,6 +11,8 @@ import { useSettingsSurface } from "@/settings/surface"
 import { useSettings } from "@/settings/model"
 import { ExtensionServerCover } from "@/runtime/extension/server-shell"
 import { ExtensionSlot } from "@/runtime/extension/render"
+import { JABISU } from "@opencode/ui/logo"
+import { createWorkroomNavState, WorkroomNav } from "@/shell/nav/workroom-nav"
 
 export default function Layout(props: ParentProps) {
   const platform = usePlatform()
@@ -23,7 +25,9 @@ export default function Layout(props: ParentProps) {
     tabsMount: undefined,
   })
 
-  const verticalTabs = () => preferences.appearance.tabLayout() === "vertical" && !mobile()
+  // 자비수 keeps its tabs across the top: the left side holds its 작업실 list.
+  const nav = JABISU ? createWorkroomNavState() : undefined
+  const verticalTabs = () => !nav && preferences.appearance.tabLayout() === "vertical" && !mobile()
   const bottomTitlebar = () => mobile() && preferences.general.mobileTitlebarPosition() === "bottom"
 
   return (
@@ -45,7 +49,10 @@ export default function Layout(props: ParentProps) {
             : "max(0px, calc(8px - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))))",
         }}
       >
-        <Titlebar verticalTabs={verticalTabs() ? { mount: state.tabsMount } : undefined} />
+        <Titlebar
+          verticalTabs={verticalTabs() ? { mount: state.tabsMount } : undefined}
+          nav={mobile() ? undefined : nav}
+        />
         <div class="flex flex-1 min-h-0 min-w-0 flex-row">
           <Show when={verticalTabs()}>
             <aside
@@ -66,6 +73,28 @@ export default function Layout(props: ParentProps) {
                 onResize={(width) => setState("tabsWidth", width)}
               />
             </aside>
+          </Show>
+          <Show when={!mobile() && nav?.open() ? nav : undefined}>
+            {(nav) => (
+              <aside
+                data-slot="jabisu-nav-sidebar"
+                class="relative flex h-full min-h-0 shrink-0 flex-col bg-v2-background-bg-deep pe-1 ps-2.5 pt-2"
+                style={{
+                  width: `${nav().width()}px`,
+                  "padding-bottom": "max(10px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))",
+                }}
+              >
+                <ResizeHandle
+                  class="-end-2"
+                  direction="horizontal"
+                  size={nav().width()}
+                  min={200}
+                  max={420}
+                  onResize={nav().resize}
+                />
+                <WorkroomNav />
+              </aside>
+            )}
           </Show>
           {/* Size containment collapses percentage-height descendants in WebKit. */}
           <main

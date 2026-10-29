@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, For, Show } from "solid-js"
+import { createMemo, createSignal, For, Show } from "solid-js"
 import type { JabisuSkill } from "@opencode/client/promise"
 import { Button } from "@opencode/ui/button"
 import { Dialog, DialogBody, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
@@ -7,10 +7,9 @@ import { showToast } from "@opencode/ui/toast"
 import { useExtension } from "../sdk"
 import type { ContextUsageProps } from "./contract"
 import type definition from "./index"
+import { createSkillCatalog, type SkillGroup } from "./skill-catalog"
 
-type Group = "mine" | "bundled" | "other"
-
-const GROUPS: readonly Group[] = ["mine", "bundled", "other"]
+const GROUPS: readonly SkillGroup[] = ["mine", "bundled", "other"]
 
 const BADGE: Record<JabisuSkill["status"] | "off", string> = {
   default: "bg-v2-background-bg-layer-04 text-v2-text-text-muted",
@@ -18,9 +17,6 @@ const BADGE: Record<JabisuSkill["status"] | "off", string> = {
   changed: "bg-v2-state-bg-warning text-v2-state-fg-warning",
   off: "bg-v2-background-bg-layer-04 text-v2-text-text-faint",
 }
-
-// Windows compares paths without case and with either separator.
-const key = (file: string) => file.replaceAll("\\", "/").toLowerCase()
 
 /**
  * Every skill the session can use, grouped by where it comes from: the user's own, the ones 자비수 bundles (with
@@ -31,45 +27,9 @@ export function SkillList(props: ContextUsageProps & { tokens?: string }) {
   const ctx = useExtension<typeof definition>()
   const [query, setQuery] = createSignal("")
   const [busy, setBusy] = createSignal<string>()
-  const data = () => props.session.server.data
   const location = () => ({ directory: props.session.directory })
-
-  // The session's skills may not be loaded yet; 자비수 says which are bundled and where the user's own live.
-  const [bundled, { mutate }] = createResource(
-    () => ({ data: data(), client: props.session.server.client, directory: props.session.directory }),
-    async (input) => {
-      await input.data.location.skill.sync({ directory: input.directory })
-
-      return input.client.jabisu.skills.list({ location: { directory: input.directory } }).catch(() => undefined)
-    },
-  )
-
-  const all = createMemo(() => {
-    const list = bundled.latest
-    const named = new Map((list?.skills ?? []).map((skill) => [skill.name, skill]))
-    const folder = list ? `${key(list.folder)}/` : undefined
-
-    return (data().location.skill.list({ directory: props.session.directory }) ?? [])
-      .map((skill) => {
-        const known = named.get(skill.name)
-        const group: Group = known ? "bundled" : folder && key(skill.path).startsWith(folder) ? "mine" : "other"
-
-        return {
-          name: skill.name,
-          title: known?.title,
-          // 자비수's Korean summary for its own skills, the skill's own description otherwise.
-          text: known?.summary ?? skill.description ?? "",
-          search: [skill.name, skill.description, known?.title, known?.summary, ...(known?.keywords ?? [])]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase(),
-          path: skill.path,
-          group,
-          known,
-        }
-      })
-      .toSorted((a, b) => a.name.localeCompare(b.name))
-  })
+  const catalog = createSkillCatalog(() => props.session)
+  const all = catalog.all
 
   const shown = createMemo(() => {
     const words = query().trim().toLowerCase().split(/\s+/).filter(Boolean)
@@ -81,7 +41,7 @@ export function SkillList(props: ContextUsageProps & { tokens?: string }) {
     setBusy(name)
 
     try {
-      mutate(await props.session.server.client.jabisu.skills.turn({ location: location(), name, on }))
+      catalog.replace(await props.session.server.client.jabisu.skills.turn({ location: location(), name, on }))
     } catch (error) {
       showToast({
         variant: "error",
@@ -114,7 +74,7 @@ export function SkillList(props: ContextUsageProps & { tokens?: string }) {
           onChange={setQuery}
         />
         <Show
-          when={!bundled.loading || all().length}
+          when={!catalog.loading() || all().length}
           fallback={<p class="text-13-regular text-text-weak">{ctx.t("skills.loading")}</p>}
         >
           <Show when={shown().length} fallback={<p class="text-13-regular text-text-weak">{ctx.t("skills.empty")}</p>}>

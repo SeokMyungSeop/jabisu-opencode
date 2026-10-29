@@ -2,16 +2,11 @@ import type { SessionInfo } from "@opencode/client/promise"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Button } from "@opencode/ui/button"
 import { DialogFooter, DialogHeader, DialogTitleGroup, Dialog } from "@opencode/ui/dialog"
-import { skipToken, useQuery, useQueryClient } from "@tanstack/solid-query"
+import { useQuery, useQueryClient } from "@tanstack/solid-query"
 import { type Accessor, createEffect, createMemo, type JSX, startTransition, untrack } from "solid-js"
 import { notifySessionTabsRemoved } from "@/shell/titlebar/session-events"
 import { useCommand } from "@/shell/commands/command"
-import {
-  HOME_SESSION_LIMIT,
-  loadHomeSessionIndex,
-  mergeHomeSessionIndex,
-  retainHomeSessions,
-} from "@/home/sessions/index"
+import { HOME_SESSION_LIMIT } from "@/home/sessions/index"
 import type { LocalProject } from "@/shell/state/layout"
 import { useLanguage } from "@/runtime/i18n/language"
 import { ServerConnection } from "@/runtime/server/registry"
@@ -25,13 +20,11 @@ import { usePlatform } from "@/runtime/platform/platform"
 import { sessionLabel, sessionTitle } from "@/session/title"
 import { showToast } from "@/shell/notifications/toast"
 import { archiveHomeSession } from "./archive"
+import { homeSessionQuery, homeSessions } from "./query"
 import type { HomeController } from "../model"
 import { buildHomeSessionRecords, homeProjectForSession, homeSessionLocation, type HomeSessionRecord } from "./records"
 
 export type { HomeSessionRecord } from "./records"
-
-// Keep the immutable result opaque so Solid Query does not recursively unwrap every session on mount.
-const selectSessions = (sessions: SessionInfo[]) => () => sessions
 
 export type HomeSessionGroup = {
   id: "today" | "yesterday" | "older"
@@ -58,23 +51,7 @@ export function createHomeSessionsController(home: HomeController) {
     return project ? directories(project) : [selected]
   })
 
-  const sessionLoad = useQuery(() => {
-    const ctx = home.server.focusedContext()
-    const conn = home.server.focused()
-
-    return {
-      queryKey: ["home-sessions", conn] as const,
-      enabled: !!ctx && ctx.sdk.connection.status() === "connected",
-      queryFn: ctx
-        ? ({ signal }) => loadHomeSessionIndex((input, options) => ctx.sdk.api.session.list(input, options), signal)
-        : skipToken,
-      retry: false,
-      staleTime: 30_000,
-      refetchOnMount: true,
-      refetchOnReconnect: true,
-      select: selectSessions,
-    }
-  })
+  const sessionLoad = useQuery(() => homeSessionQuery(home.server.focusedContext(), home.server.focused()))
 
   const indexedSessions = createMemo(() => {
     const ctx = home.server.focusedContext()
@@ -82,13 +59,7 @@ export function createHomeSessionsController(home: HomeController) {
 
     if (!ctx || !conn) return []
 
-    return retainHomeSessions(
-      ctx.data.session.apply(
-        mergeHomeSessionIndex(sessionLoad.isPending ? [] : (sessionLoad.data?.() ?? []), ctx.data.session.list()),
-      ),
-      HOME_SESSION_LIMIT,
-      Date.now(),
-    )
+    return homeSessions(ctx, sessionLoad.isPending ? [] : (sessionLoad.data?.() ?? []))
   })
 
   const allRecords = createMemo(() =>

@@ -286,8 +286,7 @@ export const defaultSettings: Settings = {
     terminalPlacement: "side",
     followUpBehavior: "steer",
   },
-  // 자비수 lists conversations down the left side, under its 「새 작업실」 button.
-  appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: JABISU ? "vertical" : "horizontal" },
+  appearance: { fontSize: 14, mono: "", sans: "", terminal: "", tabLayout: "horizontal" },
   keybinds: {},
   permissions: { autoApprove: false, autoApproveProjects: {} },
   workspaces: { defaultDestination: "last-used", lastUsed: {} },

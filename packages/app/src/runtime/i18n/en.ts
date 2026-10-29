@@ -1083,6 +1083,16 @@ export const dict = {
   "jabisu.workflow.kind.delegate": "Handing off work",
   "jabisu.workflow.kind.tool": "Using a tool",
   "jabisu.workflow.kind.answer": "Answering",
+  "jabisu.nav.label": "Workrooms",
+  "jabisu.nav.toggle": "Show or hide the workroom list",
+  "jabisu.nav.search": "Search conversations",
+  "jabisu.nav.jiphyeonjeon": "Jiphyeonjeon",
+  "jabisu.nav.workrooms": "Workrooms",
+  "jabisu.nav.count": "{{count}} conversations",
+  "jabisu.nav.more": "Show {{count}} more",
+  "jabisu.nav.less": "Show fewer",
+  "jabisu.nav.newConversation": "New conversation",
+  "jabisu.nav.empty": "No workrooms yet. Start one with New workroom.",
 }
 
 export default dict

@@ -244,7 +244,10 @@ export const SettingsGeneral: Component = () => {
       <h3 class="settings-section-title">{language.t("settings.general.section.general")}</h3>
       <SettingsList>
         <LanguageSetting />
-        <TabLayoutSetting />
+        {/* 자비수's tabs stay across the top: its left side holds the 작업실 list. */}
+        <Show when={!JABISU}>
+          <TabLayoutSetting />
+        </Show>
 
         {/* Where new sessions start only matters with git workspaces, which 자비수 leaves out. */}
         <Show when={!JABISU}>

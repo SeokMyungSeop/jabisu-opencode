@@ -1,143 +1,56 @@
-import { createMemo, on, onCleanup, For, Show } from "solid-js"
+import { createMemo, onCleanup, For, Show } from "solid-js"
 import type { JSX } from "solid-js"
-import { checksum } from "@opencode/util/encode"
+import type { McpServer } from "@opencode/client/promise"
 import { Icon } from "@opencode/ui/icon"
 import { Button } from "@opencode/ui/button"
-import { Accordion } from "@opencode/ui/accordion"
-import { StickyAccordionHeader } from "@opencode/ui/sticky-accordion-header"
 import { ScrollView } from "@opencode/ui/scroll-view"
 import { showToast } from "@opencode/ui/toast"
 import { useI18n } from "@opencode/ui/context/i18n"
-import { File } from "@opencode/session-ui/file"
 import { Markdown } from "@opencode/session-ui/markdown"
-import type { SessionMessageInfo } from "@opencode/client/promise"
-import { lastAssistantWithUsage } from "@opencode/client/solid"
-import { createKeyed, useExtension, type MountedSession } from "../sdk"
-import { catalogModel, syncCatalog } from "./catalog"
+import { useExtension, type MountedSession } from "../sdk"
+import { SummaryRow } from "./breakdown"
 import { fetchSessionExport, sessionExportFilename } from "./export"
 import { createSessionContextFormatter } from "./format"
 import type definition from "./index"
-import { moneyFormat } from "./money"
+import { createSkillCatalog } from "./skill-catalog"
+import { SkillList } from "./skills"
+import { ContextOverview } from "./summary"
+import { createSessionUsage } from "./usage"
 
-function Stat(props: { label: string; value: JSX.Element }) {
-  return (
-    <div class="flex flex-col gap-1">
-      <div class="text-12-regular text-text-weak">{props.label}</div>
-      <div class="text-12-medium text-text-strong">{props.value}</div>
-    </div>
-  )
+// The tools that load a skill into the conversation; both take the skill's ID.
+const SKILL_TOOLS: readonly string[] = ["skill", "skill_turn_on"]
+
+const MCP_DOT: Record<McpServer["status"]["status"], string> = {
+  connected: "var(--v2-avatar-border-green)",
+  pending: "var(--v2-icon-icon-base, var(--icon-base))",
+  disabled: "var(--v2-background-bg-layer-04, var(--border-weak-base))",
+  failed: "var(--v2-avatar-border-orange)",
+  needs_auth: "var(--v2-avatar-border-yellow)",
 }
 
-function RawMessageContent(props: { message: SessionMessageInfo; onRendered: () => void }) {
-  const file = createMemo(() => {
-    const contents = JSON.stringify(props.message, null, 2)
-
-    return {
-      name: `${props.message.type}-${props.message.id}.json`,
-      contents,
-      cacheKey: checksum(contents),
-    }
-  })
-
+function Section(props: { title: string; action?: JSX.Element; children: JSX.Element }) {
   return (
-    <File
-      mode="text"
-      file={file()}
-      overflow="wrap"
-      class="select-text"
-      onRendered={() => requestAnimationFrame(props.onRendered)}
-    />
+    <section class="flex flex-col gap-2">
+      <div class="flex min-h-7 items-center justify-between gap-2">
+        <h3 class="text-12-medium text-v2-text-text-faint">{props.title}</h3>
+        {props.action}
+      </div>
+      {props.children}
+    </section>
   )
 }
-
-function RawMessage(props: {
-  message: SessionMessageInfo
-  onRendered: () => void
-  time: (value: number | undefined) => string
-}) {
-  return (
-    <Accordion.Item value={props.message.id}>
-      <StickyAccordionHeader>
-        <Accordion.Trigger>
-          <div class="flex items-center justify-between gap-2 w-full">
-            <div class="min-w-0 truncate">
-              {props.message.type} <span class="text-text-base">• {props.message.id}</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="shrink-0 text-12-regular text-text-weak">{props.time(props.message.time.created)}</div>
-              <Icon name="chevron-grabber-vertical" size="small" class="shrink-0 text-text-weak" />
-            </div>
-          </div>
-        </Accordion.Trigger>
-      </StickyAccordionHeader>
-      <Accordion.Content class="bg-background-base">
-        <div class="p-3">
-          <RawMessageContent message={props.message} onRendered={props.onRendered} />
-        </div>
-      </Accordion.Content>
-    </Accordion.Item>
-  )
-}
-
-const emptyMessages: SessionMessageInfo[] = []
 
 export default function SessionContextTab(props: { session: MountedSession }) {
   const ctx = useExtension<typeof definition>()
   const layout = ctx.layout
   const system = ctx.system
   const i18n = useI18n()
-  const data = () => props.session.server.data
-  syncCatalog(() => props.session)
-
-  const info = createMemo(() => (props.session.id ? data().session.get(props.session.id) : undefined))
-
-  const messages = createMemo(
-    () => {
-      const id = props.session.id
-
-      if (!id) return emptyMessages
-
-      return data().session.message.list(id)
-    },
-    emptyMessages,
-    { equals: same },
-  )
-
-  const money = createMemo(() => moneyFormat(i18n.locale(), ctx.stores.currency.value))
-
-  // Same step as the TUI and the header button: after the last completed compaction and before an undo boundary.
-  const context = createMemo(() => {
-    const message = lastAssistantWithUsage(messages(), info()?.revert?.messageID)
-
-    if (!message) return
-    const entry = catalogModel(props.session, message.model)
-
-    const total =
-      message.tokens.input +
-      message.tokens.output +
-      message.tokens.reasoning +
-      message.tokens.cache.read +
-      message.tokens.cache.write
-
-    return {
-      message,
-      tokens: message.tokens,
-      providerLabel: entry?.provider.name ?? message.model.providerID,
-      modelLabel: entry?.model?.name ?? message.model.id,
-      limit: entry?.model?.limit.context,
-      input: message.tokens.input,
-      total,
-      usage: entry?.model?.limit.context ? Math.round((total / entry.model.limit.context) * 100) : null,
-    }
-  })
-
+  const usage = createSessionUsage(() => props.session)
+  const skills = createSkillCatalog(() => props.session)
   const formatter = createMemo(() => createSessionContextFormatter(i18n.locale()))
 
-  // A root session's cost includes its subagent sessions, as in the TUI.
-  const cost = createMemo(() => money()(props.session.id ? data().session.cost(props.session.id) : 0))
-
   const counts = createMemo(() => {
-    const all = messages()
+    const all = usage.messages()
     const user = all.reduce((count, message) => count + (message.type === "user" ? 1 : 0), 0)
     const assistant = all.reduce((count, message) => count + (message.type === "assistant" ? 1 : 0), 0)
 
@@ -149,53 +62,59 @@ export default function SessionContextTab(props: { session: MountedSession }) {
   })
 
   const systemPrompt = createMemo(() => {
-    const system = messages().findLast((message) => message.type === "system")?.text
+    const system = usage
+      .messages()
+      .findLast((message) => message.type === "system")
+      ?.text.trim()
 
-    if (!system) return
-    const trimmed = system.trim()
-
-    if (!trimmed) return
-
-    return trimmed
+    return system || undefined
   })
 
-  const providerLabel = createMemo(() => {
-    const c = context()
+  // Skills the AI loaded in this conversation, in the order it first did.
+  const used = createMemo(() => {
+    const ids = new Set<string>()
 
-    if (!c) return "—"
+    for (const message of usage.messages()) {
+      if (message.type !== "assistant") continue
 
-    return c.providerLabel
+      for (const part of message.content) {
+        if (part.type !== "tool" || !SKILL_TOOLS.includes(part.name) || part.state.status === "streaming") continue
+        const id = part.state.input.id
+
+        if (typeof id === "string") ids.add(id)
+      }
+    }
+
+    return [...ids].map((id) => ({ id, title: skills.all().find((skill) => skill.name === id)?.title }))
   })
 
-  const modelLabel = createMemo(() => {
-    const c = context()
+  const servers = () =>
+    (props.session.server.data.location.mcp.server.list({ directory: props.session.directory }) ?? []).toSorted(
+      (a, b) => a.name.localeCompare(b.name),
+    )
 
-    if (!c) return "—"
-
-    return c.modelLabel
-  })
+  const number = (value: number | undefined) => formatter().number(value)
 
   const stats = [
-    { label: "stats.session", value: () => info()?.title ?? (props.session.id || "—") },
+    { label: "stats.session", value: () => usage.info()?.title ?? (props.session.id || "—") },
+    { label: "stats.provider", value: () => usage.context()?.provider ?? "—" },
+    { label: "stats.model", value: () => usage.context()?.model ?? "—" },
     { label: "stats.messages", value: () => counts().all.toLocaleString(i18n.locale()) },
-    { label: "stats.provider", value: providerLabel },
-    { label: "stats.model", value: modelLabel },
-    { label: "stats.limit", value: () => formatter().number(context()?.limit) },
-    { label: "stats.totalTokens", value: () => formatter().number(context()?.total) },
-    { label: "stats.usage", value: () => formatter().percent(context()?.usage) },
-    { label: "stats.inputTokens", value: () => formatter().number(context()?.input) },
-    { label: "stats.outputTokens", value: () => formatter().number(context()?.tokens.output) },
-    { label: "stats.reasoningTokens", value: () => formatter().number(context()?.tokens.reasoning) },
-    {
-      label: "stats.cacheTokens",
-      value: () =>
-        `${formatter().number(context()?.tokens.cache.read)} / ${formatter().number(context()?.tokens.cache.write)}`,
-    },
     { label: "stats.userMessages", value: () => counts().user.toLocaleString(i18n.locale()) },
     { label: "stats.assistantMessages", value: () => counts().assistant.toLocaleString(i18n.locale()) },
-    { label: "stats.totalCost", value: cost },
-    { label: "stats.sessionCreated", value: () => formatter().time(info()?.time.created) },
-    { label: "stats.lastActivity", value: () => formatter().time(context()?.message.time.created) },
+    { label: "stats.inputTokens", value: () => number(usage.context()?.message.tokens.input) },
+    { label: "stats.outputTokens", value: () => number(usage.context()?.message.tokens.output) },
+    { label: "stats.reasoningTokens", value: () => number(usage.context()?.message.tokens.reasoning) },
+    {
+      label: "stats.cacheTokens",
+      value: () => {
+        const cache = usage.context()?.message.tokens.cache
+
+        return `${number(cache?.read)} / ${number(cache?.write)}`
+      },
+    },
+    { label: "stats.sessionCreated", value: () => formatter().time(usage.info()?.time.created) },
+    { label: "stats.lastActivity", value: () => formatter().time(usage.context()?.message.time.created) },
   ] satisfies { label: string; value: () => JSX.Element }[]
 
   const exportSession = async () => {
@@ -227,6 +146,8 @@ export default function SessionContextTab(props: { session: MountedSession }) {
       })
     }
   }
+
+  const openSkills = () => ctx.dialogs.open(() => <SkillList session={props.session} />)
 
   let scroll: HTMLDivElement | undefined
   let frame: number | undefined
@@ -266,12 +187,6 @@ export default function SessionContextTab(props: { session: MountedSession }) {
     })
   }
 
-  // Restores the stored scroll a frame after the messages change; on mount the viewport ref restores it.
-  createKeyed(
-    createMemo(on(messages, (list) => list, { defer: true })),
-    () => void requestAnimationFrame(restoreScroll),
-  )
-
   onCleanup(() => {
     if (frame === undefined) return
     cancelAnimationFrame(frame)
@@ -286,25 +201,15 @@ export default function SessionContextTab(props: { session: MountedSession }) {
       }}
       onScroll={handleScroll}
     >
-      <div data-slot="session-usage-content" class="px-4 pt-4 pb-6 flex flex-col gap-6 md:px-6 md:pb-10 md:gap-10">
-        <div class="grid grid-cols-1 @[32rem]:grid-cols-2 gap-4">
-          <For each={stats}>{(stat) => <Stat label={ctx.t(stat.label)} value={stat.value()} />}</For>
-        </div>
+      <div
+        data-slot="session-usage-content"
+        class="px-4 pt-4 pb-6 flex flex-col gap-7 text-13-regular md:px-6 md:pb-10"
+      >
+        <ContextOverview session={props.session} usage={usage} large />
 
-        <Show when={systemPrompt()}>
-          {(prompt) => (
-            <div class="flex flex-col gap-2">
-              <div class="text-12-regular text-text-weak">{ctx.t("systemPrompt.title")}</div>
-              <div class="border border-border-base rounded-md bg-surface-base px-3 py-2">
-                <Markdown text={prompt()} class="text-12-regular" />
-              </div>
-            </div>
-          )}
-        </Show>
-
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <div class="text-12-regular text-text-weak">{ctx.t("rawMessages.title")}</div>
+        <Section
+          title={ctx.t("section.session")}
+          action={
             <Button
               size="small"
               variant="ghost"
@@ -314,24 +219,77 @@ export default function SessionContextTab(props: { session: MountedSession }) {
               <Icon name="download" size="small" />
               <span>{ctx.t("export.session")}</span>
             </Button>
+          }
+        >
+          <div class="flex flex-col gap-1.5">
+            <For each={stats}>{(stat) => <SummaryRow name={ctx.t(stat.label)} value={stat.value()} />}</For>
           </div>
-          <Accordion multiple>
-            <For each={messages()}>
-              {(message) => <RawMessage message={message} onRendered={restoreScroll} time={formatter().time} />}
-            </For>
-          </Accordion>
-        </div>
+        </Section>
+
+        <Section
+          title={ctx.t("section.skills")}
+          action={
+            <button
+              type="button"
+              class="flex items-center gap-1 text-v2-text-text-muted hover:text-v2-text-text-base"
+              onClick={openSkills}
+            >
+              <span>{ctx.t("skills.on", { count: skills.on().length })}</span>
+              <Icon name="outline-arrow-right" size="small" class="rtl:-scale-x-100" />
+            </button>
+          }
+        >
+          <div class="flex flex-col gap-1.5">
+            <span class="text-v2-text-text-muted">{ctx.t("skills.used")}</span>
+            <Show
+              when={used().length > 0}
+              fallback={<span class="text-v2-text-text-faint">{ctx.t("skills.none")}</span>}
+            >
+              <div class="flex flex-wrap gap-1.5">
+                <For each={used()}>
+                  {(skill) => (
+                    <span
+                      class="max-w-full truncate rounded-full border border-v2-border-border-base px-2.5 py-0.5 text-v2-text-text-base"
+                      title={skill.id}
+                    >
+                      {skill.title ?? skill.id}
+                    </span>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
+        </Section>
+
+        <Section title={ctx.t("section.mcp")}>
+          <Show
+            when={servers().length > 0}
+            fallback={<span class="text-v2-text-text-faint">{ctx.t("mcp.empty")}</span>}
+          >
+            <div class="flex flex-col gap-1.5">
+              <For each={servers()}>
+                {(server) => (
+                  <SummaryRow
+                    color={MCP_DOT[server.status.status]}
+                    name={server.name}
+                    value={ctx.t(`mcp.status.${server.status.status}`)}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
+        </Section>
+
+        <Show when={systemPrompt()}>
+          {(prompt) => (
+            <Section title={ctx.t("systemPrompt.title")}>
+              <div class="border border-border-base rounded-md bg-surface-base px-3 py-2">
+                <Markdown text={prompt()} class="text-12-regular" />
+              </div>
+            </Section>
+          )}
+        </Show>
       </div>
     </ScrollView>
   )
-}
-
-function same<T>(a: readonly T[] | undefined, b: readonly T[] | undefined) {
-  if (a === b) return true
-
-  if (!a || !b) return false
-
-  if (a.length !== b.length) return false
-
-  return a.every((x, i) => x === b[i])
 }
