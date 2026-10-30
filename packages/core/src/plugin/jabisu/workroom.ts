@@ -1,22 +1,29 @@
 export * as Workroom from "./workroom.js"
 
 import path from "path"
-import { Effect, Schema } from "effect"
+import { Effect, Schedule, Schema } from "effect"
+import { AbsolutePath } from "@opencode/schema/schema"
 import type { FSUtil } from "@opencode/util/fs-util"
 import type { Global } from "@opencode/util/global"
+import type { Session } from "../../session.js"
 
 // 자비수 작업실: 「새 작업실」 opens a conversation in `<Documents>/자비수 작업실`, and when its first message is sent the
 // folder the conversation works in is made there, named after the message's first attached file or, without one,
-// after the request itself. The folder is made only once its name is known, so it is never renamed while a
-// conversation or a program started for it works in it.
+// after the request itself. The folder is made only once its name is known, so it is never renamed behind a
+// conversation's back. The user may rename it later, while no conversation works in it, and its conversations
+// follow it; folders the user added from elsewhere are never renamed or thrown away.
 
 export const ROOT = "자비수 작업실"
 // The name shown until the first message, and the folder name when nothing better can be read from the message.
 export const FALLBACK = "새 작업실"
 const MAX_LENGTH = 40
+// A name the user types may be longer than one read from a message.
+const TYPED_LENGTH = 60
 
 export class WorkroomError extends Schema.TaggedError<WorkroomError>()("Workroom.WorkroomError", {
   reason: Schema.String,
+  // What went wrong in terms the user can act on; the app words each one.
+  kind: Schema.optional(Schema.Literals(["name", "taken", "busy", "in_use", "not_owned", "missing"])),
 }) {}
 
 export interface Dependencies {
@@ -26,6 +33,13 @@ export interface Dependencies {
 
 /** The folder that holds every 작업실 made with 「새 작업실」. */
 export const root = (global: Pick<Global.Interface, "home">) => path.join(global.home, "Documents", ROOT)
+
+const same = (a: string, b: string) => (process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b)
+
+/** Whether a folder is one 「새 작업실」 made, directly inside the 작업실 folder. */
+export function owned(global: Pick<Global.Interface, "home">, directory: string) {
+  return same(path.dirname(path.resolve(directory)), root(global))
+}
 
 const INVALID = /[<>:"/\\|?*\u0000-\u001f]/g
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i
@@ -96,4 +110,85 @@ export const create = Effect.fn("Workroom.create")(function* (
     return { directory, name: candidate }
   }
   return yield* new WorkroomError({ reason: `${base} and 98 numbered copies already exist in ${parent}` })
+})
+
+const FORBIDDEN = /[<>:"/\\|?*\u0000-\u001f]/
+
+/** A name the user typed for a 작업실, as Windows takes it for a folder: without trailing dots and spaces. */
+export function typed(text: string) {
+  const name = text.trim().replace(/[.\s]+$/, "")
+  if (!name || name.startsWith(".") || FORBIDDEN.test(name) || RESERVED.test(name) || name.length > TYPED_LENGTH)
+    return undefined
+  return name
+}
+
+type Conversation = Session.Info
+
+export interface RenameDependencies extends Dependencies {
+  /** The conversations, which follow a renamed 작업실; one working now keeps its 작업실 as it is until it stops. */
+  readonly sessions: Pick<Session.Interface, "list" | "move" | "active">
+  /** Shuts down what the server runs in a folder, such as MCP servers, which keep the folder open on Windows. */
+  readonly release: (directory: string) => Effect.Effect<void>
+}
+
+// Every conversation held in a folder, archived ones too.
+const held = Effect.fnUntraced(function* (deps: RenameDependencies, directory: string) {
+  const found: Conversation[] = []
+  let page = yield* deps.sessions.list({ directory: AbsolutePath.make(directory), limit: 100 }).pipe(Effect.orDie)
+  for (;;) {
+    found.push(...page.data)
+    const next = page.cursor.next
+    if (!next || page.data.length === 0) return found
+    page = yield* deps.sessions.list({ cursor: next, limit: 100 }).pipe(Effect.orDie)
+  }
+})
+
+/**
+ * Readies a 작업실 made with 「새 작업실」 to be renamed or thrown away: no conversation in it is working, and nothing
+ * the server ran for it still holds the folder open. Returns the conversations held in it.
+ */
+export const release = Effect.fn("Workroom.release")(function* (deps: RenameDependencies, directory: string) {
+  const folder = path.resolve(directory)
+  if (!owned(deps.global, folder))
+    return yield* new WorkroomError({ kind: "not_owned", reason: `${folder} is not in ${root(deps.global)}` })
+  if (!(yield* deps.fs.isDir(folder))) return yield* new WorkroomError({ kind: "missing", reason: `${folder} is gone` })
+  const conversations = yield* held(deps, folder)
+  const working = yield* deps.sessions.active
+  const busy = conversations.find((conversation) => working.has(conversation.id))
+  if (busy) return yield* new WorkroomError({ kind: "busy", reason: `${busy.id} is working in ${folder}` })
+  yield* deps.release(folder)
+  return conversations
+})
+
+/** Renames a 작업실 made with 「새 작업실」, its folder too, and moves its conversations along. */
+export const rename = Effect.fn("Workroom.rename")(function* (
+  deps: RenameDependencies,
+  input: { readonly directory: string; readonly name: string },
+) {
+  const folder = path.resolve(input.directory)
+  const name = typed(input.name)
+  if (!name) return yield* new WorkroomError({ kind: "name", reason: `${input.name} cannot name a folder` })
+  const target = path.join(path.dirname(folder), name)
+  if (target === folder) return { directory: folder, name }
+  // A change of letter case alone names the same folder on Windows.
+  if (!same(target, folder) && (yield* deps.fs.existsSafe(target)))
+    return yield* new WorkroomError({ kind: "taken", reason: `${target} already exists` })
+  const conversations = yield* release(deps, folder)
+  // Programs the server stopped may take a moment to let go of the folder; a file open in another program does not.
+  yield* deps.fs.rename(folder, target).pipe(
+    Effect.retry({ times: 12, schedule: Schedule.spaced("250 millis") }),
+    Effect.mapError(() => new WorkroomError({ kind: "in_use", reason: `${folder} is open in another program` })),
+  )
+  // The old folder is gone, so each move applies at once.
+  yield* Effect.forEach(
+    conversations,
+    (conversation) =>
+      deps.sessions
+        .move({ sessionID: conversation.id, directory: AbsolutePath.make(target) })
+        .pipe(
+          Effect.catchCause((cause) => Effect.logWarning("workroom conversation did not move", { conversation, cause })),
+        ),
+    { discard: true },
+  )
+  return { directory: target, name }
 })

@@ -1,5 +1,6 @@
 import { Generate } from "@opencode/core/generate"
 import { Integration } from "@opencode/core/integration"
+import { LocationServiceMap } from "@opencode/core/location-service-map"
 import { Plugin } from "@opencode/core/plugin"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { LawApi } from "@opencode/core/plugin/jabisu/law/api"
@@ -10,12 +11,13 @@ import { WorkIndexer } from "@opencode/core/plugin/jabisu/work/indexer"
 import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { WorkSettings } from "@opencode/core/plugin/jabisu/work/settings"
 import { Workroom } from "@opencode/core/plugin/jabisu/workroom"
+import { Session } from "@opencode/core/session"
 import { OpenRouter } from "@opencode/core/tool/openrouter"
 import { Transcribe } from "@opencode/core/tool/transcribe"
 import { InvalidRequestError } from "@opencode/protocol/errors"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
-import { Effect, Layer } from "effect"
+import { Effect, Layer, Option, RcMap } from "effect"
 import { HttpClient } from "effect/http"
 import { HttpApiBuilder } from "effect/http-api"
 import { Api } from "../api"
@@ -45,6 +47,25 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
     })
     const invalid = (kind: string) => (error: { readonly reason: string }) =>
       new InvalidRequestError({ message: error.reason, kind })
+    // Renaming or throwing away a 작업실 moves its conversations and stops what runs in its folder.
+    const workroom: Workroom.RenameDependencies = {
+      fs,
+      global,
+      sessions: yield* Session.Service,
+      release: (directory) =>
+        Effect.gen(function* () {
+          const locations = yield* Effect.serviceOption(LocationServiceMap.Service)
+          if (Option.isNone(locations)) return
+          const refs = Array.from(yield* RcMap.keys(locations.value.rcMap))
+          yield* Effect.forEach(
+            refs.filter((ref) => FSUtil.contains(directory, ref.directory)),
+            (ref) => locations.value.invalidate(ref),
+            { discard: true },
+          )
+        }),
+    }
+    const workroomError = (error: Workroom.WorkroomError) =>
+      new InvalidRequestError({ message: error.reason, kind: `jabisu_workroom${error.kind ? `_${error.kind}` : ""}` })
 
     // 자비수's work folder and the chosen folders with the index's coverage of each, the folders still to suggest, and
     // the work profile.
@@ -208,6 +229,12 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
       )
       .handle("jabisu.workroom.create", (ctx) =>
         Workroom.create({ fs, global }, ctx.payload).pipe(Effect.mapError(invalid("jabisu_workroom"))),
+      )
+      .handle("jabisu.workroom.rename", (ctx) =>
+        Workroom.rename(workroom, ctx.payload).pipe(Effect.mapError(workroomError)),
+      )
+      .handle("jabisu.workroom.release", (ctx) =>
+        Workroom.release(workroom, ctx.payload.directory).pipe(Effect.asVoid, Effect.mapError(workroomError)),
       )
       .handle("jabisu.skills.list", () => JabisuSkills.list({ fs, global }))
       .handle("jabisu.skills.copy", (ctx) =>

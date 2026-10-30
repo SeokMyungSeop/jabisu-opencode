@@ -1093,6 +1093,33 @@ export const dict = {
   "jabisu.nav.less": "Show fewer",
   "jabisu.nav.newConversation": "New conversation",
   "jabisu.nav.empty": "No workrooms yet. Start one with New workroom.",
+  "jabisu.nav.menu": "Workroom options",
+  "jabisu.room.rename": "Rename",
+  "jabisu.room.delete": "Delete workroom",
+  "jabisu.room.rename.title": "Rename workroom",
+  "jabisu.room.rename.label": "Name",
+  "jabisu.room.rename.owned": "Its folder is renamed too, and its conversations move with it.",
+  "jabisu.room.rename.listOnly":
+    "Jabisu did not make this folder, so only the name in the list changes. The folder keeps its name.",
+  "jabisu.room.rename.save": "Rename",
+  "jabisu.room.delete.title": "Delete 「{{name}}」?",
+  "jabisu.room.delete.owned":
+    "It leaves the workroom list. Delete its folder too? The folder goes to the Recycle Bin, where you can restore it.",
+  "jabisu.room.delete.listOnly":
+    "It leaves the workroom list. Jabisu did not make this folder, so the folder itself stays.",
+  "jabisu.room.delete.kept": "It leaves the workroom list. The folder stays, since only the desktop app can delete it.",
+  "jabisu.room.delete.keepFolder": "Only from the list",
+  "jabisu.room.delete.withFolder": "Delete the folder too",
+  "jabisu.room.delete.confirm": "Delete",
+  "jabisu.room.failed.rename": "Couldn't rename the workroom",
+  "jabisu.room.failed.delete": "Couldn't delete the folder",
+  "jabisu.room.error.name":
+    'A folder name can\'t contain \\ / : * ? " < > | or end with a dot, and can be up to 60 characters.',
+  "jabisu.room.error.taken": "A workroom with that name already exists. Choose another name.",
+  "jabisu.room.error.busy": "The AI is still working in this workroom. Try again when it finishes.",
+  "jabisu.room.error.in_use":
+    "A file in this folder is open in another program, such as Hangul or Excel. Close it and try again.",
+  "jabisu.room.error.missing": "The folder is gone. It may have been moved or deleted in Explorer.",
 }
 
 export default dict

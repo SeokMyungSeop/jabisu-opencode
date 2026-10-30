@@ -1,6 +1,7 @@
 export * as DesktopFiles from "./index"
 
 import { execFile, spawn } from "node:child_process"
+import { homedir } from "node:os"
 import { clipboard, dialog, nativeImage, shell } from "electron"
 import { Context, Effect, FileSystem, Layer, Path } from "effect"
 import type { DirectoryPickerOptions, FilePickerOptions, SaveFilePickerOptions } from "../../shared/ipc-contract"
@@ -123,6 +124,22 @@ function make(fs: FileSystem.FileSystem, path: Path.Path) {
 
       if (!exists) return false
       shell.showItemInFolder(target)
+
+      return true
+    }),
+    // Only a 작업실 made with 「새 작업실」, a folder directly in Documents\자비수 작업실, can be thrown away from the app.
+    // The server keeps that folder, so it is found the same way, under the user's home.
+    trashWorkroom: Effect.fn("DesktopFiles.trashWorkroom")(function* (target: string) {
+      const root = path.join(homedir(), "Documents", "자비수 작업실")
+      const folder = path.resolve(target)
+      const parent = path.dirname(folder)
+      const inside = process.platform === "win32" ? parent.toLowerCase() === root.toLowerCase() : parent === root
+
+      if (!inside) return false
+      const exists = yield* fs.exists(folder).pipe(Effect.orElseSucceed(() => false))
+
+      if (!exists) return false
+      yield* Effect.tryPromise(() => shell.trashItem(folder))
 
       return true
     }),

@@ -3,6 +3,7 @@ import fs from "fs/promises"
 import path from "path"
 import { Effect } from "effect"
 import { Workroom } from "@opencode/core/plugin/jabisu/workroom"
+import type { Session } from "@opencode/core/session"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
 import { LayerNode } from "@opencode/util/effect/layer-node"
@@ -83,6 +84,43 @@ describe("Workroom", () => {
       expect(first).toEqual({ directory: path.join(root, "회의록"), name: "회의록" })
       expect(second).toEqual({ directory: path.join(root, "회의록 (2)"), name: "회의록 (2)" })
       expect((yield* Effect.promise(() => fs.stat(second.directory))).isDirectory()).toBe(true)
+    }),
+  )
+
+  it.live("takes a typed name as Windows takes a folder name, and refuses one it cannot use", () =>
+    Effect.sync(() => {
+      expect(Workroom.typed("  초광역특구 설명회. ")).toBe("초광역특구 설명회")
+      expect(Workroom.typed("보고서 (2)")).toBe("보고서 (2)")
+      for (const refused of ["", " . ", "a/b", "회의:록", "CON", ".숨김", "가".repeat(61)])
+        expect(Workroom.typed(refused)).toBeUndefined()
+    }),
+  )
+
+  it.live("leaves a 작업실 as it is while one of its conversations is working", () =>
+    Effect.gen(function* () {
+      const { deps, root } = yield* setup
+      const folder = path.join(root, "회의록")
+      yield* Effect.promise(() => fs.mkdir(folder, { recursive: true }))
+      const released: string[] = []
+      // SAFETY: renaming reads only the ID of a conversation it lists.
+      const working = { id: "ses_working" } as unknown as Session.Info
+
+      const refused = yield* Workroom.rename(
+        {
+          ...deps,
+          sessions: {
+            list: () => Effect.succeed({ data: [working], cursor: {} }),
+            move: () => Effect.die("a working conversation moved"),
+            active: Effect.succeed(new Set([working.id])),
+          },
+          release: (directory) => Effect.sync(() => void released.push(directory)),
+        },
+        { directory: folder, name: "회의록 정리" },
+      ).pipe(Effect.flip)
+
+      expect(refused).toMatchObject({ kind: "busy" })
+      expect(released).toEqual([])
+      expect((yield* Effect.promise(() => fs.stat(folder))).isDirectory()).toBe(true)
     }),
   )
 })

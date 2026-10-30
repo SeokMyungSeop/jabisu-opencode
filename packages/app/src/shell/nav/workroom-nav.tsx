@@ -3,6 +3,8 @@ import { Schema } from "effect"
 import { useQuery } from "@tanstack/solid-query"
 import type { SessionInfo } from "@opencode/client/promise"
 import { Icon, type IconProps } from "@opencode/ui/icon"
+import { IconButton } from "@opencode/ui/icon-button"
+import { Menu } from "@opencode/ui/menu"
 import { displayName } from "@opencode/ui/project-avatar"
 import { homeSessionQuery, homeSessions } from "@/home/sessions/query"
 import { useNewWorkroom } from "@/new-session/workroom"
@@ -18,6 +20,7 @@ import type { LocalProject } from "@/shell/state/layout"
 import { useLayout } from "@/shell/state/layout"
 import { useTabs } from "@/shell/tabs/tabs"
 import { pathKey } from "@/workspaces/path-key"
+import { useWorkroomActions } from "./workroom-actions"
 import { groupWorkrooms, type Workroom } from "./workrooms"
 
 // Conversations an open room lists before 「더 보기」.
@@ -98,6 +101,9 @@ export function WorkroomNav() {
 
   const ctx = useServerCtx(server)
   const load = useQuery(() => homeSessionQuery(ctx(), server()))
+  const actions = useWorkroomActions({ server, ctx })
+  // The room whose 「이름 바꾸기·작업실 삭제」 menu is open, from its ⋯ button or a right click.
+  const [menu, setMenu] = createSignal<string>()
 
   const rooms = createMemo(() => {
     const context = ctx()
@@ -170,22 +176,59 @@ export function WorkroomNav() {
 
     return (
       <div class="flex flex-col gap-0.5">
-        <button
-          type="button"
-          class={`${row} text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover`}
-          classList={{ "font-[600]": key() === here() }}
-          aria-expanded={isOpen(props.room)}
-          title={props.room.project.worktree}
-          onClick={() => toggle(props.room)}
+        <div
+          class="group/room relative"
+          data-menu={menu() === key()}
+          onContextMenu={(event) => {
+            event.preventDefault()
+            setMenu(key())
+          }}
         >
-          <Icon name="folder" size="small" class="shrink-0 text-v2-icon-icon-base" />
-          <span class="min-w-0 truncate">{displayName(props.room.project)}</span>
-          <Show when={!isOpen(props.room) && props.room.sessions.length > 0}>
-            <span class="ms-auto shrink-0 text-[12px] font-[400] text-v2-text-text-faint">
-              {language.t("jabisu.nav.count", { count: props.room.sessions.length })}
-            </span>
-          </Show>
-        </button>
+          <button
+            type="button"
+            class={`${row} pe-8 text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover`}
+            classList={{ "font-[600]": key() === here() }}
+            aria-expanded={isOpen(props.room)}
+            title={props.room.project.worktree}
+            onClick={() => toggle(props.room)}
+          >
+            <Icon name="folder" size="small" class="shrink-0 text-v2-icon-icon-base" />
+            <span class="min-w-0 truncate">{displayName(props.room.project)}</span>
+            <Show when={!isOpen(props.room) && props.room.sessions.length > 0}>
+              <span class="ms-auto shrink-0 text-[12px] font-[400] text-v2-text-text-faint group-hover/room:invisible group-data-[menu=true]/room:invisible">
+                {language.t("jabisu.nav.count", { count: props.room.sessions.length })}
+              </span>
+            </Show>
+          </button>
+          <div class="absolute inset-y-0 end-1 flex items-center opacity-0 group-hover/room:opacity-100 group-data-[menu=true]/room:opacity-100 focus-within:opacity-100">
+            <Menu
+              gutter={4}
+              modal={false}
+              placement="bottom-end"
+              open={menu() === key()}
+              onOpenChange={(open) => setMenu(open ? key() : undefined)}
+            >
+              <Menu.Trigger
+                as={IconButton}
+                variant="ghost-muted"
+                size="small"
+                icon={<Icon name="outline-dots" />}
+                aria-label={language.t("jabisu.nav.menu")}
+              />
+              <Menu.Portal>
+                <Menu.Content>
+                  <Menu.Item onSelect={() => void actions.rename(props.room.project)}>
+                    {language.t("jabisu.room.rename")}
+                  </Menu.Item>
+                  <Menu.Separator />
+                  <Menu.Item onSelect={() => void actions.remove(props.room.project)}>
+                    {language.t("jabisu.room.delete")}
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Portal>
+            </Menu>
+          </div>
+        </div>
         <Show when={isOpen(props.room)}>
           <div class="ms-[15px] flex flex-col gap-0.5 border-s border-v2-border-border-base ps-2">
             <For each={shown()}>
@@ -199,10 +242,10 @@ export function WorkroomNav() {
                 return (
                   <button
                     type="button"
-                    class={`${row} text-v2-text-text-base`}
+                    class={row}
                     classList={{
-                      "bg-v2-background-bg-base font-[600] shadow-[0_0_0_1px_var(--v2-border-border-base)]": active(),
-                      "hover:bg-v2-overlay-simple-overlay-hover": !active(),
+                      "bg-v2-background-bg-accent/12 font-[600] text-v2-text-text-accent-hover": active(),
+                      "text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover": !active(),
                     }}
                     aria-current={active() ? "page" : undefined}
                     onClick={() => openSession(props.room, session)}
@@ -242,12 +285,14 @@ export function WorkroomNav() {
       aria-label={language.t("jabisu.nav.label")}
       data-component="jabisu-nav"
       class="flex size-full min-h-0 flex-col gap-0.5"
+      // The browser's own menu here offers only 「Select All」; a 작업실 opens its own menu instead.
+      onContextMenu={(event) => event.preventDefault()}
     >
       {/* 자비수's 「새 작업실」 heads the list in its sun color, the one accent on screen. */}
       <button
         type="button"
         data-action="jabisu-new-workroom"
-        class="mb-2 flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#f5b942] text-[14px] font-[700] tracking-[-0.02em] text-[#0f2e21] hover:bg-[#f0a92e]"
+        class="mb-2 flex h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-full bg-v2-background-bg-contrast text-[14px] font-[700] tracking-[-0.02em] text-v2-text-text-contrast shadow-[var(--v2-elevation-button-contrast)] hover:brightness-125"
         onClick={() => void openWorkroom(current()?.server)}
       >
         <Icon name="plus" size="small" class="shrink-0" />

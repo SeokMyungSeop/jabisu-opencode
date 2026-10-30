@@ -73,6 +73,12 @@ export const FilesRevealPath = Rpc.make("FilesRevealPath", {
   success: Schema.Boolean,
 })
 
+// Moves a 작업실 made with 「새 작업실」 to the recycle bin; false for any other folder or one that is gone.
+export const FilesTrashWorkroom = Rpc.make("FilesTrashWorkroom", {
+  payload: { path: Schema.String },
+  success: Schema.Boolean,
+})
+
 export const FilesReadClipboardImage = Rpc.make("FilesReadClipboardImage", {
   success: Schema.NullOr(ClipboardImage),
 })
@@ -92,6 +98,7 @@ export const FileRpcs = RpcGroup.make(
   FilesOpenLocalFile,
   FilesOpenPath,
   FilesRevealPath,
+  FilesTrashWorkroom,
   FilesReadClipboardImage,
   FilesWriteClipboardText,
 )

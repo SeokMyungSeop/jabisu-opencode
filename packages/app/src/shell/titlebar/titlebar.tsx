@@ -451,12 +451,12 @@ export function Titlebar(props: { verticalTabs?: { mount?: HTMLElement }; nav?: 
             const openWorkroom = useNewWorkroom()
             const currentServer = () => currentTab()?.server
 
-            // 자비수's 「새 작업실」 in its sun color, the one accent on screen.
+            // 자비수's 「새 작업실」 in the theme's strongest color, the one filled button on screen.
             const workroomButton = () => (
               <button
                 type="button"
                 data-action="jabisu-new-workroom"
-                class="me-1 flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#f5b942] px-3 text-[13px] font-[700] tracking-[-0.02em] text-[#0f2e21] hover:bg-[#f0a92e]"
+                class="me-1 flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-full bg-v2-background-bg-contrast px-3 text-[13px] font-[700] tracking-[-0.02em] text-v2-text-text-contrast shadow-[var(--v2-elevation-button-contrast)] hover:brightness-125"
                 onClick={() => void openWorkroom(currentServer())}
               >
                 <Icon name="plus" size="small" class="shrink-0" />

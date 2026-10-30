@@ -27,6 +27,7 @@ function fileApi(events: string[]): Parameters<typeof createDesktopFiles>[0] {
     resolveAppPath: async () => null,
     openPath: async () => undefined,
     revealPath: async () => false,
+    trashWorkroom: async () => false,
     readClipboardImage: async () => null,
     writeClipboardText: async (text: string) => {
       events.push(`clipboard:${text}`)

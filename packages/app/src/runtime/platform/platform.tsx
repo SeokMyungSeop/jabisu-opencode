@@ -50,6 +50,12 @@ type PlatformBase = {
   /** Reveal a local path in the system file manager; false when the path does not exist (desktop only) */
   revealPath?(path: string): Promise<boolean>
 
+  /**
+   * Move a 작업실 made with 「새 작업실」 to the recycle bin; false for any other folder or one that is gone, and a
+   * rejection when it cannot be moved, such as while a file in it is open (desktop only)
+   */
+  trashWorkroom?(path: string): Promise<boolean>
+
   /** Restart the app  */
   restart(): Promise<void>
 

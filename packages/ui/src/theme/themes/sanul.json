@@ -4,9 +4,9 @@
   "id": "sanul",
   "light": {
     "palette": {
-      "neutral": "#f7f4ea",
+      "neutral": "#edf3ee",
       "ink": "#17251e",
-      "primary": "#f5b942",
+      "primary": "#1f6b45",
       "accent": "#2f6f9e",
       "success": "#2b8757",
       "warning": "#f0a92e",
@@ -20,11 +20,11 @@
       "text-strong": "#17251e",
       "text-base": "#3c4d44",
       "text-weak": "#5f7066",
-      "border-weak-base": "#e2e5dd",
-      "border-weaker-base": "#ebe8de",
-      "surface-base": "#f7f4ea",
-      "surface-raised-base": "#efe9d8",
-      "surface-raised-base-hover": "#e8e1cc",
+      "border-weak-base": "#d9e2db",
+      "border-weaker-base": "#e1e8e2",
+      "surface-base": "#edf3ee",
+      "surface-raised-base": "#e3ece5",
+      "surface-raised-base-hover": "#d8e5db",
       "surface-interactive-weak": "#eef7f1",
       "syntax-comment": "#5f7066",
       "syntax-keyword": "#1f6b45",
@@ -41,7 +41,7 @@
     },
     "v2Overrides": {
       "v2-background-bg-base": "#ffffff",
-      "v2-background-bg-deep": "#f7f4ea",
+      "v2-background-bg-deep": "#edf3ee",
       "v2-background-bg-contrast": "#1a5138",
       "v2-background-bg-accent": "#1f6b45",
       "v2-text-text-contrast": "#ffffff",
@@ -52,14 +52,14 @@
       "v2-state-fg-success": "#1f6b45",
       "v2-state-fg-danger": "#a8402e",
       "v2-overlay-simple-tab-active-scrim": "#ffffff00",
-      "v2-overlay-simple-tab-scrim": "#f7f4ea00"
+      "v2-overlay-simple-tab-scrim": "#edf3ee00"
     }
   },
   "dark": {
     "palette": {
       "neutral": "#0f2e21",
       "ink": "#f7f4ea",
-      "primary": "#f5b942",
+      "primary": "#3aa06a",
       "accent": "#6fa8d6",
       "success": "#3aa06a",
       "warning": "#f5b942",
@@ -81,10 +81,11 @@
       "markdown-heading": "#dcefe3",
       "markdown-link": "#8cc9a8",
       "markdown-link-text": "#8cc9a8",
-      "markdown-strong": "#fdf2d8",
+      "markdown-strong": "#eef7f1",
       "markdown-block-quote": "#a9b8ae"
     },
     "v2Overrides": {
+      "v2-background-bg-accent": "#2b8757",
       "v2-text-text-accent": "#8cc9a8",
       "v2-text-text-accent-hover": "#dcefe3",
       "v2-border-border-focus": "#3aa06a"

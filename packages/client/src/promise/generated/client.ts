@@ -315,6 +315,10 @@ import type {
   JabisuWorkroomRootOutput,
   JabisuWorkroomCreateInput,
   JabisuWorkroomCreateOutput,
+  JabisuWorkroomRenameInput,
+  JabisuWorkroomRenameOutput,
+  JabisuWorkroomReleaseInput,
+  JabisuWorkroomReleaseOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2605,6 +2609,32 @@ export function make(options: ClientOptions) {
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,
+            },
+            requestOptions,
+          ),
+        rename: (input: JabisuWorkroomRenameInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomRenameOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom/rename`,
+              query: { location: input["location"] },
+              body: { directory: input["directory"], name: input["name"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        release: (input: JabisuWorkroomReleaseInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomReleaseOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom/release`,
+              query: { location: input["location"] },
+              body: { directory: input["directory"] },
+              successStatus: 204,
+              declaredStatuses: [400, 401, 404],
+              empty: true,
             },
             requestOptions,
           ),

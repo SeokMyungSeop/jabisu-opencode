@@ -142,7 +142,7 @@ export default function WorkSection() {
               </Row>
               {folders("received", current().received)}
               <Show when={current().candidates.length}>
-                <Row nested title={ctx.t("found.title")} description={ctx.t("found.description")}>
+                <Row nested stacked title={ctx.t("found.title")} description={ctx.t("found.description")}>
                   <For each={current().candidates}>
                     {(candidate) => (
                       <Button
@@ -186,17 +186,23 @@ export default function WorkSection() {
 const tail = (folder: string) => folder.split(/[\\/]/).filter(Boolean).at(-1) ?? folder
 
 // The host's settings row markup; its stylesheet is loaded with the settings screen. A nested row belongs to the
-// group row above it.
-function Row(props: { title: string; description: string; nested?: boolean; children?: JSX.Element }) {
+// group row above it. The host keeps its controls on one line beside the text, so a stacked row puts a list of them
+// under the text, where it wraps instead of squeezing the text into a column one letter wide.
+function Row(props: { title: string; description: string; nested?: boolean; stacked?: boolean; children?: JSX.Element }) {
   return (
     <div data-component="settings-row" classList={{ "pl-4": props.nested }}>
       <div data-slot="settings-row-copy">
         <div data-slot="settings-row-title">{props.title}</div>
         <div data-slot="settings-row-description">{props.description}</div>
+        <Show when={props.stacked}>
+          <div class="-ms-2 flex flex-wrap items-center gap-1">{props.children}</div>
+        </Show>
       </div>
-      <div data-slot="settings-row-control" class="flex flex-wrap items-center justify-end gap-2">
-        {props.children}
-      </div>
+      <Show when={!props.stacked}>
+        <div data-slot="settings-row-control" class="flex flex-wrap items-center justify-end gap-2">
+          {props.children}
+        </div>
+      </Show>
     </div>
   )
 }

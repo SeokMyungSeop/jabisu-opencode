@@ -1,5 +1,5 @@
 import { Schema } from "effect"
-import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/http-api"
+import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/http-api"
 import { InvalidRequestError } from "../errors.js"
 import { LocationQuery, locationQueryOpenApi } from "./location.js"
 
@@ -407,6 +407,40 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           summary: "Make a 작업실",
           description:
             "Make a 작업실 folder named after a conversation's first message: its first attached file, else its request.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.workroom.rename", "/api/jabisu/workroom/rename", {
+      query: LocationQuery,
+      payload: Schema.Struct({ directory: Schema.String, name: Schema.String }),
+      success: JabisuWorkroom,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.rename",
+          summary: "Rename a 작업실",
+          description:
+            "Rename a 작업실 made with 「새 작업실」, its folder too, and move its conversations to the renamed folder. Fails while one of them is working or a file in the folder is open in another program.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.workroom.release", "/api/jabisu/workroom/release", {
+      query: LocationQuery,
+      payload: Schema.Struct({ directory: Schema.String }),
+      success: HttpApiSchema.NoContent,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.release",
+          summary: "Ready a 작업실 to be thrown away",
+          description:
+            "Stop what the server runs in a 작업실 made with 「새 작업실」, so the app can move its folder to the recycle bin. Fails while one of its conversations is working.",
         }),
       ),
   )

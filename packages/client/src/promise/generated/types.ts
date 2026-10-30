@@ -6223,3 +6223,18 @@ export type JabisuWorkroomCreateInput = {
 }
 
 export type JabisuWorkroomCreateOutput = JabisuWorkroom
+
+export type JabisuWorkroomRenameInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly directory: { readonly directory: string; readonly name: string }["directory"]
+  readonly name: { readonly directory: string; readonly name: string }["name"]
+}
+
+export type JabisuWorkroomRenameOutput = JabisuWorkroom
+
+export type JabisuWorkroomReleaseInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly directory: { readonly directory: string }["directory"]
+}
+
+export type JabisuWorkroomReleaseOutput = void
