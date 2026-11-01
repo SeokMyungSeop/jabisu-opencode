@@ -63,6 +63,15 @@ import "./models.css"
 
 const CUSTOM_ID = "_custom"
 
+/** The line beside a recommended provider that is not connected yet. */
+const recommendedNote = (id: string) => {
+  if (id === "openrouter") return "dialog.provider.openrouter.note" as const
+
+  if (id === "jabisu-free") return "dialog.provider.jabisuFree.note" as const
+
+  return undefined
+}
+
 type IntegrationForm = NonNullable<ProviderConnectMethod["form"]>[number]
 
 type StringForm = Extract<IntegrationForm, { type: "string" }>
@@ -382,13 +391,13 @@ function ProviderPicker(props: { directory?: string; onSelect: (provider: string
                         </Show>
                         <Show
                           when={
-                            provider.id === "openrouter" &&
                             recommendedProviders.has(provider.id) &&
-                            accountCount(provider) === 0
+                            accountCount(provider) === 0 &&
+                            recommendedNote(provider.id)
                           }
                         >
                           <span class="min-w-0 truncate font-[440] text-v2-text-text-muted">
-                            {language.t("dialog.provider.openrouter.note")}
+                            {language.t(recommendedNote(provider.id) ?? "dialog.provider.openrouter.note")}
                           </span>
                           <span class="flex h-4 shrink-0 items-center rounded-xs border-[0.5px] border-v2-border-border-base bg-v2-background-bg-layer-03 px-1 text-[11px] font-[530] leading-none tracking-[0.05px] text-v2-text-text-muted">
                             {language.t("dialog.provider.tag.recommended")}
@@ -894,6 +903,10 @@ function ProviderConnection(props: {
           <Match when={item()?.field.options !== undefined}>
             <div class="w-full flex flex-col gap-1.5">
               <div class="text-14-regular text-text-base">{select()?.title}</div>
+              {/* What the choice is about, such as a notice to agree to, comes before the choices. */}
+              <Show when={select()?.description}>
+                {(description) => <p class="whitespace-pre-line text-13-regular text-text-weak">{description()}</p>}
+              </Show>
               <div>
                 <List
                   class="px-3"

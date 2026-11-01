@@ -78,6 +78,7 @@ export const dict = {
   "dialog.provider.openai.note": "빠르고 강력한 범용 AI 작업을 위한 GPT 모델",
   "dialog.provider.google.note": "빠르고 구조화된 응답을 위한 Gemini 모델",
   "dialog.provider.openrouter.note": "모든 지원 모델을 단일 공급자에서 액세스",
+  "dialog.provider.jabisuFree.note": "키 없이 바로 · 무료로 시작",
   "dialog.provider.vercel.note": "스마트 라우팅을 통한 AI 모델 통합 액세스",
   "dialog.model.select.title": "모델 선택",
   "dialog.model.search.placeholder": "모델 검색",
@@ -950,7 +951,8 @@ export const dict = {
     "자비수가 만든 폴더가 아니어서 목록에 보이는 이름만 바뀌어요. 실제 폴더 이름은 그대로예요.",
   "jabisu.room.rename.save": "바꾸기",
   "jabisu.room.delete.title": "「{{name}}」 작업실을 삭제할까요?",
-  "jabisu.room.delete.owned": "작업실 목록에서 빠져요. 실제 폴더도 삭제할까요? 폴더는 휴지통으로 가서 되살릴 수 있어요.",
+  "jabisu.room.delete.owned":
+    "작업실 목록에서 빠져요. 실제 폴더도 삭제할까요? 폴더는 휴지통으로 가서 되살릴 수 있어요.",
   "jabisu.room.delete.listOnly": "작업실 목록에서 빠져요. 자비수가 만든 폴더가 아니어서 실제 폴더는 그대로 둬요.",
   "jabisu.room.delete.kept": "작업실 목록에서 빠져요. 폴더는 데스크톱 앱에서만 지울 수 있어서 그대로 둬요.",
   "jabisu.room.delete.keepFolder": "목록에서만 삭제",
@@ -962,6 +964,7 @@ export const dict = {
     '폴더 이름에는 \\ / : * ? " < > | 를 쓸 수 없고, 마침표로 끝나면 안 돼요. 60자까지 쓸 수 있어요.',
   "jabisu.room.error.taken": "같은 이름의 작업실이 이미 있어요. 다른 이름을 적어 주세요.",
   "jabisu.room.error.busy": "이 작업실에서 AI가 아직 일하는 중이에요. 끝난 뒤에 다시 해 주세요.",
-  "jabisu.room.error.in_use": "이 폴더 안의 파일이 한글·엑셀 같은 다른 프로그램에 열려 있어요. 그 파일을 닫고 다시 해 주세요.",
+  "jabisu.room.error.in_use":
+    "이 폴더 안의 파일이 한글·엑셀 같은 다른 프로그램에 열려 있어요. 그 파일을 닫고 다시 해 주세요.",
   "jabisu.room.error.missing": "폴더가 없어요. 탐색기에서 옮기거나 지웠을 수 있어요.",
 }

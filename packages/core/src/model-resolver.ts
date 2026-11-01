@@ -220,8 +220,13 @@ const resolveCatalogModel = Effect.fn("ModelResolver.resolveCatalogModel")(funct
   const module = yield* (dependencies?.loadPackage ?? Provider.loadPackage)(specifier).pipe(
     Effect.mapError((error) => initialization(resolved, "load", error.cause)),
   )
+  // A stored credential replaces configured auth. An external one for an OpenAI-compatible provider holds no secret, so
+  // the configured key stays: 자비수 무료 LLM 콘솔's connection is the person's agreement, and its key is a placeholder.
+  const replacesAuth =
+    credential !== undefined &&
+    !(credential.type === "external" && specifier === "@opencode/ai/providers/openai-compatible")
   const settings = {
-    ...(credential ? Struct.omit(mapped, ["accessToken", "apiKey", "authToken"]) : mapped),
+    ...(replacesAuth ? Struct.omit(mapped, ["accessToken", "apiKey", "authToken"]) : mapped),
     ...(resolved.canonical === undefined ? {} : { provider: resolved.canonical }),
     ...nativeCredentialSettings(resolved, specifier, credential),
     headers: resolved.headers,

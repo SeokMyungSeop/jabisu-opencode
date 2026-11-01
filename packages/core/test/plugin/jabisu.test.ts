@@ -7,16 +7,26 @@ import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
+import { FreeConsole } from "@opencode/core/plugin/jabisu/free-console"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { Watcher } from "@opencode/core/filesystem/watcher"
 import { InstructionDiscovery } from "@opencode/core/instruction-discovery"
 import { Location } from "@opencode/core/location"
 import { Agent } from "@opencode/core/agent"
+import { FileAccess } from "@opencode/core/file-access"
+import { FileMutation } from "@opencode/core/file-mutation"
 import { Permission } from "@opencode/core/permission"
 import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { AbsolutePath } from "@opencode/core/schema"
 import { Skill } from "@opencode/core/skill"
+import { Model } from "@opencode/core/model"
+import { Provider } from "@opencode/core/provider"
+import type { ConnectionInfo } from "@opencode/client"
+import { Integration } from "@opencode/core/integration"
+import type { Plugin } from "@opencode/plugin/effect"
+import type { IntegrationMethodRegistration } from "@opencode/plugin/effect/integration"
+import type { Credential } from "@opencode/schema/credential"
 import type { Mcp } from "@opencode/schema/mcp"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
@@ -35,6 +45,24 @@ const it = testEffect(
 // The plugin only hands the HTTP client to the law tools, which these tests do not call.
 const offline = HttpClient.make(() => Effect.die("these tests make no requests"))
 
+// The law tools save a comparison table only when asked, which these tests never do.
+const unused = () => Effect.die("these tests save no files")
+const access = FileAccess.Service.of({ resolve: unused, authorizeExternal: unused, authorizeRead: unused })
+const mutation = FileMutation.Service.of({
+  withLock: () => (effect) => effect,
+  write: unused,
+  writeTextPreservingBom: unused,
+})
+const permission = Permission.Service.of({
+  ask: unused,
+  assert: unused,
+  reply: unused,
+  get: unused,
+  forSession: unused,
+  list: unused,
+  close: Effect.void,
+})
+
 // Runs the plugin on one channel over the given configured MCP servers, with its cache in a temporary directory, at
 // the given Location directory or the host's default one.
 const run = (
@@ -42,6 +70,9 @@ const run = (
   servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>,
   directory?: string,
   folders: { readonly cache?: string; readonly config?: string; readonly home?: string } = {},
+  // The free console's connection, when the test has one: made by agreeing in the connect dialog.
+  connection?: ConnectionInfo,
+  credential?: Credential.Value,
 ) =>
   Effect.gen(function* () {
     const skill = yield* Skill.Service
@@ -53,6 +84,14 @@ const run = (
     const home = folders.home ?? (yield* tmpdirScoped()).path
     const base = host()
     const tools: string[] = []
+    // What the free console registers: its integration and connect method, its provider and model, and its hook.
+    const free = {
+      integrations: new Map<string, string>(),
+      methods: [] as IntegrationMethodRegistration[],
+      providers: new Map<string, Types.DeepMutable<Provider.Info>>(),
+      models: new Map<string, Types.DeepMutable<Model.Info>>(),
+      hooks: [] as { name: string; callback: (event: never) => Effect.Effect<void>; providerID?: string }[],
+    }
     // The default agent allows everything; a planning agent denies edits; an exploring one denies all but commands.
     const agents = [
       Agent.Info.default(Agent.defaultID),
@@ -112,6 +151,69 @@ const run = (
               return { dispose: Effect.void }
             }),
         },
+        integration: {
+          ...base.integration,
+          transform: (transform) =>
+            Effect.sync(() => {
+              transform({
+                list: () => [],
+                get: () => undefined,
+                update: (id, update) => {
+                  const ref = { id, name: id }
+                  update(ref)
+                  free.integrations.set(id, ref.name)
+                },
+                remove: () => {},
+                method: { list: () => [], update: (input) => void free.methods.push(input), remove: () => {} },
+              })
+
+              return { dispose: Effect.void }
+            }),
+          connection: {
+            ...base.integration.connection,
+            active: () => Effect.succeed(connection),
+            resolve: () => Effect.succeed(credential),
+          },
+        },
+        provider: {
+          ...base.provider,
+          transform: (transform) =>
+            Effect.sync(() => {
+              transform({
+                list: () => [],
+                get: () => undefined,
+                add: () => {},
+                update: (id, update) => {
+                  const provider = free.providers.get(id) ?? structuredClone(Provider.Info.empty(Provider.ID.make(id)))
+                  update(provider)
+                  free.providers.set(id, provider)
+                },
+                remove: () => {},
+                models: {
+                  set: () => {},
+                  update: (providerID, modelID, update) => {
+                    const model = structuredClone(
+                      Model.Info.default(Provider.ID.make(providerID), Model.ID.make(modelID)),
+                    )
+                    update(model)
+                    free.models.set(`${providerID}/${modelID}`, model)
+                  },
+                  remove: () => {},
+                },
+              })
+
+              return { dispose: Effect.void }
+            }),
+        },
+        session: {
+          // SAFETY: the fake only records the registration; the test calls the callback with the event it was made for.
+          hook: ((name: string, callback: (event: never) => Effect.Effect<void>, options?: { providerID?: string }) =>
+            Effect.sync(() => {
+              free.hooks.push({ name, callback, providerID: options?.providerID })
+
+              return { dispose: Effect.void }
+            })) as unknown as Plugin.Context["session"]["hook"],
+        },
         mcp: {
           ...base.mcp,
           transform: (transform) =>
@@ -139,11 +241,14 @@ const run = (
     ).pipe(
       Effect.provideService(Global.Service, Global.make({ cache, data, config, home })),
       Effect.provideService(HttpClient.HttpClient, offline),
+      Effect.provideService(FileAccess.Service, access),
+      Effect.provideService(FileMutation.Service, mutation),
+      Effect.provideService(Permission.Service, permission),
     )
 
     const instructions = yield* (yield* InstructionDiscovery.Service).list()
 
-    return { skills: yield* skill.list(), servers, data, cache, config, home, tools, instructions, agents }
+    return { skills: yield* skill.list(), servers, data, cache, config, home, tools, instructions, agents, free }
   })
 
 const runWithCache = (cache?: string, config?: string) => run("jabisu", {}, undefined, { cache, config })
@@ -366,6 +471,79 @@ describe("JabisuPlugin.Plugin", () => {
       expect((yield* run("jabisu", {})).tools).not.toContain("source_search")
     }),
   )
+
+  it.live(
+    "offers 자비수 무료 LLM 콘솔 behind its notice and sends the install and the agreed version with each request",
+    () =>
+      Effect.gen(function* () {
+        const connection = { type: "credential", id: "crd_free", label: FreeConsole.NAME } as unknown as ConnectionInfo
+        const credential = {
+          type: "external" as const,
+          methodID: Integration.MethodID.make("consent"),
+          metadata: { consent: FreeConsole.CONSENT },
+        }
+        const { free, data } = yield* run("jabisu", {}, undefined, {}, connection, credential)
+
+        expect(free.integrations.get(FreeConsole.ID)).toBe(FreeConsole.NAME)
+        const method = free.methods.find((item) => item.integrationID === FreeConsole.ID)?.method
+        expect(method?.type).toBe("external")
+        // The one answer is the agreement; nothing is chosen for the person.
+        const field = method?.type === "external" ? method.form?.[0] : undefined
+        expect(field?.type === "string" ? field.options?.map((option) => option.value) : undefined).toEqual([
+          FreeConsole.CONSENT,
+        ])
+        expect(field?.type === "string" ? field.default : "none").toBeUndefined()
+        expect(field?.description).toContain("학습")
+        expect(field?.description).toContain("비공개 업무 자료는 넣지 마세요")
+
+        const provider = free.providers.get(FreeConsole.ID)
+        expect(provider?.name).toBe(FreeConsole.NAME)
+        expect(provider?.integrationID).toBe(Integration.ID.make(FreeConsole.ID))
+        expect(provider?.activation).toBe("auto")
+        expect(provider?.settings).toEqual({
+          baseURL: FreeConsole.baseURL(),
+          apiKey: "public",
+          provider: FreeConsole.ID,
+        })
+        const model = free.models.get(`${FreeConsole.ID}/${FreeConsole.MODEL}`)
+        expect(model?.name).toBe("자비수 무료")
+        expect(model?.limit).toEqual({ context: 400_000, output: 32_000 })
+        // No price, so the app shows no amount for it.
+        expect(model?.cost).toEqual([])
+
+        const hook = free.hooks.find((item) => item.name === "model.request")
+        expect(hook?.providerID).toBe(FreeConsole.ID)
+        const event = { kind: "primary", headers: {} as Record<string, string> }
+        yield* hook!.callback(event as never)
+        const install = (yield* Effect.promise(() =>
+          fs.readFile(path.join(data, "jabisu", "install-id"), "utf8"),
+        )).trim()
+        expect(event.headers).toEqual({
+          "X-Jabisu-Install": install,
+          "X-Jabisu-Version": "1.1.0",
+          "X-Jabisu-Kind": "primary",
+          "X-Jabisu-Consent": "1",
+        })
+        expect(install).toMatch(/^[0-9a-f-]{36}$/)
+      }),
+  )
+
+  it.live("keeps one install number and sends no agreement without a connection", () =>
+    Effect.gen(function* () {
+      const fsUtil = yield* FSUtil.Service
+      const file = path.join((yield* tmpdirScoped()).path, "install-id")
+      const first = yield* FreeConsole.install(fsUtil, file)
+      expect(yield* FreeConsole.install(fsUtil, file)).toBe(first)
+      expect(FreeConsole.agreed({ consent: "1" })).toBe("1")
+      expect(FreeConsole.agreed({})).toBeUndefined()
+
+      const { free } = yield* run("jabisu", {})
+      const event = { kind: "primary", headers: {} as Record<string, string> }
+      yield* free.hooks.find((item) => item.name === "model.request")!.callback(event as never)
+      expect(event.headers["X-Jabisu-Consent"]).toBeUndefined()
+      expect(event.headers["X-Jabisu-Install"]).toBeDefined()
+    }),
+  )
 })
 
 describe("JabisuPlugin work assistant", () => {
@@ -374,7 +552,9 @@ describe("JabisuPlugin work assistant", () => {
       const { tools } = yield* run("jabisu", {})
 
       expect(tools).toContain("work_search")
-      expect(tools).toEqual(expect.arrayContaining(["law_search", "law_text", "law_verify"]))
+      expect(tools).toEqual(
+        expect.arrayContaining(["law_search", "law_text", "law_compare", "law_amend", "law_verify"]),
+      )
       expect((yield* run("opencode", {})).tools).not.toContain("law_search")
     }),
   )

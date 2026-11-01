@@ -17,6 +17,8 @@ export type AdviceID =
   | "output"
   | "request"
   | "opencode-free"
+  | "free-console"
+  | "free-console.offline"
 
 /** What to tell the user about a failure, and the settings page that fixes it, if one does. */
 export interface Advice {
@@ -42,6 +44,12 @@ const PATTERNS = {
 /** Advice for a failure, or undefined when there is nothing useful to add. */
 export function advise(failure: SessionFailure): Advice | undefined {
   const { type, status, message } = failure
+
+  // 자비수 무료 LLM 콘솔 explains its own refusals in Korean; the advice adds the way on, or says it could not be reached.
+  if (failure.provider === "jabisu-free")
+    return type === "provider.transport" || type === "provider.timeout" || PATTERNS.network.test(message)
+      ? { id: "free-console.offline", settings: "providers" }
+      : { id: "free-console", settings: "providers" }
 
   if (PATTERNS.opencodeFree.test(message)) return { id: "opencode-free", settings: "providers" }
 

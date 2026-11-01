@@ -52,6 +52,20 @@ const cases: Array<[SessionFailure, Advice]> = [
     },
     { id: "opencode-free", settings: "providers" },
   ],
+  // The free console words its own refusals; any failure there points to connecting a key, and one it never reached
+  // says so rather than blaming the network.
+  [
+    { type: "provider.rate-limit", status: 429, message: "오늘의 무료 사용량을 다 썼어요.", provider: "jabisu-free" },
+    { id: "free-console", settings: "providers" },
+  ],
+  [
+    { type: "provider.auth", status: 403, message: "이용 안내에 동의해야 쓸 수 있어요.", provider: "jabisu-free" },
+    { id: "free-console", settings: "providers" },
+  ],
+  [
+    { type: "provider.transport", message: "fetch failed", provider: "jabisu-free" },
+    { id: "free-console.offline", settings: "providers" },
+  ],
 ]
 
 test.each(cases)("advises on %o", (failure, advice) => {

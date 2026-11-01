@@ -3,6 +3,7 @@
 
 export * as JabisuPlugin from "./jabisu.js"
 
+import { ToolFailure } from "@opencode/ai"
 import { define } from "@opencode/plugin/effect/plugin"
 import { FSUtil } from "@opencode/util/fs-util"
 import { Global } from "@opencode/util/global"
@@ -11,9 +12,14 @@ import { Effect, Option, Stream } from "effect"
 import { HttpClient } from "effect/http"
 import path from "path"
 import { SkillFile } from "../config/plugin/skill-file.js"
+import { FileAccess } from "../file-access.js"
+import { FileMutation } from "../file-mutation.js"
 import { Watcher } from "../filesystem/watcher.js"
 import { InstructionDiscovery } from "../instruction-discovery.js"
+import { Integration } from "../integration.js"
+import { Permission } from "../permission.js"
 import { FilmCraft } from "./jabisu/filmcraft.js"
+import { FreeConsole } from "./jabisu/free-console.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
 import { LawTools } from "./jabisu/law/tools.js"
 import { JabisuSafety } from "./jabisu/safety.js"
@@ -116,6 +122,47 @@ export const Plugin = define({
         )
       : undefined
 
+    // 자비수 무료 LLM 콘솔 appears once the person agrees to its notice in the connect dialog; each request then
+    // carries this install's number and the notice version it agreed to, which the console checks and counts by.
+    const installID = yield* FreeConsole.install(fs, path.join(global.data, "jabisu", "install-id"))
+    yield* ctx.integration.transform((editor) => {
+      editor.update(FreeConsole.ID, (integration) => {
+        integration.name = FreeConsole.NAME
+      })
+      editor.method.update({ integrationID: FreeConsole.ID, method: FreeConsole.method })
+    })
+    yield* ctx.provider.transform((providers) => {
+      providers.update(FreeConsole.ID, (provider) => {
+        provider.name = FreeConsole.NAME
+        provider.integrationID = Integration.ID.make(FreeConsole.ID)
+        provider.activation = "auto"
+        provider.package = "@opencode/ai/providers/openai-compatible"
+        provider.settings = { baseURL: FreeConsole.baseURL(), apiKey: "public", provider: FreeConsole.ID }
+      })
+      providers.models.update(FreeConsole.ID, FreeConsole.MODEL, (model) => {
+        model.name = FreeConsole.MODEL_NAME
+        model.capabilities = { tools: true, input: ["text"], output: ["text"] }
+        model.limit = { context: FreeConsole.CONTEXT, output: FreeConsole.OUTPUT }
+      })
+    })
+    yield* ctx.session.hook(
+      "model.request",
+      (event) =>
+        Effect.gen(function* () {
+          const connection = yield* ctx.integration.connection.active(FreeConsole.ID)
+          const credential = connection
+            ? yield* ctx.integration.connection.resolve(connection).pipe(Effect.orElseSucceed(() => undefined))
+            : undefined
+          const consent = credential?.type === "external" ? FreeConsole.agreed(credential.metadata) : undefined
+          event.headers["X-Jabisu-Install"] = installID
+          event.headers["X-Jabisu-Version"] = ctx.app.version
+          // Titles and summaries the engine asks for on its own are not the person's questions.
+          event.headers["X-Jabisu-Kind"] = event.kind
+          if (consent) event.headers["X-Jabisu-Consent"] = consent
+        }),
+      { providerID: FreeConsole.ID },
+    )
+
     // Configured servers are applied before this plugin, so a configured context7 or filmcraft is kept as it is.
     yield* ctx.mcp.transform((editor) => {
       if (!editor.get("context7"))
@@ -137,12 +184,35 @@ export const Plugin = define({
     // Every session can find files in the work folders the user chose; the server's indexer keeps them indexed.
     yield* ctx.tool.transform((editor) => editor.add(WorkSearch.tool(global)))
 
-    // Every session can look up laws in the official database and check the articles an answer cites.
+    // Every session can look up laws in the official database and check the articles an answer cites. A comparison
+    // table it is asked to save is written like any edit, with the same approval.
     const http = yield* HttpClient.HttpClient
-    const law = LawTools.tools({ fs, global, http })
+    const access = yield* FileAccess.Service
+    const mutation = yield* FileMutation.Service
+    const permission = yield* Permission.Service
+    const save: LawTools.Save = (file, bytes, context) =>
+      Effect.gen(function* () {
+        const target = yield* access.resolve({ path: file, kind: "file" })
+
+        yield* access.authorizeExternal([target], context)
+        yield* permission.assert({
+          action: "edit",
+          resources: [target.resource],
+          save: ["*"],
+          sessionID: context.sessionID,
+          agent: context.agent,
+          source: { type: "tool", messageID: context.messageID, id: context.id },
+        })
+        yield* mutation.write({ target, content: bytes })
+
+        return target.resource
+      }).pipe(Effect.mapError((error) => new ToolFailure({ message: `Unable to save ${file}`, error })))
+    const law = LawTools.tools({ fs, global, http, save })
     yield* ctx.tool.transform((editor) => {
       editor.add(law.search)
       editor.add(law.text)
+      editor.add(law.compare)
+      editor.add(law.amend)
       editor.add(law.verify)
     })
 

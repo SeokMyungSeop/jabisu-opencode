@@ -21,9 +21,10 @@ const ARTICLE = String.raw`제\s*(\d+)\s*조(?:\s*의\s*(\d+))?(?:\s*제\s*(\d+)
 
 const ARTICLE_ONLY = new RegExp(`^\\s*${ARTICLE}\\s*$`)
 
-// 「name」, optionally followed by a note such as (이하 "법"이라 한다) and an article; or 같은 법 with an article.
+// 「name」, optionally followed by a note such as (이하 "법"이라 한다) and an article; or 같은 법 with an article. The
+// name is the innermost pair, so a sentence quoted whole in 「」 still yields the laws named inside it.
 const CITATION = new RegExp(
-  `「([^」]{2,100})」(?:\\s*\\([^)]{0,60}\\))?(?:\\s*${ARTICLE})?|같은\\s*법(\\s*시행령|\\s*시행규칙)?\\s*${ARTICLE}`,
+  `「([^「」]{2,100})」(?:\\s*\\([^)]{0,60}\\))?(?:\\s*${ARTICLE})?|같은\\s*법(\\s*시행령|\\s*시행규칙)?\\s*${ARTICLE}`,
   "g",
 )
 

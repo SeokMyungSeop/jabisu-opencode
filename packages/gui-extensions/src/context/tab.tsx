@@ -1,12 +1,12 @@
 import { createMemo, onCleanup, For, Show } from "solid-js"
 import type { JSX } from "solid-js"
+import { Option, Schema } from "effect"
 import type { McpServer } from "@opencode/client/promise"
 import { Icon } from "@opencode/ui/icon"
 import { Button } from "@opencode/ui/button"
 import { ScrollView } from "@opencode/ui/scroll-view"
 import { showToast } from "@opencode/ui/toast"
 import { useI18n } from "@opencode/ui/context/i18n"
-import { Markdown } from "@opencode/session-ui/markdown"
 import { useExtension, type MountedSession } from "../sdk"
 import { SummaryRow } from "./breakdown"
 import { fetchSessionExport, sessionExportFilename } from "./export"
@@ -15,10 +15,13 @@ import type definition from "./index"
 import { createSkillCatalog } from "./skill-catalog"
 import { SkillList } from "./skills"
 import { ContextOverview } from "./summary"
+import { SystemPrompt } from "./system-prompt"
 import { createSessionUsage } from "./usage"
 
 // The tools that load a skill into the conversation; both take the skill's ID.
 const SKILL_TOOLS: readonly string[] = ["skill", "skill_turn_on"]
+
+const skillInput = Schema.decodeUnknownOption(Schema.Struct({ id: Schema.String }))
 
 const MCP_DOT: Record<McpServer["status"]["status"], string> = {
   connected: "var(--v2-avatar-border-green)",
@@ -61,6 +64,7 @@ export default function SessionContextTab(props: { session: MountedSession }) {
     }
   })
 
+  // The latest instruction change the AI was told about. It is long and in English, so it opens on its own.
   const systemPrompt = createMemo(() => {
     const system = usage
       .messages()
@@ -79,9 +83,9 @@ export default function SessionContextTab(props: { session: MountedSession }) {
 
       for (const part of message.content) {
         if (part.type !== "tool" || !SKILL_TOOLS.includes(part.name) || part.state.status === "streaming") continue
-        const id = part.state.input.id
+        const input = skillInput(part.state.input)
 
-        if (typeof id === "string") ids.add(id)
+        if (Option.isSome(input)) ids.add(input.value.id)
       }
     }
 
@@ -282,10 +286,20 @@ export default function SessionContextTab(props: { session: MountedSession }) {
 
         <Show when={systemPrompt()}>
           {(prompt) => (
-            <Section title={ctx.t("systemPrompt.title")}>
-              <div class="border border-border-base rounded-md bg-surface-base px-3 py-2">
-                <Markdown text={prompt()} class="text-12-regular" />
-              </div>
+            <Section
+              title={ctx.t("systemPrompt.title")}
+              action={
+                <button
+                  type="button"
+                  class="flex items-center gap-1 text-v2-text-text-muted hover:text-v2-text-text-base"
+                  onClick={() => ctx.dialogs.open(() => <SystemPrompt text={prompt()} />)}
+                >
+                  <span>{ctx.t("systemPrompt.view")}</span>
+                  <Icon name="outline-arrow-right" size="small" class="rtl:-scale-x-100" />
+                </button>
+              }
+            >
+              <span class="text-v2-text-text-faint">{ctx.t("systemPrompt.summary")}</span>
             </Section>
           )}
         </Show>

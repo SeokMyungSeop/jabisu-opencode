@@ -46,6 +46,10 @@ export default {
   "mcp.status.failed": "Failed",
   "mcp.status.needs_auth": "Needs sign-in",
   "systemPrompt.title": "System Prompt",
+  "systemPrompt.description":
+    "When instructions change during a conversation, the AI is told like this. This is the latest one.",
+  "systemPrompt.summary": "The latest instruction change the AI was told about.",
+  "systemPrompt.view": "View",
   "export.session": "Export session",
   "stats.session": "Session",
   "stats.messages": "Messages",

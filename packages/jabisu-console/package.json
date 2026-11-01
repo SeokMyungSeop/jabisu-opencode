@@ -1,0 +1,15 @@
+{
+  "name": "@jabisu/console",
+  "version": "1.0.0",
+  "private": true,
+  "description": "자비수 무료 LLM 콘솔: 자비수 앱의 무료 체험 요청을 명상의 OpenRouter 키로 이어 주는 중계",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test test/*.test.ts"
+  }
+}

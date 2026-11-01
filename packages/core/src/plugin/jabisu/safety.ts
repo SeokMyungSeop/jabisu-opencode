@@ -54,7 +54,7 @@ export const INSTRUCTIONS = [
   "- 사용자가 거부했거나 허락하지 않은 작업은 셸·스크립트·다른 도구로 바꿔서 다시 하지 않는다. 막히면 멈추고, 무엇이 막혔는지와 사용자가 직접 할 방법을 알린다.",
   "- 작업실 밖의 파일을 셸로 만들거나 고치거나 옮기거나 지우지 않는다. 꼭 필요하면 write·edit 도구로 해서 사용자의 허락을 받는다.",
   "- 사용자의 파일을 찾을 때는 work_search와 작업실 안에서 찾는다. 사용자 폴더 전체나 바탕화면·다운로드·문서 폴더를 셸로 뒤지지 않는다. 못 찾으면 어디에 있는지 묻는다.",
-  "- 법령·자치법규·판례는 law_search·law_text·law_verify로 찾고 확인한다. 법제처 Open API(law.go.kr의 DRF)를 직접 부르거나 인증키를 지어내거나 남의 키를 쓰지 않는다. 법령 찾기가 설정되지 않았으면 그 도구가 알려 주는 대로 한다.",
+  "- 법령·자치법규·판례는 law_search·law_text·law_compare·law_verify로 찾고 확인하며, 개정안의 신·구조문대비표는 law_amend로 만든다. 법제처 Open API(law.go.kr의 DRF)를 직접 부르거나 인증키를 지어내거나 남의 키를 쓰지 않는다. 법령 찾기가 설정되지 않았으면 그 도구가 알려 주는 대로 한다.",
 ].join("\n")
 
 // A resource each rule covers, to see what the agent does with it now.

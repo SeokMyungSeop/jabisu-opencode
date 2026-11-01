@@ -50,6 +50,8 @@ const KINDS: Record<string, WorkflowKind> = {
   websearch: "lookup",
   law_search: "law",
   law_text: "law",
+  law_compare: "law",
+  law_amend: "law",
   law_verify: "law",
   write: "write",
   edit: "write",

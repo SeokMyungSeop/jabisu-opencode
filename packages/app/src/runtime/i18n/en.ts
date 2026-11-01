@@ -107,6 +107,7 @@ export const dict = {
   "dialog.provider.openai.note": "GPT models for fast, capable general AI tasks",
   "dialog.provider.google.note": "Gemini models for fast, structured responses",
   "dialog.provider.openrouter.note": "Access all supported models from one provider",
+  "dialog.provider.jabisuFree.note": "No key needed · free to start",
   "dialog.provider.vercel.note": "Unified access to AI models with smart routing",
 
   "dialog.model.select.title": "Select model",
@@ -1056,7 +1057,8 @@ export const dict = {
   "jabisu.workroom.failed": "Couldn't open a new workroom",
   "jabisu.workroom.createFailed": "Couldn't make the workroom folder",
   "jabisu.workroom.named": "Workroom: {{name}}",
-  "jabisu.workroom.named.description": "Named after your first message. It is in the 자비수 작업실 folder in Documents.",
+  "jabisu.workroom.named.description":
+    "Named after your first message. It is in the 자비수 작업실 folder in Documents.",
   "jabisu.workroom.pending": "New workroom",
   "jabisu.workroom.hero.title": "What would you like me to do?",
   "jabisu.workroom.hero.lead":
@@ -1114,7 +1116,7 @@ export const dict = {
   "jabisu.room.failed.rename": "Couldn't rename the workroom",
   "jabisu.room.failed.delete": "Couldn't delete the folder",
   "jabisu.room.error.name":
-    'A folder name can\'t contain \\ / : * ? " < > | or end with a dot, and can be up to 60 characters.',
+    "A folder name can't contain \\ / : * ? \" < > | or end with a dot, and can be up to 60 characters.",
   "jabisu.room.error.taken": "A workroom with that name already exists. Choose another name.",
   "jabisu.room.error.busy": "The AI is still working in this workroom. Try again when it finishes.",
   "jabisu.room.error.in_use":

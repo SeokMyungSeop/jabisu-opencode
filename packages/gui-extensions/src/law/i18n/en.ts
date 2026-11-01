@@ -2,7 +2,7 @@ export default {
   section: "Law lookup",
   "key.title": "Open API key",
   "key.description":
-    "With a free key (OC) from open.law.go.kr, the AI finds laws, local ordinances, administrative rules, precedents and interpretations in their official text, and checks that the articles an answer cites exist. When applying, register the public IP address this PC uses on the internet. The words it searches for are sent to law.go.kr.",
+    "With a free key (OC) from open.law.go.kr, the AI finds laws, local ordinances, administrative rules, precedents, interpretations, decisions, annexes and forms in their official text, makes comparison tables of amendments, and checks that the articles and cases an answer cites exist. When applying, register the public IP address this PC uses on the internet, and choose all the data it lists. The words it searches for are sent to law.go.kr.",
   "key.placeholder": "The key (OC) you received",
   "key.saved": "Connected: {{masked}}",
   "key.none": "No key yet",

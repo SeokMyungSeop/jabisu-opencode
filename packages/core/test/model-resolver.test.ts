@@ -769,6 +769,35 @@ describe("ModelResolver", () => {
     ),
   )
 
+  it.effect("keeps an OpenAI-compatible provider's configured key when its connection is external", () =>
+    Effect.gen(function* () {
+      // 자비수 무료 LLM 콘솔: connecting records the person's agreement and holds no secret.
+      const credential = Credential.External.make({
+        type: "external",
+        methodID: Integration.MethodID.make("consent"),
+        metadata: { consent: "1" },
+      })
+      const resolved = yield* ModelResolver.fromCatalogModel(
+        model("@opencode/ai/providers/openai-compatible", {
+          providerID: Provider.ID.make("jabisu-free"),
+          settings: { apiKey: "public", baseURL: "https://console.example/v1" },
+          headers: {},
+          body: {},
+        }),
+        credential,
+      )
+      const headers = yield* resolved.route.auth.apply({
+        request: LLM.request({ model: resolved, prompt: "Hello" }),
+        method: "POST",
+        url: "https://console.example/v1/chat/completions",
+        body: "{}",
+        headers: Headers.empty,
+      })
+
+      expect(headers.authorization).toBe("Bearer public")
+    }),
+  )
+
   it.effect("does not project API key metadata into the request body", () =>
     Effect.gen(function* () {
       // V1 auth.json stored connect-form answers as API key metadata, and the legacy import preserves them there.

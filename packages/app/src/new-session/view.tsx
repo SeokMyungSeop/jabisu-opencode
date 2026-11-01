@@ -214,12 +214,13 @@ function NewSessionTips(props: {
     openConnect()
   }
 
-  // 자비수 opens OpenRouter's key form first; the dialog's back button lists every provider.
+  // 자비수 opens its free console's notice first, so a new user can start with no key; the dialog's back button lists
+  // every provider, OpenRouter among the recommended.
   const openConnect = () =>
     void import("@/providers/connect/dialog").then(({ DialogConnectProvider, useProviderConnectController }) => {
       const controller = useProviderConnectController()
 
-      if (JABISU) controller.select("openrouter")
+      if (JABISU) controller.select("jabisu-free")
       void dialog.show(() => (
         <DialogConnectProvider
           directory={sdk().directory}

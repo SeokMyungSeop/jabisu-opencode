@@ -1,4 +1,7 @@
 [data-component="input"] {
+  /* Holds a hidden label (`hideLabel`, positioned absolutely) to its field: without it the label is placed against an
+     ancestor outside the scrolling list around the field and stretches that ancestor, which then scrolls as a whole. */
+  position: relative;
   width: 100%;
 
   [data-slot="input-input"] {
