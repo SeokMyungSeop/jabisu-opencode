@@ -29,6 +29,8 @@ export type Refusal = {
   readonly type: string
   readonly message: string
   readonly retryAfter?: number
+  /** Waiting a few seconds will not help, so the app is told not to retry and shows the message at once. */
+  readonly final?: boolean
 }
 
 export type Decision =
@@ -49,7 +51,8 @@ export const ended = (trialDay: number, limits: Limits) =>
   trialDay >= limits.trialDays.length && limits.afterTrialKrw <= 0
 
 export function decide(at: Situation, limits: Limits): Decision {
-  const refuse = (refusal: Refusal): Decision => ({ allow: false, ...refusal })
+  // Every limit here lasts minutes to a day, or needs the person to act, so none is worth retrying.
+  const refuse = (refusal: Refusal): Decision => ({ allow: false, final: true, ...refusal })
   const untilMidnight = Math.ceil((at.midnight - at.now) / 1000)
 
   if (!at.open)

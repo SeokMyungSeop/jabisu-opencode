@@ -21,7 +21,7 @@ export default {
   "advice.opencode-free":
     "OpenCode 무료 모델은 자비수에서 지금 쓸 수 없어요. 입력창 아래에서 OpenRouter 모델을 고르세요. OpenRouter가 아직 연결되지 않았으면 설정 → 공급자에서 맨 위 OpenRouter를 연결하세요.",
   "advice.free-console":
-    "자비수 무료 LLM 콘솔은 하루에 쓸 수 있는 양이 정해져 있어요. 위 안내를 따르거나, 바로 계속하려면 설정 → 공급자에서 「내 OpenRouter 키」를 연결하세요.",
+    "자비수 무료 LLM 콘솔은 무료 체험 창구라서 쉬고 있거나 오늘 쓸 수 있는 양이 끝났을 수 있어요. 위 안내를 따르거나, 바로 계속하려면 설정 → 공급자에서 「내 OpenRouter 키」를 연결하세요.",
   "advice.free-console.offline":
     "자비수 무료 LLM 콘솔에 닿지 못했어요. 창구가 쉬고 있을 수 있어요. 잠시 뒤 다시 보내거나, 설정 → 공급자에서 「내 OpenRouter 키」를 연결해 쓰세요.",
   "advice.unsupported": "이 모델은 이 기능을 지원하지 않습니다. 다른 모델을 고르세요.",

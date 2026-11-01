@@ -34,12 +34,16 @@ const send = (res: ServerResponse, status: number, body: unknown, headers: Recor
   res.end(JSON.stringify(body))
 }
 
+// The engine reads x-should-retry (as OpenAI-style SDKs do), so a final refusal shows at once instead of being retried.
 const refuse = (res: ServerResponse, refusal: Refusal) =>
   send(
     res,
     refusal.status,
     { error: { type: refusal.type, code: refusal.status, message: refusal.message } },
-    refusal.retryAfter ? { "retry-after": String(refusal.retryAfter) } : {},
+    {
+      ...(refusal.retryAfter ? { "retry-after": String(refusal.retryAfter) } : {}),
+      ...(refusal.final ? { "x-should-retry": "false" } : {}),
+    },
   )
 
 const read = (req: IncomingMessage) =>
@@ -224,6 +228,7 @@ export function handler(deps: Deps) {
           status: 503,
           type: "jabisu_free_full",
           message: `${NAME}에 준비한 양이 다 찼어요. ${OWN_KEY}`,
+          final: true,
         })
       if (response.status === 429)
         return refuse(res, {

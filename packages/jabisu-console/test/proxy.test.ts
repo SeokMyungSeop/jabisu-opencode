@@ -75,6 +75,8 @@ test("requests without a 자비수 install or with no consent never reach OpenRo
   assert.match((await json(bare)).error.message, /자비수 앱에서만/)
   const unconsented = await ask({ "x-jabisu-install": "install-0001" })
   assert.equal(unconsented.status, 403)
+  // Agreeing takes the person, not a retry, so the app is told to stop and show the message.
+  assert.equal(unconsented.headers.get("x-should-retry"), "false")
   assert.equal((await json(unconsented)).error.type, "jabisu_free_consent")
   assert.equal(sent.length, 0)
 })
@@ -111,10 +113,13 @@ test("OpenRouter's refusals come back as plain Korean and are reported as failur
   reply = () => new Response(JSON.stringify({ error: { message: "rate limited" } }), { status: 429 })
   const busy = await ask({ ...app, "x-jabisu-install": "install-0003" })
   assert.equal(busy.status, 429)
+  // A busy model may free up in a minute, so this one may be retried.
+  assert.equal(busy.headers.get("x-should-retry"), null)
   assert.equal((await json(busy)).error.type, "jabisu_free_busy")
   reply = () => new Response(JSON.stringify({ error: { message: "Key limit exceeded" } }), { status: 403 })
   const full = await ask({ ...app, "x-jabisu-install": "install-0003" })
   assert.equal(full.status, 503)
+  assert.equal(full.headers.get("x-should-retry"), "false")
   assert.match((await json(full)).error.message, /내 OpenRouter 키/)
   assert.deepEqual(failures, [429, 403])
   // Failed requests are not questions, so they do not use up the hour.
@@ -143,6 +148,7 @@ test("tool steps go through after the hour's questions are used; a new question 
   await step.text()
   const waiting = await ask(install)
   assert.equal(waiting.status, 429)
+  assert.equal(waiting.headers.get("x-should-retry"), "false")
   assert.equal((await json(waiting)).error.type, "jabisu_free_hourly")
   assert.ok(Number(waiting.headers.get("retry-after")) > 0)
   // A title the engine asks for on its own is not a question either.

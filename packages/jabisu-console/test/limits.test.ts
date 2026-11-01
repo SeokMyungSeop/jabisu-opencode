@@ -26,6 +26,8 @@ test("a new install may use free models first and the paid one after", () => {
 
 test("the console being closed, a missing or old consent, and a finished trial refuse with a reason", () => {
   assert.equal(decide({ ...base, open: false }, limits).allow, false)
+  const closed = decide({ ...base, open: false }, limits)
+  assert.equal(!closed.allow && closed.final, true)
   const consent = decide({ ...base, consent: undefined }, limits)
   assert.equal(!consent.allow && consent.type, "jabisu_free_consent")
   assert.equal(!consent.allow && consent.status, 403)

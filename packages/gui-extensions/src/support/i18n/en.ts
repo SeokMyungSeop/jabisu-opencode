@@ -21,7 +21,7 @@ export default {
   "advice.opencode-free":
     "OpenCode's free models do not work in Jabisu for now. Choose an OpenRouter model under the composer, or connect OpenRouter first in Settings → Providers.",
   "advice.free-console":
-    "The Jabisu free LLM console allows a set amount each day. Follow the note above, or connect your own OpenRouter key in Settings → Providers to continue now.",
+    "The Jabisu free LLM console is a free trial, so it may be closed or today's share may be used up. Follow the note above, or connect your own OpenRouter key in Settings → Providers to continue now.",
   "advice.free-console.offline":
     "The Jabisu free LLM console could not be reached; it may be closed for now. Send again later, or connect your own OpenRouter key in Settings → Providers.",
   "advice.unsupported": "This model does not support this feature. Choose another model.",
