@@ -29,6 +29,7 @@ export default {
   "error.host-key":
     "호스트의 신원을 확인할 수 없습니다. SSH의 알려진 호스트 목록을 업데이트하기 전에 지문을 확인하세요.",
   "error.ssh-missing": "OpenSSH를 찾을 수 없습니다. OpenSSH 클라이언트를 설치하고 ssh가 PATH에 있는지 확인하세요.",
+  "error.unavailable": "SSH를 쓸 수 없습니다",
   "action.authenticate": "인증",
   "stage.connecting": "SSH로 연결 중…",
   "stage.authentication": "인증 필요",

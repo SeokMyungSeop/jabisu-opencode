@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import { dict as app } from "./ko"
+import { dict as appEnglish } from "./en"
 import { dict as ui } from "@opencode/ui/i18n/ko"
-import { conversation, jabisuKorean, workroom } from "./jabisu-ko"
+import { dict as uiEnglish } from "@opencode/ui/i18n/en"
+import { MISSING, conversation, jabisuKorean, workroom } from "./jabisu-ko"
 
 describe("자비수 Korean", () => {
   test("calls a project 「작업실」 and fits the particle after it", () => {
@@ -35,5 +37,20 @@ describe("자비수 Korean", () => {
     expect(shown["settings.projects.empty.title"]).toBe("아직 작업실이 없습니다")
     expect(shown["command.session.new"]).toBe("새 대화창")
     expect(shown["home.sessions.search.placeholder"]).toBe("대화 검색")
+  })
+
+  test("has a Korean string for every English one, so no English shows in the Korean app", () => {
+    const shown: Record<string, string> = jabisuKorean({ ...app, ...ui })
+
+    expect(Object.keys({ ...appEnglish, ...uiEnglish }).filter((key) => !(key in shown))).toEqual([])
+    expect(shown["settings.permissions.autoAccept.default.description"]).toBe(
+      "권한 요청을 묻지 않고 승인합니다. 작업실마다 설정에서 따로 정할 수 있습니다.",
+    )
+    expect(shown["command.session.previous"]).toBe("이전 대화")
+    expect(shown["settings.tab.about"]).toBe("정보")
+  })
+
+  test("fills in only strings upstream has not translated yet", () => {
+    expect(Object.keys(MISSING).filter((key) => key in { ...app, ...ui })).toEqual([])
   })
 })

@@ -14,5 +14,5 @@ export default Extension.define({
     // Each open /btw tab's chat (its question and answer), kept until its tab closes.
     chats: Store.session(Chats, { chats: [] }),
   },
-  i18n: { en },
+  i18n: { en, ko: () => import("./i18n/ko") },
 })
