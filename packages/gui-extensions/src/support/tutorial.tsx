@@ -2,18 +2,18 @@ import { createResource, For, onCleanup, Show } from "solid-js"
 import { Button } from "@opencode/ui/button"
 import { Icon } from "@opencode/ui/icon"
 import { builtin, locationOf } from "../builtin-server"
-import { useExtension } from "../sdk"
+import { createKeyed, useExtension } from "../sdk"
 import type definition from "./index"
 
 // The work status changes while the user does a mission in another tab, so it is read again this often.
 const REFRESH_MS = 5_000
 
-type Mission = "folders" | "profile" | "search" | "docs" | "law"
+type Mission = "connect" | "folders" | "profile" | "search" | "docs" | "law"
 
 /**
  * The home screen's 따라하기: the first things to do, each with a button that opens the place to do it. A mission is
- * done when its result exists (chosen folders, a work profile) or, for one that leaves none, once tried; asking about
- * a law needs the 법제처 key first, so until it is saved that mission opens the settings.
+ * done when its result exists (a connected provider, chosen folders, a work profile) or, for one that leaves none, once
+ * tried; asking about a law needs the 법제처 key first, so until it is saved that mission opens the settings.
  */
 export default function HomeTutorial(props: { guide: () => void }) {
   const ctx = useExtension<typeof definition>()
@@ -36,7 +36,18 @@ export default function HomeTutorial(props: { guide: () => void }) {
 
   onCleanup(() => clearInterval(timer))
 
+  // Connecting the free console or a key in the providers settings updates this list, which checks the first mission.
+  createKeyed(
+    () => builtin(ctx.servers),
+    (current) => void current.data.location.integration.sync(),
+  )
+
   const done = (mission: Mission) => {
+    if (mission === "connect")
+      return !!builtin(ctx.servers)
+        ?.data.location.integration.list()
+        ?.some((integration) => integration.connections.length > 0)
+
     const current = work.latest
 
     if (mission === "folders") return !!current && current.received.length + current.saved.length > 0
@@ -66,6 +77,7 @@ export default function HomeTutorial(props: { guide: () => void }) {
     ctx.t(setup(mission) ? `mission.${mission}.setup.${part}` : `mission.${mission}.${part}`)
 
   const missions: readonly { id: Mission; run: () => void }[] = [
+    { id: "connect", run: () => ctx.layout.settings("providers") },
     { id: "folders", run: () => ctx.layout.settings("general") },
     { id: "profile", run: () => chat("profile") },
     { id: "search", run: () => chat("search") },
