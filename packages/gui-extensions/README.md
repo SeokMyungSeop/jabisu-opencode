@@ -491,7 +491,7 @@ export default Extension.define({
     // Whether main keeps the display awake; stored before in the desktop's own settings namespace.
     keepScreenActive: Store.main(Schema.Boolean, false, { state: ["opencode.settings", "keepScreenActive"] }),
   },
-  i18n: { en },
+  i18n: { en, ko: () => import("./i18n/ko") },
 })
 ```
 
