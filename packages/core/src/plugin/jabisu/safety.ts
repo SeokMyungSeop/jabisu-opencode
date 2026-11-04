@@ -8,8 +8,9 @@ import { Permission } from "../../permission.js"
 // around a refused write with a shell redirect and a refused delete with `powershell -Command`, so commands are
 // matched anywhere in their text, and every chat is also told not to work around a refusal.
 
-// An edit inside the 작업실 names the file relative to it; one outside names it absolutely, by drive or network path.
-const OUTSIDE = ["?:/*", "//*"]
+// An edit inside the 작업실 names the file relative to it; one outside names it absolutely: by drive or network path
+// (`//server/…`) on Windows, from the root (`/Users/…`) on macOS.
+const OUTSIDE = ["?:/*", "/*"]
 
 // Short commands that delete or move files, asked for at the start of a command or after a space, as in
 // `cmd /c del …` or `… && rm …`. Where a command points is not known reliably, so these ask wherever they point.
@@ -35,8 +36,15 @@ const CALLS = [
   ".unlink(",
 ]
 
-// A shell redirect into a file named by drive, which is how a command writes outside the 작업실.
-const REDIRECTS = ["*> ?:/*", '*> "?:/*', "*> '?:/*", "*>?:/*", '*>"?:/*']
+// A shell redirect into a file outside the 작업실, which is how a command writes there: named by drive on Windows, and
+// on macOS under the users' folders, a mounted disk or the home folder. `> /dev/null` and `> /tmp/…` stay free.
+const REDIRECTS = ["?:/", "/Users/", "/Volumes/", "~/", "$HOME/"].flatMap((root) => [
+  `*> ${root}*`,
+  `*> "${root}*`,
+  `*> '${root}*`,
+  `*>${root}*`,
+  `*>"${root}*`,
+])
 
 export const rules: Permission.Ruleset = [
   ...OUTSIDE.map((resource) => ({ action: "edit", resource, effect: "ask" as const })),

@@ -264,6 +264,29 @@ export function getConfig() {
     // file name with the Korean name on shortcuts, updates from its own GitHub Releases, and no `opencode://` scheme,
     // which stays OpenCode's.
     case "jabisu": {
+      // The licenses of OpenCode and of the skills the CLI bundles.
+      const licenses = [
+        { from: path.join(rootDir, "LICENSE"), to: "LICENSE.opencode.txt" },
+        {
+          from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.mattpocock-skills"),
+          to: "LICENSE.mattpocock-skills.txt",
+        },
+        {
+          from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.hwpx-skill"),
+          to: "LICENSE.hwpx-skill.txt",
+        },
+        // SheetJS, unpdf and PDF.js, which read documents for the CLI and the file preview.
+        {
+          from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.document-libraries"),
+          to: "LICENSE.document-libraries.txt",
+        },
+        // Pretendard, the typeface of 자비수's text (SIL Open Font License).
+        {
+          from: path.join(rootDir, "packages/app/src/assets/fonts/jabisu/LICENSE.pretendard.txt"),
+          to: "LICENSE.pretendard.txt",
+        },
+      ]
+
       return {
         ...base,
         appId,
@@ -285,28 +308,30 @@ export function getConfig() {
           author: { name: "명상(明想)" },
           description: "자비수(諮備秀) · 수석 AI 참모 · 만든이 명상(明想) · OpenCode 기반",
         },
-        // The licenses of OpenCode and of the skills the CLI bundles.
-        extraFiles: [
-          { from: path.join(rootDir, "LICENSE"), to: "LICENSE.opencode.txt" },
-          {
-            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.mattpocock-skills"),
-            to: "LICENSE.mattpocock-skills.txt",
+        // Windows keeps the licenses beside the app. A macOS bundle allows no loose files in Contents, which would
+        // break its signature, so there they go to Contents/Resources.
+        win: { ...base.win, extraFiles: licenses },
+        // 자비수 for macOS has no Apple developer ID, so it is signed ad hoc, not notarized, and opened once through
+        // System Settings. Ad hoc code has no team for library validation to match, so the hardened runtime, which
+        // only notarization requires, stays off. It cannot update itself, so it has no update feed.
+        mac: {
+          ...base.mac,
+          category: "public.app-category.productivity",
+          icon: "resources/icons/icon.png",
+          artifactName: "Jabisu-${version}-${arch}.${ext}",
+          identity: "-",
+          hardenedRuntime: false,
+          notarize: false,
+          target: ["dmg"],
+          publish: null,
+          extraResources: licenses,
+          extendInfo: {
+            ...base.mac?.extendInfo,
+            NSDocumentsFolderUsageDescription: "자비수는 문서 폴더의 「자비수 작업실」에 작업 파일을 만들고 읽습니다.",
+            NSDownloadsFolderUsageDescription: "자비수는 받은 파일을 찾고 읽을 때 다운로드 폴더를 봅니다.",
+            NSDesktopFolderUsageDescription: "자비수는 요청하신 바탕화면의 파일을 읽거나 고칩니다.",
           },
-          {
-            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.hwpx-skill"),
-            to: "LICENSE.hwpx-skill.txt",
-          },
-          // SheetJS, unpdf and PDF.js, which read documents for the CLI and the file preview.
-          {
-            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.document-libraries"),
-            to: "LICENSE.document-libraries.txt",
-          },
-          // Pretendard, the typeface of 자비수's text (SIL Open Font License).
-          {
-            from: path.join(rootDir, "packages/app/src/assets/fonts/jabisu/LICENSE.pretendard.txt"),
-            to: "LICENSE.pretendard.txt",
-          },
-        ],
+        },
         nsis: { ...base.nsis, shortcutName: "자비수", uninstallDisplayName: "자비수" },
       }
     }

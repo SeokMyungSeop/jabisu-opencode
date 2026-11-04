@@ -79,7 +79,10 @@ export const files = Effect.fn("JabisuSkills.files")(function* (deps: Dependenci
       text.replaceAll("__JABISU_BUNDLES__", path.join(deps.global.cache, "skills")),
   }
   const text = (file: { path: string; text: string }) => filled[file.path]?.(file.text) ?? file.text
-  const embedded = yield* Effect.forEach(JabisuBundle.files, (file) =>
+  // The Craft apps are Windows programs, so other systems get neither their skill nor FilmCraft's launcher.
+  const craft = process.platform === "win32"
+  const bundle = JabisuBundle.files.filter((file) => craft || !file.path.startsWith("craft-apps/"))
+  const embedded = yield* Effect.forEach(bundle, (file) =>
     Effect.gen(function* () {
       // Binary files are embedded in the CLI, so failing to read one is a build defect.
       return {
@@ -95,10 +98,14 @@ export const files = Effect.fn("JabisuSkills.files")(function* (deps: Dependenci
       { path: `${skill}/scripts/jabisu_python.py`, content: helper },
       { path: `${skill}/python-setup.md`, content: pythonSetup },
     ]),
-    {
-      path: "craft-apps/scripts/start-filmcraft.ps1",
-      content: FilmCraft.launcher(FilmCraft.tokenFile(deps.global.data)),
-    },
+    ...(craft
+      ? [
+          {
+            path: "craft-apps/scripts/start-filmcraft.ps1",
+            content: FilmCraft.launcher(FilmCraft.tokenFile(deps.global.data)),
+          },
+        ]
+      : []),
   ] satisfies File[]
 })
 

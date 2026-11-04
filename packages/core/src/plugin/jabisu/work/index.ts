@@ -347,11 +347,13 @@ export function search(db: WorkDatabase, query: Query): Hit[] {
   const hits = new Map<string, Hit>()
 
   if (query.where !== "content") {
+    // A word in the chosen folder's own path, such as "메신저", would match every file in it. Files named on a Mac
+    // often keep Hangul decomposed (NFD), so a name matches a word in either form.
+    const name = "substr(f.path, length(f.folder) + 2) like ? escape '\\'"
     const names = db.all<Omit<Hit, "match">>(
-      // A word in the chosen folder's own path, such as "메신저", would match every file in it.
-      `select ${columns} from files f ${where(query.words.map(() => "substr(f.path, length(f.folder) + 2) like ? escape '\\'"))} order by f.mtime desc limit ?`,
+      `select ${columns} from files f ${where(query.words.map(() => `(${name} or ${name})`))} order by f.mtime desc limit ?`,
       ...params,
-      ...query.words.map(like),
+      ...query.words.flatMap((word) => [like(word.normalize("NFC")), like(word.normalize("NFD"))]),
       query.limit,
     )
 
