@@ -9,7 +9,7 @@ import { Permission } from "../../permission.js"
 // matched anywhere in their text, and every chat is also told not to work around a refusal.
 
 // An edit inside the 작업실 names the file relative to it; one outside names it absolutely: by drive or network path
-// (`//server/…`) on Windows, from the root (`/Users/…`) on macOS.
+// (`//server/…`) on Windows, from the root (`/Users/…`, `/home/…`) on macOS and Linux.
 const OUTSIDE = ["?:/*", "/*"]
 
 // Short commands that delete or move files, asked for at the start of a command or after a space, as in
@@ -37,8 +37,9 @@ const CALLS = [
 ]
 
 // A shell redirect into a file outside the 작업실, which is how a command writes there: named by drive on Windows, and
-// on macOS under the users' folders, a mounted disk or the home folder. `> /dev/null` and `> /tmp/…` stay free.
-const REDIRECTS = ["?:/", "/Users/", "/Volumes/", "~/", "$HOME/"].flatMap((root) => [
+// on macOS and Linux under the users' folders, a mounted disk or the home folder. `> /dev/null` and `> /tmp/…` stay
+// free.
+const REDIRECTS = ["?:/", "/Users/", "/Volumes/", "/home/", "/media/", "/mnt/", "~/", "$HOME/"].flatMap((root) => [
   `*> ${root}*`,
   `*> "${root}*`,
   `*> '${root}*`,

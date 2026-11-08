@@ -29,4 +29,8 @@ export default {
   "releaseNotes.action.next": "다음",
   "releaseNotes.action.hideFuture": "다시 보지 않기",
   "releaseNotes.media.alt": "릴리스 미리보기",
+  "beta.title": "자비수 맥·리눅스판은 베타(시험판)예요",
+  "beta.description":
+    "아직 정식판이 아니에요. 자동 업데이트가 없어 새 판은 직접 내려받아야 하고, Craft 앱 편집처럼 Windows에서만 되는 기능이 있어요. 리눅스판의 음성 받아쓰기는 WAV 파일만 돼요. 문제를 찾으면 도움말 → 「오류 신고」로 알려 주세요.",
+  "beta.ok": "알겠어요",
 }

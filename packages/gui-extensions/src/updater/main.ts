@@ -10,13 +10,14 @@ const setup: MainSetup<typeof definition> = async (ctx) => {
   const build = ctx.build
   const lifecycle = ctx.lifecycle
 
-  // Only builds with an update feed check for updates: beta, stable, and 자비수 (its GitHub Releases). 자비수 for
-  // macOS is signed ad hoc, which cannot replace itself, and its releases carry no macOS feed, so it does not check.
+  // Only builds with an update feed check for updates: beta, stable, and 자비수 for Windows (its GitHub Releases).
+  // 자비수 for macOS is signed ad hoc, which cannot replace itself, and 자비수's releases carry only a Windows feed,
+  // so the macOS and Linux betas do not check.
   const enabled =
     build.packaged &&
     (build.channel === "beta" ||
       build.channel === "prod" ||
-      (build.channel === "jabisu" && process.platform !== "darwin"))
+      (build.channel === "jabisu" && process.platform === "win32"))
 
   // Holds no resources, so it needs no cleanup.
   const context = logContext(ctx.log.write)

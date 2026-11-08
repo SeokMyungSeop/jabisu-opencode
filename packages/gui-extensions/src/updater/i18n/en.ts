@@ -29,4 +29,8 @@ export default {
   "releaseNotes.action.next": "Next",
   "releaseNotes.action.hideFuture": "Don't show these in the future",
   "releaseNotes.media.alt": "Release preview",
+  "beta.title": "Jabisu for macOS and Linux is a beta",
+  "beta.description":
+    "This is not a stable release yet. It does not update itself, so download new versions by hand, and some features, such as Craft app editing, work only on Windows. On Linux, transcription accepts WAV files only. Please report problems through Help → Report an issue.",
+  "beta.ok": "Got it",
 }

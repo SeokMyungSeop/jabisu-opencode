@@ -697,6 +697,11 @@ describe("JabisuPlugin work assistant", () => {
       expect(effect(agents, "build", "shell", "cat 초안.md >>/Volumes/USB/초안.md")).toBe("ask")
       expect(effect(agents, "build", "shell", "echo 메모 > ~/Desktop/메모.txt")).toBe("ask")
       expect(effect(agents, "build", "shell", `echo 메모 > "$HOME/Desktop/메모.txt"`)).toBe("ask")
+      // Linux: the home folders, removable media and mounts.
+      expect(effect(agents, "build", "edit", "/home/me/문서/계획.hwpx")).toBe("ask")
+      expect(effect(agents, "build", "shell", "printf '밖' > /home/me/바깥.txt")).toBe("ask")
+      expect(effect(agents, "build", "shell", "cat 초안.md >> /media/me/USB/초안.md")).toBe("ask")
+      expect(effect(agents, "build", "shell", "echo 메모 >/mnt/c/Users/me/메모.txt")).toBe("ask")
       expect(effect(agents, "build", "shell", "rm -rf ~/Downloads/old")).toBe("ask")
       expect(effect(agents, "build", "shell", `python3 -c "import os; os.remove('a.txt')"`)).toBe("ask")
       // Common commands that only read or report stay free.

@@ -332,6 +332,22 @@ export function getConfig() {
             NSDesktopFolderUsageDescription: "자비수는 요청하신 바탕화면의 파일을 읽거나 고칩니다.",
           },
         },
+        // 자비수 for Linux is a beta: an AppImage that runs anywhere and a deb for Ubuntu and Debian. It does not update
+        // itself, so it has no update feed. The menu entry is named 자비수.
+        linux: {
+          ...base.linux,
+          category: "Office",
+          artifactName: "Jabisu-${version}-${arch}.${ext}",
+          target: ["AppImage", "deb"],
+          publish: null,
+          extraFiles: licenses,
+          // A deb needs a maintainer address; this is GitHub's no-reply address for the maker's account.
+          maintainer: "명상(明想) <SeokMyungSeop@users.noreply.github.com>",
+          desktop: {
+            ...base.linux?.desktop,
+            entry: { ...base.linux?.desktop?.entry, Name: "자비수", Comment: "수석 AI 참모 · 만든이 명상(明想)" },
+          },
+        },
         nsis: { ...base.nsis, shortcutName: "자비수", uninstallDisplayName: "자비수" },
       }
     }

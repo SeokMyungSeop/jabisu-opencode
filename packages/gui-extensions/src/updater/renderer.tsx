@@ -6,6 +6,7 @@ import type definition from "./index"
 
 const setup: Setup<typeof definition> = (ctx) => {
   whatsNew(ctx)
+  betaNotice(ctx)
 
   if (!ctx.desktop) return
   const updater = ctx.uses.updater
@@ -108,6 +109,36 @@ function whatsNew(ctx: SetupContext<typeof definition>) {
     if (ctx.signal.aborted) return
 
     module.showWhatsNew(ctx, { previous, current: version, markSeen })
+  })
+}
+
+/**
+ * 자비수 for macOS and Linux is a beta: it does not update itself and lacks some Windows features, so each new beta
+ * version says so once, until the person acknowledges it.
+ */
+function betaNotice(ctx: SetupContext<typeof definition>) {
+  const os = ctx.desktop?.os
+  const version = ctx.build.version
+
+  if (ctx.build.channel !== "jabisu" || !os || os === "windows" || !version) return
+
+  const beta = ctx.stores.beta
+
+  if (beta.value.version === version) return
+
+  showToast({
+    title: ctx.t("beta.title"),
+    description: ctx.t("beta.description"),
+    persistent: true,
+    actions: [
+      {
+        label: ctx.t("beta.ok"),
+        onClick: () =>
+          beta.update((draft) => {
+            draft.version = version
+          }),
+      },
+    ],
   })
 }
 

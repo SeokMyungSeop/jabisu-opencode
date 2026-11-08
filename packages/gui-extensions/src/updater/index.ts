@@ -26,6 +26,8 @@ export default Extension.define({
     ),
     // The version whose What's New was last shown or skipped; stored before under the app's own key.
     seen: Store.global(Seen, {}, "highlights.v1"),
+    // The 자비수 macOS or Linux beta version whose beta notice was last acknowledged.
+    beta: Store.global(Seen, {}, "jabisu.beta.v1"),
     // The update main staged for the next start; stored before in the updater's settings file.
     ready: Store.main(Schema.NullOr(Schema.Struct({ version: Schema.String })), null, {
       settings: "ready",

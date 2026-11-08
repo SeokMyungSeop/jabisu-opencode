@@ -11,6 +11,7 @@
 - `py --version`이 되면 이후 `python` 대신 `py`를 쓴다.
 - 3.10보다 오래된 버전이면 Python이 없는 것처럼 2단계를 따른다.
 - macOS에서는 `python3 --version`을 실행하고, 이 문서와 스킬의 `python` 명령을 모두 `python3`로 바꿔 쓴다. macOS에 들어 있는 `python3`는 3.9이거나, 처음 실행할 때 「명령어 라인 개발자 도구」 설치 창을 띄운다. 그 창이 뜨거나 3.10보다 오래됐으면 Python이 없는 것으로 보고 2단계를 따른다.
+- Linux에서도 `python3 --version`을 실행하고, `python` 명령을 모두 `python3`로 바꿔 쓴다.
 
 ## 2. Python이 없을 때
 
@@ -25,7 +26,7 @@
 - winget이 없거나 실패하면 https://www.python.org/downloads/ 에서 직접 설치하도록 안내한다. 설치 첫 화면에서 "Add python.exe to PATH"를 켜라고 알려 준다.
 - 설치 직후에는 자비수가 새 PATH를 모를 수 있다. `python`이 여전히 안 되면 전체 경로로 실행하거나(`& "$env:LOCALAPPDATA\Programs\Python\Python314\python.exe"`), 자비수를 다시 시작해 달라고 한다.
 - macOS에서는 winget이 없다. https://www.python.org/downloads/macos/ 에서 macOS 설치 파일(.pkg)을 내려받아 열도록 안내한다. 설치할 때 맥 암호를 묻는다. Homebrew가 있으면(`brew --version`이 되면) `brew install python`도 된다. 설치한 뒤에는 `python3`로 실행한다.
-- Linux는 배포판의 패키지 관리자로 설치한다.
+- Linux는 배포판의 패키지 관리자로 설치한다. 예: Ubuntu·Debian은 `sudo apt install python3 python3-venv python3-pip`. 설치할 때 컴퓨터 암호를 묻는다.
 - 사용자가 설치를 원하지 않으면, 같은 내용을 마크다운 같은 다른 형식으로 줄 수 있다고 제안한다.
 
 ## 3. 패키지 확인과 설치
