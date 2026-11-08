@@ -436,6 +436,15 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
           else projects[project] = value
           setStore("permissions", "autoApproveProjects", reconcile(projects))
         },
+        // Stops approving without asking everywhere: the default and every project that chose it on its own.
+        disableAutoApprove() {
+          const projects = Object.fromEntries(
+            Object.entries(store.permissions?.autoApproveProjects ?? {}).filter(([, value]) => !value),
+          )
+
+          setStore("permissions", "autoApprove", false)
+          setStore("permissions", "autoApproveProjects", reconcile(projects))
+        },
         // Whether a project's requests are approved without asking.
         autoApproves: (project: ScopedKey | undefined) => autoApproveOverride(project) ?? autoApproveDefault(),
         // Whether this request is approved without asking. One the engine marks attended, such as deleting files or
