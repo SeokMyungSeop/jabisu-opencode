@@ -126,20 +126,30 @@ function betaNotice(ctx: SetupContext<typeof definition>) {
 
   if (beta.value.version === version) return
 
-  showToast({
-    title: ctx.t("beta.title"),
-    description: ctx.t("beta.description"),
-    persistent: true,
-    actions: [
-      {
-        label: ctx.t("beta.ok"),
-        onClick: () =>
-          beta.update((draft) => {
-            draft.version = version
-          }),
-      },
-    ],
-  })
+  // Extensions set up before the window's toast area exists, and a toast shown before then is lost: the macOS and
+  // Linux screenshots of the first beta had no notice. It waits until the first window has settled.
+  const timer = setTimeout(() => {
+    if (ctx.signal.aborted) return
+
+    showToast({
+      title: ctx.t("beta.title"),
+      description: ctx.t("beta.description"),
+      persistent: true,
+      actions: [
+        {
+          label: ctx.t("beta.ok"),
+          onClick: () =>
+            beta.update((draft) => {
+              draft.version = version
+            }),
+        },
+      ],
+    })
+  }, BETA_NOTICE_DELAY_MS)
+
+  ctx.signal.addEventListener("abort", () => clearTimeout(timer), { once: true })
 }
+
+const BETA_NOTICE_DELAY_MS = 4_000
 
 export default setup
