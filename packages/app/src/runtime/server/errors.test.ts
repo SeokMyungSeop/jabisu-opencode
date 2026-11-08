@@ -1,7 +1,22 @@
 import { describe, expect, test } from "bun:test"
 import type { FileNotFoundError, SessionNotFoundError } from "@opencode/client/promise"
 import type { ConfigInvalidError, ProviderModelNotFoundError } from "./errors"
-import { formatServerError, isSessionNotFoundError, parseReadableConfigInvalidError } from "./errors"
+import { formatServerError, isMissingLocation, isSessionNotFoundError, parseReadableConfigInvalidError } from "./errors"
+
+describe("isMissingLocation", () => {
+  test("recognises a gone folder whether the client passes the reply itself or wraps it", () => {
+    const reply = {
+      _tag: "LocationNotFoundError",
+      location: { directory: "C:\\Users\\me\\Documents\\자비수 작업실\\안녕하세요" },
+      message: "Location not found",
+    }
+
+    expect(isMissingLocation(reply)).toBe(true)
+    expect(isMissingLocation(new Error("request failed", { cause: { body: reply } }))).toBe(true)
+    expect(isMissingLocation({ _tag: "InvalidRequestError", message: "nope" })).toBe(false)
+    expect(isMissingLocation(new Error("offline"))).toBe(false)
+  })
+})
 
 function fill(text: string, vars?: Record<string, string | number>) {
   if (!vars) return text

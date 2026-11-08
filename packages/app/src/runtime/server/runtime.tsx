@@ -15,7 +15,7 @@ import { createDesktopData } from "./data"
 import { ModelState } from "./persistence"
 import { useLanguage } from "@/runtime/i18n/language"
 import { showToast } from "@/shell/notifications/toast"
-import { formatServerError } from "./errors"
+import { formatServerError, isMissingLocation } from "./errors"
 import { useSettings } from "@/settings/model"
 import { timelinePreset } from "@opencode/session-ui/timeline/detail"
 import type { SessionInfo } from "@opencode/client/promise"
@@ -181,6 +181,10 @@ function createServerController(
     connection: sdk.connection,
     directory: "",
     onError(error) {
+      // A folder that is gone leaves nothing to refresh: a 작업실 being thrown away refuses to boot while it goes, and a
+      // folder deleted in Explorer stays gone. The views on it close or say so themselves.
+      if (isMissingLocation(error)) return
+
       showToast({
         variant: "error",
         title: language.t("common.requestFailed"),

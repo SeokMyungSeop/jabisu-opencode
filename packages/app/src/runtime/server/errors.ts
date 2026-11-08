@@ -1,3 +1,5 @@
+import { isLocationNotFoundError } from "@opencode/client/promise"
+
 export type ConfigInvalidError = {
   name: "ConfigInvalidError"
   data: {
@@ -25,6 +27,11 @@ function tr(translator: Translator | undefined, key: string, text: string, vars?
   if (!out || out === key) return text
 
   return out
+}
+
+/** Whether a request failed because the folder it was about is gone, however the client wrapped the reply. */
+export function isMissingLocation(error: unknown) {
+  return isLocationNotFoundError(error) || isLocationNotFoundError(unwrapNamedError(error))
 }
 
 export function formatServerError(error: unknown, translate?: Translator, fallback?: string) {
