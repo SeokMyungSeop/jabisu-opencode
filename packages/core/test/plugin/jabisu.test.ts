@@ -271,7 +271,7 @@ const withProgramFiles = (directory: string) =>
   )
 
 describe("JabisuPlugin.Plugin", () => {
-  it.live("bundles its skills with their files and offers Context7 switched off on the jabisu channel", () =>
+  it.live("bundles its skills with their files and offers Context7 and 명경 switched off on the jabisu channel", () =>
     Effect.gen(function* () {
       const { skills, servers } = yield* run("jabisu", {})
       const byId = new Map(skills.map((skill) => [String(skill.id), skill]))
@@ -286,6 +286,7 @@ describe("JabisuPlugin.Plugin", () => {
         "grilling",
         "handoff",
         "hwpx",
+        "myungkyung",
         "pptx",
         "tdd",
         "work-profile",
@@ -300,6 +301,15 @@ describe("JabisuPlugin.Plugin", () => {
         yield* Effect.promise(() => fs.readFile(source("skills/tdd/tests.md"), "utf8")),
       )
       expect(servers.context7).toEqual({ type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
+      expect(servers.myungkyung).toEqual({
+        type: "remote",
+        url: "https://myungkyung.sejong-nexus.ai.kr/api/mcp",
+        disabled: true,
+      })
+      // The saju skill is for fun: off until the user turns it on, and it names the tools the server promises.
+      expect(byId.get("myungkyung")?.autoinvoke).toBe(false)
+      for (const tool of ["saju_chart", "saju_reading", "saju_year"])
+        expect(byId.get("myungkyung")?.content).toContain(tool)
     }),
   )
 
@@ -450,6 +460,19 @@ describe("JabisuPlugin.Plugin", () => {
         url: "https://mcp.context7.com/mcp",
         headers: { CONTEXT7_API_KEY: "key" },
       })
+    }),
+  )
+
+  it.live("keeps a configured myungkyung as it is", () =>
+    Effect.gen(function* () {
+      // Someone who tried 명경 before it was bundled turned it on in their own config.
+      const configured: Types.DeepMutable<Mcp.ServerConfig> = {
+        type: "remote",
+        url: "https://myungkyung.sejong-nexus.ai.kr/api/mcp",
+      }
+      const { servers } = yield* run("jabisu", { myungkyung: configured })
+
+      expect(servers.myungkyung).toBe(configured)
     }),
   )
 

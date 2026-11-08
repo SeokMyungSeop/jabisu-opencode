@@ -32,9 +32,12 @@ import { WorkProfile } from "./jabisu/work/profile.js"
 import { WorkSearch } from "./jabisu/work/search-tool.js"
 
 // 자비수(諮備秀) ships six of Matt Pocock's skills (mattpocock/skills 1.3.1, MIT — jabisu/LICENSE.mattpocock-skills),
-// the hwpx skill (jkf87/hwpx-skill, MIT — jabisu/LICENSE.hwpx-skill), its own docx, xlsx, pptx and craft-apps skills,
-// and offers Context7, and FilmCraft when it is installed, as MCP servers that stay off until the user turns them on.
-// Other channels get none of these.
+// the hwpx skill (jkf87/hwpx-skill, MIT — jabisu/LICENSE.hwpx-skill), its own docx, xlsx, pptx, craft-apps and
+// myungkyung skills, and offers Context7, 명경 (명상's saju server), and FilmCraft when it is installed, as MCP servers
+// that stay off until the user turns them on. Other channels get none of these.
+
+// 명경(明鏡) computes saju charts on 명상's server; its tool names and inputs are a public promise and only grow.
+const MYUNGKYUNG_URL = "https://myungkyung.sejong-nexus.ai.kr/api/mcp"
 
 // A folder another 자비수 version wrote may still be in use by that version for a while.
 const STALE_MS = 86_400_000
@@ -163,10 +166,13 @@ export const Plugin = define({
       { providerID: FreeConsole.ID },
     )
 
-    // Configured servers are applied before this plugin, so a configured context7 or filmcraft is kept as it is.
+    // Configured servers are applied before this plugin, so a configured context7, myungkyung or filmcraft is kept as
+    // it is.
     yield* ctx.mcp.transform((editor) => {
       if (!editor.get("context7"))
         editor.set("context7", { type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
+
+      if (!editor.get("myungkyung")) editor.set("myungkyung", { type: "remote", url: MYUNGKYUNG_URL, disabled: true })
 
       if (filmcraftServer && !editor.get("filmcraft")) editor.set("filmcraft", filmcraftServer)
     })

@@ -90,6 +90,13 @@ export const ENTRIES: Readonly<Record<string, Entry>> = {
     keywords: ["코드 설계", "구조", "리팩터링"],
     on: false,
   },
+  // For fun, not work: it needs the 명경 MCP server, which is also off until the user turns it on.
+  myungkyung: {
+    title: "명경 사주풀이",
+    summary: "생년월일시로 사주팔자 원국·오행·대운·올해 운을 계산하고 풀이해요",
+    keywords: ["사주", "팔자", "운세", "사주풀이", "대운", "세운", "올해 운", "띠", "일주", "만세력"],
+    on: false,
+  },
 }
 
 /** Whether a bundled skill is on: the user's choice, else its default; a skill the catalog lacks is on. */
