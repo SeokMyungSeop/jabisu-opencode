@@ -3,7 +3,7 @@ export * as DesktopFiles from "./index"
 import { execFile, spawn } from "node:child_process"
 import { homedir } from "node:os"
 import { clipboard, dialog, nativeImage, shell } from "electron"
-import { Context, Effect, FileSystem, Layer, Path } from "effect"
+import { Context, Effect, FileSystem, Layer, Path, Schedule } from "effect"
 import type { DirectoryPickerOptions, FilePickerOptions, SaveFilePickerOptions } from "../../shared/ipc-contract"
 import { scoped } from "../native/logging"
 import { nativeT } from "../native/translations"
@@ -139,7 +139,11 @@ function make(fs: FileSystem.FileSystem, path: Path.Path) {
       const exists = yield* fs.exists(folder).pipe(Effect.orElseSucceed(() => false))
 
       if (!exists) return false
-      yield* Effect.tryPromise(() => shell.trashItem(folder))
+      // Programs the server just stopped for this folder may take a moment to let go of it; a file open in another
+      // program does not, so the retries end after about three seconds.
+      yield* Effect.tryPromise(() => shell.trashItem(folder)).pipe(
+        Effect.retry({ times: 12, schedule: Schedule.spaced("250 millis") }),
+      )
 
       return true
     }),

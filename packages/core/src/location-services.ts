@@ -1,5 +1,9 @@
-import { Context, Duration, Effect, Exit, Layer, LayerMap, MutableHashMap, Option } from "effect"
+import { Context, Duration, Effect, Exit, Layer, LayerMap, MutableHashMap, Option, RcMap } from "effect"
+import { FSUtil } from "@opencode/util/fs-util"
 import { LayerNode } from "@opencode/util/effect/layer-node"
+import { AbsolutePath } from "@opencode/schema/schema"
+import path from "path"
+import { FileSystem } from "./filesystem.js"
 import { Instance } from "./instance.js"
 import { Location } from "./location.js"
 import { LocationLifecycle } from "./location-lifecycle.js"
@@ -55,11 +59,43 @@ export function buildLocationServiceMap(
         // decide whether a location (including workspace placement) can retry.
         { idleTimeToLive: Duration.infinity },
       )
-      const map = {
+      // Folders being renamed or thrown away, until when (epoch ms) their locations must not boot again.
+      const retired = new Map<string, number>()
+      const isRetired = (ref: Location.Ref) => {
+        const now = Date.now()
+        for (const [folder, until] of retired) {
+          if (until <= now) retired.delete(folder)
+          else if (FSUtil.contains(folder, ref.directory)) return true
+        }
+        return false
+      }
+      // A folder on its way out reads as gone, which every route already reports as a missing location.
+      const gone = (ref: Location.Ref) =>
+        new FileSystem.DirectoryNotFoundError({ directory: ref.directory, cause: "the folder is being renamed or removed" })
+      const map: LocationServiceMap.Locations = {
         ...inner,
-        get: (ref: Location.Ref) => inner.get(LocationServiceMap.canonical(ref)),
-        contextEffect: (ref: Location.Ref) => inner.contextEffect(LocationServiceMap.canonical(ref)),
+        get: (ref: Location.Ref) => {
+          const key = LocationServiceMap.canonical(ref)
+          return isRetired(key)
+            ? Layer.fromBuild<LocationServices, Instance.Error, never>(() => Effect.fail(gone(key)))
+            : inner.get(key)
+        },
+        contextEffect: (ref: Location.Ref) => {
+          const key = LocationServiceMap.canonical(ref)
+          return isRetired(key) ? Effect.fail(gone(key)) : inner.contextEffect(key)
+        },
         contextEffectOption: (ref: Location.Ref) => inner.contextEffectOption(LocationServiceMap.canonical(ref)),
+        retire: (directory: AbsolutePath, duration: Duration.Input) =>
+          Effect.gen(function* () {
+            const folder = process.platform === "win32" ? path.normalize(directory) : directory
+            retired.set(folder, Date.now() + Duration.toMillis(duration))
+            const refs = Array.from(yield* RcMap.keys(inner.rcMap))
+            yield* Effect.forEach(
+              refs.filter((ref) => FSUtil.contains(folder, ref.directory)),
+              (ref) => map.invalidate(ref),
+              { discard: true },
+            )
+          }),
         invalidate: (ref: Location.Ref) =>
           Effect.suspend(() => {
             const key = LocationServiceMap.canonical(ref)

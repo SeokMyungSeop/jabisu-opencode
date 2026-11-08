@@ -1,4 +1,4 @@
-import { Context, Effect, Exit, Layer, LayerMap, RcMap } from "effect"
+import { Context, Duration, Effect, Exit, Layer, LayerMap, RcMap } from "effect"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { Node } from "@opencode/util/effect/app-node"
 import { AbsolutePath } from "@opencode/schema/schema"
@@ -6,10 +6,17 @@ import path from "path"
 import { Location } from "./location.js"
 import type { Instance } from "./instance.js"
 
-export class Service extends Context.Service<
-  Service,
-  LayerMap.LayerMap<Location.Ref, Instance.Services, Instance.Error>
->()("@opencode/example/LocationServiceMap") {
+export interface Locations extends LayerMap.LayerMap<Location.Ref, Instance.Services, Instance.Error> {
+  /**
+   * Shuts down every location in a folder that is about to be renamed or thrown away, and refuses to boot one there
+   * again for a while. A client that refetches the location's data after the shutdown would otherwise boot it again
+   * at once, and the programs that boot starts (local MCP servers run in the folder) hold the folder open on Windows.
+   * Maps built for tests may leave it out; invalidating the folder's locations is then all there is.
+   */
+  readonly retire?: (directory: AbsolutePath, duration: Duration.Input) => Effect.Effect<void>
+}
+
+export class Service extends Context.Service<Service, Locations>()("@opencode/example/LocationServiceMap") {
   static get(ref: Location.Ref) {
     return Layer.unwrap(Effect.map(Service, (locations) => locations.get(ref)))
   }

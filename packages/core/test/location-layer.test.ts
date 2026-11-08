@@ -299,6 +299,44 @@ describe("LocationServiceMap", () => {
     ),
   )
 
+  it.live("keeps a folder being renamed or thrown away from booting again until its time is up", () =>
+    Effect.acquireRelease(
+      Effect.promise(() => tmpdir()),
+      (dir) => Effect.promise(() => dir[Symbol.asyncDispose]()),
+    ).pipe(
+      Effect.flatMap((dir) =>
+        Effect.gen(function* () {
+          const locations = yield* LocationServiceMap.Service
+          const room = AbsolutePath.make(path.join(dir.path, "room"))
+          const ref = Location.Ref.make({ directory: room })
+          const inside = Location.Ref.make({ directory: AbsolutePath.make(path.join(room, "inside")) })
+          const other = Location.Ref.make({ directory: AbsolutePath.make(path.join(dir.path, "other")) })
+          for (const item of [ref, inside, other]) yield* Effect.promise(() => fs.mkdir(item.directory, { recursive: true }))
+          const boot = (item: Location.Ref) =>
+            Location.Service.pipe(Effect.provide(locations.get(item)), Effect.scoped, Effect.exit)
+
+          for (const item of [ref, inside, other]) expect((yield* boot(item))._tag).toBe("Success")
+          yield* locations.retire!(room, "300 millis")
+
+          // The folder's locations are shut down; a location elsewhere keeps running.
+          expect(Array.from(yield* RcMap.keys(locations.rcMap))).toEqual([other])
+          // A client refetching the folder's data cannot boot it, or anything inside it, again for now.
+          for (const item of [ref, inside]) {
+            const refused = yield* boot(item)
+            expect(refused._tag).toBe("Failure")
+            expect(String(refused)).toContain("FileSystem.DirectoryNotFoundError")
+          }
+          expect((yield* locations.contextEffect(ref).pipe(Effect.scoped, Effect.exit))._tag).toBe("Failure")
+          expect((yield* boot(other))._tag).toBe("Success")
+
+          // A rename that failed leaves the folder in place, and it works again once the time is up.
+          yield* Effect.sleep("400 millis")
+          expect((yield* boot(ref))._tag).toBe("Success")
+        }),
+      ),
+    ),
+  )
+
   it.live("keeps a workspace location admitted when its directory does not exist locally", () =>
     Effect.acquireRelease(
       Effect.promise(() => tmpdir()),

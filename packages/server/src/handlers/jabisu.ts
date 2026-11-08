@@ -11,6 +11,7 @@ import { WorkIndexer } from "@opencode/core/plugin/jabisu/work/indexer"
 import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { WorkSettings } from "@opencode/core/plugin/jabisu/work/settings"
 import { Workroom } from "@opencode/core/plugin/jabisu/workroom"
+import { AbsolutePath } from "@opencode/core/schema"
 import { Session } from "@opencode/core/session"
 import { OpenRouter } from "@opencode/core/tool/openrouter"
 import { Transcribe } from "@opencode/core/tool/transcribe"
@@ -47,7 +48,9 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
     })
     const invalid = (kind: string) => (error: { readonly reason: string }) =>
       new InvalidRequestError({ message: error.reason, kind })
-    // Renaming or throwing away a 작업실 moves its conversations and stops what runs in its folder.
+    // Renaming or throwing away a 작업실 moves its conversations and stops what runs in its folder. The folder stays
+    // closed for long enough to rename it or move it to the recycle bin: the app refetches a location's data when its
+    // MCP servers stop, which would boot it again and start the local MCP servers that hold the folder open.
     const workroom: Workroom.RenameDependencies = {
       fs,
       global,
@@ -56,6 +59,7 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
         Effect.gen(function* () {
           const locations = yield* Effect.serviceOption(LocationServiceMap.Service)
           if (Option.isNone(locations)) return
+          if (locations.value.retire) return yield* locations.value.retire(AbsolutePath.make(directory), "10 seconds")
           const refs = Array.from(yield* RcMap.keys(locations.value.rcMap))
           yield* Effect.forEach(
             refs.filter((ref) => FSUtil.contains(directory, ref.directory)),

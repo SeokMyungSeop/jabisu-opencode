@@ -85,7 +85,13 @@ it.live("renames a 작업실 with its folder, and its conversation follows it", 
     expect((yield* call("GET", `/api/session/${conversation}`)).body.data.location.directory).toBe(target)
 
     // Throwing a 작업실 away starts on the server, which lets go of the folder; the desktop moves it to the bin.
+    const mcp = `/api/mcp?${new URLSearchParams({ "location[directory]": target })}`
+    expect((yield* call("GET", mcp)).status).toBe(200)
     expect((yield* call("POST", "/api/jabisu/workroom/release", { directory: target })).status).toBe(204)
+    // The app refetches the MCP list when the folder's servers stop; that must not boot the folder, and the local
+    // MCP servers with it, before the desktop has moved it away.
+    expect(yield* call("GET", mcp)).toMatchObject({ status: 404, body: { _tag: "LocationNotFoundError" } })
+    expect(yield* exists(target)).toBe(true)
     expect(
       yield* call("POST", "/api/jabisu/workroom/release", { directory: made.body.directory }),
     ).toMatchObject({ status: 400, body: { kind: "jabisu_workroom_missing" } })

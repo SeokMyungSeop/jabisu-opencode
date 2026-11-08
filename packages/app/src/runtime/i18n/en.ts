@@ -1120,7 +1120,7 @@ export const dict = {
   "jabisu.room.error.taken": "A workroom with that name already exists. Choose another name.",
   "jabisu.room.error.busy": "The AI is still working in this workroom. Try again when it finishes.",
   "jabisu.room.error.in_use":
-    "A file in this folder is open in another program, such as Hangul or Excel. Close it and try again.",
+    "Another program is using this folder. Close any file opened from it in Hangul or Excel, and any command window opened in it, then try again.",
   "jabisu.room.error.missing": "The folder is gone. It may have been moved or deleted in Explorer.",
 }
 
