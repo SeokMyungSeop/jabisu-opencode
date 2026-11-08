@@ -1,13 +1,20 @@
 import { Icon } from "@opencode/ui/icon"
 import { Schema } from "effect"
-import { For, Show, createMemo, createSignal, onCleanup } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
 import type { SessionMessageInfo } from "@opencode/client/promise"
 import { useLanguage } from "@/runtime/i18n/language"
 import { Persist, persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
-import { projectWorkflow, type WorkflowStep } from "./projection"
+import { estimate, finishedRun, projectWorkflow, type WorkflowStep } from "./projection"
 
 const WorkflowStateSchema = Persistence.struct({ collapsed: Schema.Boolean })
+
+// The latest finished requests on this PC, for estimating how long the next similar one takes.
+const HISTORY_SIZE = 30
+
+const WorkflowHistorySchema = Persistence.struct({
+  runs: Schema.Array(Schema.Struct({ started: Schema.Number, law: Schema.Boolean, seconds: Schema.Number })),
+})
 
 /** 자비수's 진행 흐름 above the composer: the latest request's steps from left to right. */
 export function SessionWorkflow(props: {
@@ -46,6 +53,53 @@ export function SessionWorkflow(props: {
       : language.t("jabisu.workflow.elapsed", { minutes: Math.floor(seconds / 60), seconds: seconds % 60 })
   })
 
+  const [history, setHistory] = persisted(Persist.global("jabisu.workflow.history"), WorkflowHistorySchema, {
+    runs: [],
+  })
+
+  // A request that finishes while on screen is remembered once, however many views show it.
+  createEffect(() => {
+    const value = flow()
+    const run = value ? finishedRun(value) : undefined
+
+    if (!run || history.runs.some((item) => item.started === run.started)) return
+    setHistory("runs", [...history.runs, run].slice(-HISTORY_SIZE))
+  })
+
+  const remaining = createMemo(() => {
+    const value = flow()
+
+    return value ? estimate(value, now(), history.runs) : undefined
+  })
+
+  const eta = createMemo(() => {
+    const value = remaining()
+
+    if (!value) return
+
+    if (value.remaining < -30) return { text: language.t("jabisu.workflow.eta.over") }
+
+    const clock = new Date(now() + Math.max(0, value.remaining) * 1000).toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+
+    const hint = language.t("jabisu.workflow.eta.clock", {
+      clock,
+      basis: language.t(`jabisu.workflow.eta.basis.${value.basis}`),
+    })
+
+    if (value.remaining <= 5) return { text: language.t("jabisu.workflow.eta.soon"), hint }
+
+    // Coarse on purpose: tens of seconds under a minute, whole minutes above.
+    const time =
+      value.remaining < 60
+        ? language.t("jabisu.workflow.elapsed.seconds", { seconds: Math.max(10, Math.round(value.remaining / 10) * 10) })
+        : language.t("jabisu.workflow.eta.minutes", { minutes: Math.round(value.remaining / 60) })
+
+    return { text: language.t("jabisu.workflow.eta", { time }), hint }
+  })
+
   const label = (step: WorkflowStep) => step.title ?? language.t(`jabisu.workflow.kind.${step.kind ?? "tool"}`)
 
   const status = (step: WorkflowStep) => (step.status === "active" && props.permission() ? "permission" : step.status)
@@ -67,7 +121,20 @@ export function SessionWorkflow(props: {
                 ? language.t("jabisu.workflow.progress", { current: current(), total: value().steps.length })
                 : language.t("jabisu.workflow.done")}
             </span>
-            <span class="ms-auto text-[12px] text-v2-text-text-faint [font-variant-numeric:tabular-nums]">
+            <Show when={eta()}>
+              {(value) => (
+                <span
+                  class="ms-auto rounded-full bg-v2-background-bg-base px-2 py-px text-[12px] font-[600] text-v2-text-text-accent"
+                  title={value().hint}
+                >
+                  {value().text}
+                </span>
+              )}
+            </Show>
+            <span
+              class="text-[12px] text-v2-text-text-faint [font-variant-numeric:tabular-nums]"
+              classList={{ "ms-auto": !eta() }}
+            >
               {elapsed()}
             </span>
             <button

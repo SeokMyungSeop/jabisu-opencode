@@ -16,6 +16,7 @@ import { useServerCtx } from "@/runtime/server/runtime"
 import { sessionLabel } from "@/session/title"
 import { useSettingsDialog } from "@/settings/command"
 import { useCommand } from "@/shell/commands/command"
+import { useSessionTabAvatarState } from "@/shell/layout/project-avatar-state"
 import type { LocalProject } from "@/shell/state/layout"
 import { useLayout } from "@/shell/state/layout"
 import { useTabs } from "@/shell/tabs/tabs"
@@ -67,6 +68,21 @@ function NavButton(props: { icon: IconProps["name"]; label: string; hint?: strin
   )
 }
 
+/** The light beside a conversation, or a closed 작업실, the AI is working in. */
+function WorkingDot(props: { end?: boolean }) {
+  const language = useLanguage()
+
+  return (
+    <span
+      role="img"
+      aria-label={language.t("jabisu.nav.working")}
+      title={language.t("jabisu.nav.working")}
+      class="size-2 shrink-0 rounded-full bg-v2-state-fg-success motion-safe:animate-pulse"
+      classList={{ "ms-auto": !!props.end }}
+    />
+  )
+}
+
 /**
  * 자비수's left-hand list, as in Claude and ChatGPT: 「새 작업실」, conversation search and 집현전 on top, then every
  * 작업실 with its conversations. The room of the conversation on screen opens by itself.
@@ -104,6 +120,9 @@ export function WorkroomNav() {
   const actions = useWorkroomActions({ server, ctx })
   // The room whose 「이름 바꾸기·작업실 삭제」 menu is open, from its ⋯ button or a right click.
   const [menu, setMenu] = createSignal<string>()
+  // The conversation whose 「대화 삭제」 menu is open.
+  const [conversationMenu, setConversationMenu] = createSignal<string>()
+  const working = (sessionID: string) => ctx()?.data.session.status(sessionID) === "running"
 
   const rooms = createMemo(() => {
     const context = ctx()
@@ -194,6 +213,10 @@ export function WorkroomNav() {
           >
             <Icon name="folder" size="small" class="shrink-0 text-v2-icon-icon-base" />
             <span class="min-w-0 truncate">{displayName(props.room.project)}</span>
+            {/* A closed room still shows that the AI is at work in one of its conversations. */}
+            <Show when={!isOpen(props.room) && props.room.sessions.some((session) => working(session.id))}>
+              <WorkingDot />
+            </Show>
             <Show when={!isOpen(props.room) && props.room.sessions.length > 0}>
               <span class="ms-auto shrink-0 text-[12px] font-[400] text-v2-text-text-faint group-hover/room:invisible group-data-[menu=true]/room:invisible">
                 {language.t("jabisu.nav.count", { count: props.room.sessions.length })}
@@ -221,7 +244,7 @@ export function WorkroomNav() {
                     {language.t("jabisu.room.rename")}
                   </Menu.Item>
                   <Menu.Separator />
-                  <Menu.Item onSelect={() => void actions.remove(props.room.project)}>
+                  <Menu.Item onSelect={() => void actions.remove(props.room.project, props.room.sessions)}>
                     {language.t("jabisu.room.delete")}
                   </Menu.Item>
                 </Menu.Content>
@@ -239,19 +262,78 @@ export function WorkroomNav() {
                   return !!now && "session" in now && now.session === session.id
                 }
 
+                const state = useSessionTabAvatarState(
+                  () => {
+                    const conn = server()
+
+                    // SAFETY: rows render only while rooms() has a server context, so the empty key that matches no
+                    // server is never what the state looks up.
+                    return conn ? ServerConnection.key(conn) : ("" as ServerConnection.Key)
+                  },
+                  () => session.id,
+                  () => true,
+                  () => session,
+                )
+
                 return (
-                  <button
-                    type="button"
-                    class={row}
-                    classList={{
-                      "bg-v2-background-bg-accent/12 font-[600] text-v2-text-text-accent-hover": active(),
-                      "text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover": !active(),
+                  <div
+                    class="group/conversation relative"
+                    data-menu={conversationMenu() === session.id}
+                    onContextMenu={(event) => {
+                      event.preventDefault()
+                      setConversationMenu(session.id)
                     }}
-                    aria-current={active() ? "page" : undefined}
-                    onClick={() => openSession(props.room, session)}
                   >
-                    <span class="min-w-0 truncate">{sessionLabel(session)}</span>
-                  </button>
+                    <button
+                      type="button"
+                      class={`${row} pe-8`}
+                      classList={{
+                        "bg-v2-background-bg-accent/12 font-[600] text-v2-text-text-accent-hover": active(),
+                        "text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover": !active(),
+                      }}
+                      aria-current={active() ? "page" : undefined}
+                      onClick={() => openSession(props.room, session)}
+                    >
+                      <span class="min-w-0 truncate">{sessionLabel(session)}</span>
+                      <Show
+                        when={state.loading()}
+                        fallback={
+                          <Show when={state.unread() && !active()}>
+                            <span
+                              class="ms-auto size-1.5 shrink-0 rounded-full bg-v2-text-text-accent group-hover/conversation:invisible"
+                              title={language.t("jabisu.nav.unread")}
+                            />
+                          </Show>
+                        }
+                      >
+                        <WorkingDot end />
+                      </Show>
+                    </button>
+                    <div class="absolute inset-y-0 end-1 flex items-center opacity-0 group-hover/conversation:opacity-100 group-data-[menu=true]/conversation:opacity-100 focus-within:opacity-100">
+                      <Menu
+                        gutter={4}
+                        modal={false}
+                        placement="bottom-end"
+                        open={conversationMenu() === session.id}
+                        onOpenChange={(open) => setConversationMenu(open ? session.id : undefined)}
+                      >
+                        <Menu.Trigger
+                          as={IconButton}
+                          variant="ghost-muted"
+                          size="small"
+                          icon={<Icon name="outline-dots" />}
+                          aria-label={language.t("jabisu.nav.conversationMenu")}
+                        />
+                        <Menu.Portal>
+                          <Menu.Content>
+                            <Menu.Item onSelect={() => actions.forget(session)}>
+                              {language.t("jabisu.conversation.delete")}
+                            </Menu.Item>
+                          </Menu.Content>
+                        </Menu.Portal>
+                      </Menu>
+                    </div>
+                  </div>
                 )
               }}
             </For>

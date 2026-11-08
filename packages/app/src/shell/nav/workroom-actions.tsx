@@ -1,6 +1,6 @@
 import { createSignal, Show } from "solid-js"
 import { useQueryClient } from "@tanstack/solid-query"
-import { isInvalidRequestError } from "@opencode/client/promise"
+import { isInvalidRequestError, type SessionInfo } from "@opencode/client/promise"
 import { Button } from "@opencode/ui/button"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogTitleGroup } from "@opencode/ui/dialog"
@@ -10,9 +10,12 @@ import { useLanguage } from "@/runtime/i18n/language"
 import { usePlatform } from "@/runtime/platform/platform"
 import { ServerConnection } from "@/runtime/server/registry"
 import type { ServerCtx } from "@/runtime/server/runtime"
+import { sessionTreeIDs } from "@/session/requests/session-request-tree"
+import { sessionLabel } from "@/session/title"
 import { showToast } from "@/shell/notifications/toast"
 import type { LocalProject } from "@/shell/state/layout"
 import { useTabs } from "@/shell/tabs/tabs"
+import { notifySessionTabsRemoved } from "@/shell/titlebar/session-events"
 import { pathKey } from "@/workspaces/path-key"
 
 // What the server says went wrong with a 작업실, worded for the user.
@@ -156,6 +159,32 @@ export function useWorkroomActions(input: {
     )
   }
 
+  // Deletes conversations and closes their tabs. Returns how many could not be deleted.
+  const forget = async (ctx: ServerCtx, conn: ServerConnection.Any, sessions: readonly SessionInfo[]) => {
+    const all = ctx.data.session.list()
+
+    const results = await Promise.all(
+      sessions.map((session) =>
+        ctx.data.session.remove(session.id).then(
+          () => {
+            notifySessionTabsRemoved({
+              server: ServerConnection.key(conn),
+              directory: session.location.directory,
+              sessionIDs: sessionTreeIDs(all, session.id),
+            })
+
+            return true
+          },
+          () => false,
+        ),
+      ),
+    )
+
+    void queryClient.invalidateQueries({ queryKey: ["home-sessions", conn] })
+
+    return results.filter((done) => !done).length
+  }
+
   // Leaves the list; a draft written for the folder closes with it.
   const leave = (ctx: ServerCtx, project: LocalProject) => {
     ctx.projects.close(project.worktree)
@@ -169,7 +198,7 @@ export function useWorkroomActions(input: {
     }
   }
 
-  function DeleteDialog(props: { project: LocalProject; owned: boolean }) {
+  function DeleteDialog(props: { project: LocalProject; owned: boolean; sessions: readonly SessionInfo[] }) {
     const [busy, setBusy] = createSignal(false)
     // The recycle bin is the desktop's; a folder on another computer only leaves the list.
     const trash = () => props.owned && !!platform.trashWorkroom
@@ -212,6 +241,17 @@ export function useWorkroomActions(input: {
 
       if (!trashed) return fail(language.t("jabisu.room.error.missing"))
 
+      // The folder is gone, so its conversations go with it, as the dialog warned.
+      const conn = input.server()
+      const left = conn ? await forget(ctx, conn, props.sessions) : 0
+
+      if (left > 0)
+        showToast({
+          variant: "error",
+          title: language.t("jabisu.room.failed.conversations"),
+          description: language.t("jabisu.room.failed.conversations.description", { count: left }),
+        })
+
       leave(ctx, props.project)
       dialog.close()
     }
@@ -230,6 +270,16 @@ export function useWorkroomActions(input: {
             description={description()}
           />
         </DialogHeader>
+        <Show when={trash() && props.sessions.length > 0}>
+          <DialogBody class="px-5 pb-2">
+            <p
+              role="alert"
+              class="m-0 rounded-[8px] bg-v2-state-bg-danger px-3 py-2 text-[13px] font-[600] text-v2-state-fg-danger"
+            >
+              {language.t("jabisu.room.delete.conversations", { count: props.sessions.length })}
+            </p>
+          </DialogBody>
+        </Show>
         <DialogFooter>
           <Button variant="ghost" onClick={() => dialog.close()}>
             {language.t("common.cancel")}
@@ -254,14 +304,64 @@ export function useWorkroomActions(input: {
     )
   }
 
+  function ForgetDialog(props: { session: SessionInfo }) {
+    const [busy, setBusy] = createSignal(false)
+
+    const confirm = async () => {
+      const ctx = input.ctx()
+      const conn = input.server()
+
+      if (!ctx || !conn) return dialog.close()
+
+      // Deleting stops nothing on its own, so a conversation at work is left alone until it finishes.
+      if (ctx.data.session.status(props.session.id) === "running") {
+        showToast({
+          variant: "error",
+          title: language.t("jabisu.conversation.failed.delete"),
+          description: language.t("jabisu.conversation.error.busy"),
+        })
+
+        return dialog.close()
+      }
+
+      setBusy(true)
+      const left = await forget(ctx, conn, [props.session])
+      setBusy(false)
+
+      if (left > 0) showToast({ variant: "error", title: language.t("jabisu.conversation.failed.delete") })
+      dialog.close()
+    }
+
+    return (
+      <Dialog fit>
+        <DialogHeader hideClose>
+          <DialogTitleGroup
+            title={language.t("jabisu.conversation.delete.title", { name: sessionLabel(props.session) })}
+            description={language.t("jabisu.conversation.delete.description")}
+          />
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => dialog.close()}>
+            {language.t("common.cancel")}
+          </Button>
+          <Button variant="danger" disabled={busy()} onClick={() => void confirm()}>
+            {language.t("jabisu.conversation.delete")}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    )
+  }
+
   return {
     rename: async (project: LocalProject) => {
       const made = await owned(project)
       void dialog.show(() => <RenameDialog project={project} owned={made} />)
     },
-    remove: async (project: LocalProject) => {
+    remove: async (project: LocalProject, sessions: readonly SessionInfo[]) => {
       const made = await owned(project)
-      void dialog.show(() => <DeleteDialog project={project} owned={made} />)
+      void dialog.show(() => <DeleteDialog project={project} owned={made} sessions={sessions} />)
     },
+    /** 「대화 삭제」 for one conversation in the list; its 작업실 and files stay. */
+    forget: (session: SessionInfo) => void dialog.show(() => <ForgetDialog session={session} />),
   }
 }

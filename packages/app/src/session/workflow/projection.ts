@@ -69,6 +69,66 @@ const KINDS: Record<string, WorkflowKind> = {
 /** The kind of step a tool call belongs to. */
 export const kindOf = (name: string): WorkflowKind => KINDS[name] ?? "tool"
 
+/** How long a finished request took, kept on this PC to estimate the next one of its kind. */
+export interface WorkflowRun {
+  readonly started: number
+  /** Whether it looked up laws, which takes noticeably longer than other work. */
+  readonly law: boolean
+  readonly seconds: number
+}
+
+export interface WorkflowEstimate {
+  /** Seconds still to go; zero or less once the estimate has passed. */
+  readonly remaining: number
+  readonly basis: "plan" | "history"
+}
+
+// Fewer earlier runs than this are too few to go by.
+const HISTORY_MIN = 3
+
+/** The run to remember once a request has finished. */
+export function finishedRun(flow: Workflow): WorkflowRun | undefined {
+  if (flow.running || flow.finished === undefined) return
+
+  return {
+    started: flow.started,
+    law: flow.steps.some((step) => step.kind === "law"),
+    seconds: Math.max(0, Math.round((flow.finished - flow.started) / 1000)),
+  }
+}
+
+/**
+ * How long a running request may still take. With the AI's own to-do list, from the pace of the steps done so far;
+ * otherwise, or before a step is done, from the middle length of earlier requests on this PC that did the same kind
+ * of work. Nothing while there is no basis.
+ */
+export function estimate(
+  flow: Workflow,
+  now: number,
+  history: readonly WorkflowRun[],
+): WorkflowEstimate | undefined {
+  if (!flow.running) return
+
+  const elapsed = Math.max(0, (now - flow.started) / 1000)
+
+  if (flow.source === "plan") {
+    const done = flow.steps.filter((step) => step.status === "done" || step.status === "skipped").length
+    const waiting = flow.steps.filter((step) => step.status === "waiting").length
+    // The step at work is about half done.
+    const active = flow.steps.some((step) => step.status === "active") ? 0.5 : 0
+
+    if (done > 0) return { remaining: Math.round((elapsed / done) * (waiting + active)), basis: "plan" }
+  }
+
+  const law = flow.steps.some((step) => step.kind === "law")
+
+  const similar = history.flatMap((run) => (run.law === law ? [run.seconds] : [])).toSorted((a, b) => a - b)
+
+  if (similar.length < HISTORY_MIN) return
+
+  return { remaining: Math.round(similar[Math.floor(similar.length / 2)]! - elapsed), basis: "history" }
+}
+
 const TODO_STATUS: Record<string, WorkflowStatus> = {
   completed: "done",
   in_progress: "active",

@@ -1068,6 +1068,13 @@ export const dict = {
   "jabisu.workflow.done": "Done",
   "jabisu.workflow.elapsed": "{{minutes}}m {{seconds}}s",
   "jabisu.workflow.elapsed.seconds": "{{seconds}}s",
+  "jabisu.workflow.eta": "About {{time}} left",
+  "jabisu.workflow.eta.minutes": "{{minutes}}m",
+  "jabisu.workflow.eta.soon": "Almost done",
+  "jabisu.workflow.eta.over": "Taking longer than expected",
+  "jabisu.workflow.eta.clock": "Likely done around {{clock}}. Estimated from {{basis}}, so it may change.",
+  "jabisu.workflow.eta.basis.plan": "the pace of the finished steps",
+  "jabisu.workflow.eta.basis.history": "similar past work on this PC",
   "jabisu.workflow.collapse": "Collapse",
   "jabisu.workflow.expand": "Expand",
   "jabisu.workflow.count": "{{count}} times",
@@ -1096,6 +1103,15 @@ export const dict = {
   "jabisu.nav.newConversation": "New conversation",
   "jabisu.nav.empty": "No workrooms yet. Start one with New workroom.",
   "jabisu.nav.menu": "Workroom options",
+  "jabisu.nav.conversationMenu": "Conversation options",
+  "jabisu.nav.working": "The AI is working",
+  "jabisu.nav.unread": "New reply",
+  "jabisu.conversation.delete": "Delete conversation",
+  "jabisu.conversation.delete.title": "Delete the conversation 「{{name}}」?",
+  "jabisu.conversation.delete.description":
+    "Everything said in it is deleted and can't be restored. The workroom folder and its files stay.",
+  "jabisu.conversation.failed.delete": "Couldn't delete the conversation",
+  "jabisu.conversation.error.busy": "The AI is still working in this conversation. Try again when it finishes.",
   "jabisu.room.rename": "Rename",
   "jabisu.room.delete": "Delete workroom",
   "jabisu.room.rename.title": "Rename workroom",
@@ -1106,7 +1122,12 @@ export const dict = {
   "jabisu.room.rename.save": "Rename",
   "jabisu.room.delete.title": "Delete 「{{name}}」?",
   "jabisu.room.delete.owned":
-    "It leaves the workroom list. Delete its folder too? The folder goes to the Recycle Bin, where you can restore it.",
+    "Delete the folder too sends the folder to the Recycle Bin, where you can restore it. Only from the list keeps the folder and its conversations and just removes it from the list.",
+  "jabisu.room.delete.conversations":
+    "⚠ Delete the folder too also deletes this workroom's {{count}} conversations. They can't be restored.",
+  "jabisu.room.failed.conversations": "Some conversations weren't deleted",
+  "jabisu.room.failed.conversations.description":
+    "The folder went to the Recycle Bin, but {{count}} conversations are still there. Delete them from the home list.",
   "jabisu.room.delete.listOnly":
     "It leaves the workroom list. Jabisu did not make this folder, so the folder itself stays.",
   "jabisu.room.delete.kept": "It leaves the workroom list. The folder stays, since only the desktop app can delete it.",

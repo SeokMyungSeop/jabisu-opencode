@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { SessionMessageAssistantTool, SessionMessageInfo } from "@opencode/client/promise"
-import { projectWorkflow } from "./projection"
+import { estimate, finishedRun, projectWorkflow, type Workflow, type WorkflowRun } from "./projection"
 
 const user = (created: number) =>
   ({ id: `u${created}`, type: "user", text: "보고서 만들어 줘", time: { created } }) as SessionMessageInfo
@@ -99,5 +99,56 @@ describe("진행 흐름", () => {
     expect(
       projectWorkflow([user(1), assistant([tool("read", "completed"), tool("write", "completed")], 2), user(3)], true),
     ).toBeUndefined()
+  })
+})
+
+describe("예상 남은 시간", () => {
+  const plan = (statuses: Workflow["steps"][number]["status"][]): Workflow => ({
+    source: "plan",
+    running: true,
+    started: 0,
+    steps: statuses.map((status, index) => ({ title: `단계 ${index + 1}`, status, count: 0 })),
+  })
+  const tools = (kinds: Workflow["steps"][number]["kind"][]): Workflow => ({
+    source: "tools",
+    running: true,
+    started: 0,
+    steps: kinds.map((kind) => ({ kind, status: "active", count: 1 })),
+  })
+  const runs = (law: boolean, seconds: number[]): WorkflowRun[] =>
+    seconds.map((value, index) => ({ started: index, law, seconds: value }))
+
+  test("follows the pace of the finished steps when the AI wrote a to-do list", () => {
+    // Two steps in 60 seconds, one at work and one waiting: about 45 seconds to go.
+    expect(estimate(plan(["done", "done", "active", "waiting"]), 60_000, [])).toEqual({
+      remaining: 45,
+      basis: "plan",
+    })
+  })
+
+  test("goes by earlier similar requests on this PC, telling law lookups apart", () => {
+    const history = [...runs(true, [100, 140, 120, 400]), ...runs(false, [20, 30, 25])]
+
+    // The middle of 100, 120, 140, 400 is 140; 40 seconds in, about 100 to go.
+    expect(estimate(tools(["read", "law"]), 40_000, history)).toEqual({ remaining: 100, basis: "history" })
+    expect(estimate(tools(["read", "write"]), 10_000, history)).toEqual({ remaining: 15, basis: "history" })
+    // Running past the estimate is reported as such, not as time left.
+    expect(estimate(tools(["read", "law"]), 200_000, history)?.remaining).toBe(-60)
+  })
+
+  test("says nothing without a basis or once the request has finished", () => {
+    expect(estimate(plan(["active", "waiting"]), 10_000, runs(false, [10, 20]))).toBeUndefined()
+    expect(estimate({ ...tools(["read", "law"]), running: false, finished: 9_000 }, 10_000, runs(true, [1, 2, 3]))).toBe(
+      undefined,
+    )
+  })
+
+  test("remembers how long a finished request took and whether it looked up laws", () => {
+    expect(finishedRun({ ...tools(["read", "law"]), running: false, started: 1_000, finished: 61_400 })).toEqual({
+      started: 1_000,
+      law: true,
+      seconds: 60,
+    })
+    expect(finishedRun(tools(["read"]))).toBeUndefined()
   })
 })
