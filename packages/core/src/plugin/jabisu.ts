@@ -18,6 +18,7 @@ import { Watcher } from "../filesystem/watcher.js"
 import { InstructionDiscovery } from "../instruction-discovery.js"
 import { Integration } from "../integration.js"
 import { Permission } from "../permission.js"
+import { JabisuAnswer } from "./jabisu/answer.js"
 import { FilmCraft } from "./jabisu/filmcraft.js"
 import { FreeConsole } from "./jabisu/free-console.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
@@ -285,6 +286,16 @@ export const Plugin = define({
         new InstructionDiscovery.File({
           path: path.join(global.config, "jabisu-workflow"),
           content: JabisuWorkflow.INSTRUCTIONS,
+        }),
+      ),
+    )
+
+    // How answers about facts are put together and sourced.
+    yield* discovery.transform((editor) =>
+      editor.add(
+        new InstructionDiscovery.File({
+          path: path.join(global.config, "jabisu-answer"),
+          content: JabisuAnswer.INSTRUCTIONS,
         }),
       ),
     )

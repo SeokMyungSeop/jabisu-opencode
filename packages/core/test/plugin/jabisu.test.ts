@@ -638,6 +638,22 @@ describe("JabisuPlugin work assistant", () => {
     }),
   )
 
+  it.live("gives every conversation the answer rules: no flattery, sources that exist and were checked", () =>
+    Effect.gen(function* () {
+      const config = (yield* tmpdirScoped()).path
+      const rules = (list: unknown) =>
+        Array.isArray(list)
+          ? list.find((item: { path: string }) => item.path === path.join(config, "jabisu-answer"))
+          : undefined
+
+      const answer = rules((yield* run("jabisu", {}, undefined, { config })).instructions)?.content ?? ""
+      for (const rule of ["맞장구·아부", "핵심 답변 → 상세 설명 → 출처 목록", "webfetch", "출처 미확인", "~로 추정됨", ".go.kr"])
+        expect(answer).toContain(rule)
+      // A skill's or a 집현전's own format comes first.
+      expect(answer).toContain("집현전 지침에 정한 답변 형식")
+    }),
+  )
+
   it.live("asks before edits outside the 작업실 and before deleting, and never loosens a denial", () =>
     Effect.gen(function* () {
       const effect = (agents: readonly Agent.Info[], id: string, action: string, resource: string) =>
