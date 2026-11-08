@@ -245,6 +245,31 @@ describe("Composer submission", () => {
     expect(state.context.items()).toEqual([])
   })
 
+  test("keeps what the message brought in its 작업실, files dropped from disk too", async () => {
+    const state = createMemoryComposerState({ prompt: "이거 내용 확인해줘" }).capture()
+    const pdf = {
+      type: "path" as const,
+      id: "dropped",
+      filename: "지침서.pdf",
+      mime: "application/pdf",
+      path: "C:\\Users\\me\\Downloads\\지침서.pdf",
+    }
+
+    state.set([{ type: "text", content: "이거 내용 확인해줘", start: 0, end: 10 }, pdf])
+    state.context.add({ type: "file", path: "notes.md" })
+    const kept = Promise.withResolvers<ReadonlyArray<{ uri: string; name?: string }>>()
+    const target = { ...session({ calls: [] }), keep: async (files: ReadonlyArray<{ uri: string; name?: string }>) => {
+      kept.resolve(files)
+    } }
+
+    await submitInput(active(state, target)).submit(new Event("submit"))
+
+    expect(await kept.promise).toEqual([
+      { uri: "file:///C:/repo/notes.md", name: "notes.md" },
+      { uri: `file:///C:/Users/me/Downloads/${encodeURIComponent("지침서.pdf")}`, name: "지침서.pdf" },
+    ])
+  })
+
   test.each(["steer", "queue"] as const)(
     "shows a %s in the session as the composer clears, before its selection commits",
     async (delivery) => {
