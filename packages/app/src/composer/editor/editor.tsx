@@ -84,6 +84,8 @@ export type ComposerEditorProps = {
   class?: string
   modelControl?: JSX.Element
   modelControlsVisible?: boolean
+  /** Shown after the model controls, such as a note that permission requests are approved without asking. */
+  notice?: JSX.Element
   attachKeybind?: string[]
   attachShortcut?: string
   alternateKeybind?: string[]
@@ -368,6 +370,7 @@ export function ComposerEditor(props: ComposerEditorProps) {
                   )}
                 </Show>
               </Show>
+              {props.notice}
             </div>
           </div>
           <div data-slot="composer-actions" class="flex shrink-0 items-center">

@@ -1106,6 +1106,9 @@ export const dict = {
   "jabisu.nav.conversationMenu": "Conversation options",
   "jabisu.nav.working": "The AI is working",
   "jabisu.nav.unread": "New reply",
+  "jabisu.autoAccept.notice": "Auto-approve on",
+  "jabisu.autoAccept.notice.tooltip":
+    "Permission requests are approved without asking. Deleting or moving files and changing files outside the workroom still ask. Click to turn it off for this workroom.",
   "jabisu.conversation.delete": "Delete conversation",
   "jabisu.conversation.delete.title": "Delete the conversation 「{{name}}」?",
   "jabisu.conversation.delete.description":

@@ -312,14 +312,16 @@ export function createServerNotificationState(input: {
     })
   }
 
-  // Requests the auto-approver answers immediately are not worth an alert.
-  const handlePermissionAsked = (sessionID: string, eventID: string) => {
+  // Requests the auto-approver answers immediately are not worth an alert; attended ones wait for a person.
+  const handlePermissionAsked = (request: { sessionID: string; attended?: boolean }, eventID: string) => {
+    const sessionID = request.sessionID
     void lookup(sessionID).then((session) => {
       if (disposed.value) return
 
       if (!session) return
 
-      if (settings.permissions.autoApproves(projectSettingsKey(input.sdk.scope, session.projectID))) return
+      if (settings.permissions.autoApprovesRequest(projectSettingsKey(input.sdk.scope, session.projectID), request))
+        return
       const root = input.data.session.root(sessionID)
 
       if (!sessionIDHasOpenTab(tabs.store, input.key, root)) return
@@ -346,7 +348,7 @@ export function createServerNotificationState(input: {
     }
 
     if (event.type === "permission.asked") {
-      handlePermissionAsked(event.data.sessionID, event.id)
+      handlePermissionAsked(event.data, event.id)
 
       return
     }

@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import fs from "fs/promises"
 import path from "path"
 import { Effect, type Types } from "effect"
@@ -8,6 +8,7 @@ import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
 import { FreeConsole } from "@opencode/core/plugin/jabisu/free-console"
+import { JabisuSafety } from "@opencode/core/plugin/jabisu/safety"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { Watcher } from "@opencode/core/filesystem/watcher"
@@ -651,13 +652,17 @@ describe("JabisuPlugin work assistant", () => {
         expect(answer).toContain(rule)
       // A skill's or a 집현전's own format comes first.
       expect(answer).toContain("집현전 지침에 정한 답변 형식")
+      // Only the links handed to the user are opened; an API address found in a manual timed out in a test.
+      expect(answer).toContain("출처 목록에 넣어 사용자에게 주는 링크")
+      expect(answer).toContain("확인하려고 열지 않는다")
     }),
   )
 
   it.live("asks before edits outside the 작업실 and before deleting, and never loosens a denial", () =>
     Effect.gen(function* () {
-      const effect = (agents: readonly Agent.Info[], id: string, action: string, resource: string) =>
-        Permission.evaluate(action, resource, agents.find((agent) => agent.id === id)?.permissions ?? []).effect
+      const decide = (agents: readonly Agent.Info[], id: string, action: string, resource: string) =>
+        Permission.evaluate(action, resource, agents.find((agent) => agent.id === id)?.permissions ?? [])
+      const effect = (...input: Parameters<typeof decide>) => decide(...input).effect
 
       const other = (yield* run("local", {})).agents
       expect(effect(other, "build", "edit", "C:/Users/me/Documents/a.hwpx")).toBe("allow")
@@ -691,8 +696,24 @@ describe("JabisuPlugin work assistant", () => {
       expect(effect(agents, "plan", "edit", "C:/a.txt")).toBe("deny")
       expect(effect(agents, "explore", "edit", "C:/a.txt")).toBe("deny")
       expect(effect(agents, "explore", "shell", "del a.txt")).toBe("ask")
+      // These questions go to a person even while 「권한 자동 수락」 is on.
+      expect(decide(agents, "build", "shell", "Move-Item a.txt b.txt").attended).toBe(true)
+      expect(decide(agents, "build", "edit", "D:\\업무\\계획.hwpx").attended).toBe(true)
+      expect(decide(agents, "explore", "shell", "del a.txt").attended).toBe(true)
     }),
   )
+
+  test("makes a question an agent already asks attended, and leaves a denial alone", () => {
+    const asks: Permission.Ruleset = [{ action: "*", resource: "*", effect: "ask" }]
+    const asked = Permission.evaluate("shell", "Move-Item a b", asks, JabisuSafety.tightening(asks))
+    expect(asked).toMatchObject({ effect: "ask", attended: true })
+
+    const denies: Permission.Ruleset = [{ action: "*", resource: "*", effect: "deny" }]
+    expect(JabisuSafety.tightening(denies)).toEqual([])
+
+    // An agent that already has the attended questions gains nothing more.
+    expect(JabisuSafety.tightening(JabisuSafety.rules)).toEqual([])
+  })
 
   it.live("tells every chat not to work around a refusal or search the user's folders", () =>
     Effect.gen(function* () {

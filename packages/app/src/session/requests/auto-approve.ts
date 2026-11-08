@@ -12,12 +12,13 @@ const retryDelayMs = 1000
 
 // Auto-approves permission requests on one server connection for the projects
 // the client-local settings cover: the app-wide default, unless a project overrides it.
+// Requests the engine marks attended are left for a person.
 export function createPermissionAutoApprover(input: { sdk: ServerSDK; data: Data }) {
   const permissions = useSettings().permissions
   const enabled = () => permissions.autoApprovesOnServer(input.sdk.scope)
 
-  const covers = (projectID: string | undefined) =>
-    permissions.autoApproves(projectSettingsKey(input.sdk.scope, projectID))
+  const covers = (permission: PermissionRequest, projectID: string | undefined) =>
+    permissions.autoApprovesRequest(projectSettingsKey(input.sdk.scope, projectID), permission)
 
   const state = { disposed: false, generation: 0, responded: new Set<string>() }
 
@@ -129,7 +130,10 @@ export function createPermissionAutoApprover(input: { sdk: ServerSDK; data: Data
   // A request from a session this client has not loaded needs that session's
   // project before a per-project choice can apply to it.
   function consider(permission: PermissionRequest) {
-    if (covers(undefined) || input.data.session.get(permission.sessionID)) return approve(permission)
+    // No project choice approves an attended request, so there is nothing to look up.
+    if (permission.attended) return
+
+    if (covers(permission, undefined) || input.data.session.get(permission.sessionID)) return approve(permission)
     void input.sdk.api.session
       .get({ sessionID: permission.sessionID })
       .then((session) => approve(permission, session.projectID))
@@ -143,7 +147,7 @@ export function createPermissionAutoApprover(input: { sdk: ServerSDK; data: Data
   ) {
     // covers() guards the retry timer path: the user may disable the setting
     // between a failed reply and its scheduled retry.
-    if (state.disposed || !covers(projectID) || state.responded.has(permission.id)) return
+    if (state.disposed || !covers(permission, projectID) || state.responded.has(permission.id)) return
     remember(permission.id)
     input.sdk.api.permission
       .reply({ sessionID: permission.sessionID, requestID: permission.id, decision: "once" })

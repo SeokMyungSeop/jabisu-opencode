@@ -1,4 +1,4 @@
-import { Show, createMemo } from "solid-js"
+import { Show, createMemo, type JSX } from "solid-js"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Button } from "@opencode/ui/button"
 import { useDialog } from "@opencode/ui/context/dialog"
@@ -19,6 +19,7 @@ export function Composer(props: {
   borderUnderlay?: boolean
   readOnly?: boolean
   suggestionBoundary?: () => HTMLElement | undefined
+  notice?: JSX.Element
 }) {
   const dialog = useDialog()
   const command = useCommand()
@@ -37,6 +38,7 @@ export function Composer(props: {
         alternateKeybind={[formatKeybind("mod", language.t), "↵"]}
         exitShellKeybind={[formatKeybind("esc", language.t)]}
         suggestionBoundary={props.suggestionBoundary}
+        notice={props.notice}
         modelControl={
           <ComposerModelControl
             loading={props.model.model.loading}

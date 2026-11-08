@@ -38,13 +38,15 @@ const CALLS = [
 // A shell redirect into a file named by drive, which is how a command writes outside the 작업실.
 const REDIRECTS = ["*> ?:/*", '*> "?:/*', "*> '?:/*", "*>?:/*", '*>"?:/*']
 
+// These questions are attended: the app asks the person even while 「권한 자동 수락」 approves other requests, since a
+// test found that switch letting the AI move a file out of 다운로드 with no one asked.
 export const rules: Permission.Ruleset = [
-  ...OUTSIDE.map((resource) => ({ action: "edit", resource, effect: "ask" as const })),
+  ...OUTSIDE.map((resource) => ({ action: "edit", resource, effect: "ask" as const, attended: true })),
   ...[
     ...COMMANDS.flatMap((command) => [`${command} *`, `* ${command} *`]),
     ...CALLS.map((call) => `*${call}*`),
     ...REDIRECTS,
-  ].map((resource) => ({ action: "shell", resource, effect: "ask" as const })),
+  ].map((resource) => ({ action: "shell", resource, effect: "ask" as const, attended: true })),
 ]
 
 /** The rules every chat gets in words, for what a command can do that no rule above can see. */
@@ -60,9 +62,14 @@ export const INSTRUCTIONS = [
 // A resource each rule covers, to see what the agent does with it now.
 const example = (pattern: string) => pattern.replaceAll("?", "C").replaceAll("*", "x")
 
-/** The rules that make an agent ask where it now allows; a denial or a question it already has stays as it is. */
+/**
+ * The rules that make an agent ask a person where it now allows or asks; a question it already has becomes attended.
+ * A denial stays as it is.
+ */
 export function tightening(permissions: Permission.Ruleset): Permission.Ruleset {
-  return rules.filter(
-    (rule) => Permission.evaluate(rule.action, example(rule.resource), permissions).effect === "allow",
-  )
+  return rules.filter((rule) => {
+    const current = Permission.evaluate(rule.action, example(rule.resource), permissions)
+
+    return current.effect === "allow" || (current.effect === "ask" && !current.attended)
+  })
 }

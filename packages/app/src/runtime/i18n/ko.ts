@@ -952,6 +952,9 @@ export const dict = {
   "jabisu.nav.conversationMenu": "대화 메뉴",
   "jabisu.nav.working": "AI가 일하는 중",
   "jabisu.nav.unread": "새 답변",
+  "jabisu.autoAccept.notice": "자동 수락 켜짐",
+  "jabisu.autoAccept.notice.tooltip":
+    "권한 요청을 묻지 않고 승인하고 있어요. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 그래도 물어봐요. 누르면 이 작업실에서 꺼요.",
   "jabisu.conversation.delete": "대화 삭제",
   "jabisu.conversation.delete.title": "「{{name}}」 대화를 삭제할까요?",
   "jabisu.conversation.delete.description":

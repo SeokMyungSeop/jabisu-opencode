@@ -391,7 +391,7 @@ export type ConfigModelSettings = { compaction?: ProviderCompaction; encoding?: 
   [x: string]: JsonValue | null
 }
 
-export type PermissionRule = { action: string; resource: string; effect: PermissionEffect }
+export type PermissionRule = { action: string; resource: string; effect: PermissionEffect; attended?: boolean }
 
 export type PluginInfo = { id?: string; source: PluginSource; features: PluginFeatures; state: PluginState }
 
@@ -772,6 +772,7 @@ export type PermissionRequest = {
   metadata?: { [x: string]: JsonValue }
   source?: PermissionSource
   message?: string
+  attended?: boolean
 }
 
 export type PermissionSavedInfo = {
@@ -1679,6 +1680,7 @@ export type PermissionAsked = {
     metadata?: { [x: string]: any }
     source?: PermissionSource
     message?: string
+    attended?: boolean
   }
 }
 
@@ -3179,6 +3181,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["id"]
   readonly parentID?: {
@@ -3193,6 +3196,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["parentID"]
   readonly title?: {
@@ -3207,6 +3211,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["title"]
   readonly agent?: {
@@ -3221,6 +3226,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["agent"]
   readonly model?: {
@@ -3235,6 +3241,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["model"]
   readonly location?: {
@@ -3249,6 +3256,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["location"]
   readonly metadata?: {
@@ -3263,6 +3271,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["metadata"]
   readonly permissions?: {
@@ -3277,6 +3286,7 @@ export type SessionCreateInput = {
       readonly action: string
       readonly resource: string
       readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
     }> | null
   }["permissions"]
 }
@@ -3319,6 +3329,7 @@ export type SessionImportInput = {
         readonly action: string
         readonly resource: string
         readonly effect: "allow" | "deny" | "ask"
+        readonly attended?: boolean
       }>
       readonly revert?: {
         readonly messageID: string
@@ -3372,6 +3383,7 @@ export type SessionImportInput = {
         readonly action: string
         readonly resource: string
         readonly effect: "allow" | "deny" | "ask"
+        readonly attended?: boolean
       }>
       readonly revert?: {
         readonly messageID: string
@@ -3425,6 +3437,7 @@ export type SessionImportInput = {
         readonly action: string
         readonly resource: string
         readonly effect: "allow" | "deny" | "ask"
+        readonly attended?: boolean
       }>
       readonly revert?: {
         readonly messageID: string
@@ -3490,36 +3503,48 @@ export type SessionSwitchModelOutput = void
 export type SessionUpdateInput = {
   readonly sessionID: { readonly sessionID: string }["sessionID"]
   readonly title?: {
-    readonly title?: string | undefined
-    readonly metadata?: { readonly [x: string]: JsonValue } | undefined
-    readonly permissions?:
-      | ReadonlyArray<{ readonly action: string; readonly resource: string; readonly effect: "allow" | "deny" | "ask" }>
-      | undefined
-    readonly archived?: boolean | undefined
+    readonly title?: string | null
+    readonly metadata?: { readonly [x: string]: JsonValue } | null
+    readonly permissions?: ReadonlyArray<{
+      readonly action: string
+      readonly resource: string
+      readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
+    }> | null
+    readonly archived?: boolean | null
   }["title"]
   readonly metadata?: {
-    readonly title?: string | undefined
-    readonly metadata?: { readonly [x: string]: JsonValue } | undefined
-    readonly permissions?:
-      | ReadonlyArray<{ readonly action: string; readonly resource: string; readonly effect: "allow" | "deny" | "ask" }>
-      | undefined
-    readonly archived?: boolean | undefined
+    readonly title?: string | null
+    readonly metadata?: { readonly [x: string]: JsonValue } | null
+    readonly permissions?: ReadonlyArray<{
+      readonly action: string
+      readonly resource: string
+      readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
+    }> | null
+    readonly archived?: boolean | null
   }["metadata"]
   readonly permissions?: {
-    readonly title?: string | undefined
-    readonly metadata?: { readonly [x: string]: JsonValue } | undefined
-    readonly permissions?:
-      | ReadonlyArray<{ readonly action: string; readonly resource: string; readonly effect: "allow" | "deny" | "ask" }>
-      | undefined
-    readonly archived?: boolean | undefined
+    readonly title?: string | null
+    readonly metadata?: { readonly [x: string]: JsonValue } | null
+    readonly permissions?: ReadonlyArray<{
+      readonly action: string
+      readonly resource: string
+      readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
+    }> | null
+    readonly archived?: boolean | null
   }["permissions"]
   readonly archived?: {
-    readonly title?: string | undefined
-    readonly metadata?: { readonly [x: string]: JsonValue } | undefined
-    readonly permissions?:
-      | ReadonlyArray<{ readonly action: string; readonly resource: string; readonly effect: "allow" | "deny" | "ask" }>
-      | undefined
-    readonly archived?: boolean | undefined
+    readonly title?: string | null
+    readonly metadata?: { readonly [x: string]: JsonValue } | null
+    readonly permissions?: ReadonlyArray<{
+      readonly action: string
+      readonly resource: string
+      readonly effect: "allow" | "deny" | "ask"
+      readonly attended?: boolean
+    }> | null
+    readonly archived?: boolean | null
   }["archived"]
 }
 

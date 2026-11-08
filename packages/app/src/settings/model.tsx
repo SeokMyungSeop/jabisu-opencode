@@ -438,6 +438,11 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         },
         // Whether a project's requests are approved without asking.
         autoApproves: (project: ScopedKey | undefined) => autoApproveOverride(project) ?? autoApproveDefault(),
+        // Whether this request is approved without asking. One the engine marks attended, such as deleting files or
+        // changing files outside the 작업실, always waits for a person.
+        autoApprovesRequest(project: ScopedKey | undefined, request: { readonly attended?: boolean }) {
+          return request.attended !== true && (autoApproveOverride(project) ?? autoApproveDefault())
+        },
         // Whether any request on the server may be approved without asking.
         autoApprovesOnServer(scope: ServerScope) {
           if (autoApproveDefault()) return true

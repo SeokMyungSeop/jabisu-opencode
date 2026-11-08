@@ -73,9 +73,13 @@ export function createSessionRequestModel() {
 
     const project = projectSettingsKey(serverSDK.scope, id ? data.session.get(id)?.projectID : undefined)
 
-    if (settings.permissions.autoApproves(project)) return
-
-    return sessionPermissionRequest(data.session.list(), data.session.permission.list, id)
+    // The auto-approver answers the rest; an attended request still shows its prompt.
+    return sessionPermissionRequest(
+      data.session.list(),
+      data.session.permission.list,
+      id,
+      (request) => !settings.permissions.autoApprovesRequest(project, request),
+    )
   })
 
   const blocked = createMemo(() => {

@@ -19945,6 +19945,9 @@
           },
           "message": {
             "type": "string"
+          },
+          "attended": {
+            "type": "boolean"
           }
         },
         "required": ["id", "sessionID", "action", "resources"],
@@ -19961,6 +19964,9 @@
           },
           "effect": {
             "$ref": "#/components/schemas/Permission.Effect"
+          },
+          "attended": {
+            "type": "boolean"
           }
         },
         "required": ["action", "resource", "effect"],

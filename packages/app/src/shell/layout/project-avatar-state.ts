@@ -38,9 +38,13 @@ export function useSessionTabAvatarState(
 
     const project = projectSettingsKey(ctx.sdk.scope, ctx.data.session.get(sessionId())?.projectID)
 
-    if (settings.permissions.autoApproves(project)) return false
-
-    return !!sessionPermissionRequest(sessions(), ctx.data.session.permission.list, sessionId())
+    // Requests the auto-approver answers need no one; attended ones do.
+    return !!sessionPermissionRequest(
+      sessions(),
+      ctx.data.session.permission.list,
+      sessionId(),
+      (request) => !settings.permissions.autoApprovesRequest(project, request),
+    )
   })
 
   const hasForms = createMemo(() => {

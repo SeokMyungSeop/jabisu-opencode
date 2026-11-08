@@ -172,7 +172,7 @@ export const MISSING: Record<string, string> = {
   "settings.models.enableAll": "모든 모델 켜기",
   "settings.models.disableAll": "모든 모델 끄기",
   "settings.permissions.autoAccept.default.description":
-    "권한 요청을 묻지 않고 승인합니다. 프로젝트마다 설정에서 따로 정할 수 있습니다.",
+    "권한 요청을 묻지 않고 승인합니다. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 켜져 있어도 묻습니다. 작업실마다 따로 정할 수 있습니다.",
   "ui.sessionTurn.freeLimit.title": "오늘의 무료 메시지를 모두 썼습니다.",
   "ui.sessionTurn.freeLimit.lineReset": "오늘의 무료 메시지를 모두 썼습니다. {{time}}에 다시 채워집니다.",
   "dialog.usageExceeded.freeTier.reset": "무료 메시지는 {{time}}에 다시 채워집니다.",
@@ -200,7 +200,8 @@ const OVERRIDES: Record<string, string> = {
   "home.project.missing.description": "{{name}}의 폴더가 더 이상 없습니다.",
   "project.settings.folderMissing.title": "작업실 폴더를 찾을 수 없습니다",
   "project.settings.folderMissing.description": "폴더를 되살리거나 이 작업실을 닫으세요.",
-  "project.settings.autoAccept.description": "이 작업실의 권한 요청을 묻지 않고 승인합니다",
+  "project.settings.autoAccept.description":
+    "이 작업실의 권한 요청을 묻지 않고 승인합니다. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 그래도 묻습니다",
   "project.settings.autoAccept.default.on": "기본값 따르기 (켜짐)",
   "project.settings.autoAccept.default.off": "기본값 따르기 (꺼짐)",
   "project.settings.autoAccept.on": "켜짐",
@@ -211,7 +212,10 @@ const OVERRIDES: Record<string, string> = {
   "provider.connect.models.available": "쓸 수 있는 모델",
   "provider.connect.models.list": "{{provider}}에서 쓸 수 있는 모델",
   "toast.permissions.autoaccept.project.title": "이 작업실의 권한을 자동 승인합니다",
-  "toast.permissions.autoaccept.project.description": "이 작업실의 권한 요청은 자동으로 승인됩니다",
+  "toast.permissions.autoaccept.project.description":
+    "이 작업실의 권한 요청은 자동으로 승인됩니다. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 그래도 묻습니다",
+  "toast.permissions.autoaccept.on.description":
+    "권한 요청이 자동으로 승인됩니다. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 그래도 묻습니다",
   "session.location.unavailable": "대화의 작업실 폴더를 찾을 수 없습니다",
   "session.location.description": "이 대화를 이어 갈 다른 폴더를 고르세요.",
   "session.location.choose": "폴더 고르기",

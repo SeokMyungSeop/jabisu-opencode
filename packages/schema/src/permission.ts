@@ -31,6 +31,8 @@ const RequestFields = {
   metadata: Schema.Record(Schema.String, Schema.Unknown).pipe(optional),
   source: Source.pipe(optional),
   message: Schema.String.pipe(optional),
+  /** A rule asked for a person to answer, so a client that approves requests on its own leaves this one alone. */
+  attended: Schema.Boolean.pipe(optional),
 }
 
 export const Request = Schema.Struct({
@@ -61,6 +63,11 @@ export const Rule = Schema.Struct({
   action: Schema.String,
   resource: Schema.String,
   effect: Effect,
+  /**
+   * For an ask: a person answers it even where a client approves requests on its own, as for deleting files or
+   * changing files outside the project.
+   */
+  attended: Schema.Boolean.pipe(optional),
 }).annotate({ identifier: "Permission.Rule" })
 
 export const Ruleset = Schema.Array(Rule).annotate({ identifier: "Permission.Ruleset" })

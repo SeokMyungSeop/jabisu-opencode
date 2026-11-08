@@ -296,6 +296,31 @@ describe("Permission", () => {
     }),
   )
 
+  it.effect("marks a request attended only when a rule that asked says so", () =>
+    Effect.gen(function* () {
+      yield* setup([
+        { action: "shell", resource: "*", effect: "allow" },
+        { action: "shell", resource: "*Move-Item*", effect: "ask", attended: true },
+        { action: "shell", resource: "git *", effect: "ask" },
+      ])
+
+      const moved = yield* waitForRequest({ action: "shell", resources: ["ls", "Move-Item a.pdf b.pdf"] })
+      expect(moved.request.attended).toBe(true)
+      yield* moved.service.reply({ requestID: moved.request.id, reply: "once" })
+      yield* Fiber.join(moved.fiber)
+
+      const plain = yield* waitForRequest({
+        id: Permission.ID.create("per_plain"),
+        action: "shell",
+        resources: ["git status"],
+      })
+      // Absent rather than false, so a request without the mark encodes as before.
+      expect(plain.request).not.toHaveProperty("attended")
+      yield* plain.service.reply({ requestID: plain.request.id, reply: "once" })
+      yield* Fiber.join(plain.fiber)
+    }),
+  )
+
   it.effect("drops undefined metadata values so pending requests encode as JSON", () =>
     Effect.gen(function* () {
       yield* setup()

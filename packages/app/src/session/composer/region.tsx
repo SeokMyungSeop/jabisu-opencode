@@ -31,6 +31,7 @@ import { SessionWorkflow } from "@/session/workflow/strip"
 import { JABISU } from "@opencode/ui/logo"
 import { createSessionComposerController, type SessionComposerController } from "./controller"
 import { SessionQueuePanel } from "./queue-panel"
+import { AutoApproveNotice } from "./auto-approve-notice"
 import { resolveSessionComposerSelection } from "./selection"
 import { createSessionRequestModel } from "../requests/model"
 import type { Region } from "@/runtime/extension/panels"
@@ -374,6 +375,11 @@ export function ActiveSessionComposerRegion(props: {
                   borderUnderlay
                   readOnly={props.model.queue.undoing()}
                   suggestionBoundary={props.suggestionBoundary}
+                  notice={
+                    <Show when={JABISU}>
+                      <AutoApproveNotice projectID={props.session.data.info()?.projectID} />
+                    </Show>
+                  }
                 />
               </div>
             </div>

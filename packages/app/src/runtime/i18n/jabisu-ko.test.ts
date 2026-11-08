@@ -44,7 +44,7 @@ describe("자비수 Korean", () => {
 
     expect(Object.keys({ ...appEnglish, ...uiEnglish }).filter((key) => !(key in shown))).toEqual([])
     expect(shown["settings.permissions.autoAccept.default.description"]).toBe(
-      "권한 요청을 묻지 않고 승인합니다. 작업실마다 설정에서 따로 정할 수 있습니다.",
+      "권한 요청을 묻지 않고 승인합니다. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 켜져 있어도 묻습니다. 작업실마다 따로 정할 수 있습니다.",
     )
     expect(shown["command.session.previous"]).toBe("이전 대화")
     expect(shown["settings.tab.about"]).toBe("정보")
