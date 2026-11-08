@@ -543,6 +543,11 @@ async function sendPrompt(
   }
 
   await session.data.session.prompt(admission).catch(() => session.data.session.prompt(admission))
+
+  // The 작업실 keeps a copy of what the message brought, so the folder holds everything the conversation worked from.
+  // The conversation does not wait for it, and a copy that fails leaves the message as it was sent.
+  if (session.keep && admission.files.length > 0)
+    void session.keep(admission.files.map((file) => ({ uri: file.uri, name: file.name }))).catch(() => undefined)
 }
 
 async function buildSubmissionRequest(session: ComposerSession, value: ComposerSubmission) {

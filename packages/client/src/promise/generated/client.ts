@@ -319,6 +319,8 @@ import type {
   JabisuWorkroomRenameOutput,
   JabisuWorkroomReleaseInput,
   JabisuWorkroomReleaseOutput,
+  JabisuWorkroomKeepInput,
+  JabisuWorkroomKeepOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -2635,6 +2637,19 @@ export function make(options: ClientOptions) {
               successStatus: 204,
               declaredStatuses: [400, 401, 404],
               empty: true,
+            },
+            requestOptions,
+          ),
+        keep: (input: JabisuWorkroomKeepInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomKeepOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom/keep`,
+              query: { location: input["location"] },
+              body: { directory: input["directory"], files: input["files"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
             },
             requestOptions,
           ),

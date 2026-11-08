@@ -321,6 +321,8 @@ import type {
   JabisuWorkroomRenameOutput,
   JabisuWorkroomReleaseInput,
   JabisuWorkroomReleaseOutput,
+  JabisuWorkroomKeepInput,
+  JabisuWorkroomKeepOutput,
 } from "../api/api.js"
 import { ClientError } from "./client-error.js"
 
@@ -1864,6 +1866,14 @@ const EndpointJabisuWorkroomRelease = (raw: RawClient["server.jabisu"]) => (inpu
     }).pipe(Effect.mapError(mapClientError)),
   )
 
+const EndpointJabisuWorkroomKeep = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkroomKeepInput) =>
+  preserveEffect<JabisuWorkroomKeepOutput>()(
+    raw["jabisu.workroom.keep"]({
+      query: { location: input["location"] },
+      payload: { directory: input["directory"], files: input["files"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   transcription: { get: EndpointJabisuTranscriptionGet(raw), update: EndpointJabisuTranscriptionUpdate(raw) },
   jiphyeonjeon: {
@@ -1887,6 +1897,7 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
     create: EndpointJabisuWorkroomCreate(raw),
     rename: EndpointJabisuWorkroomRename(raw),
     release: EndpointJabisuWorkroomRelease(raw),
+    keep: EndpointJabisuWorkroomKeep(raw),
   },
 })
 

@@ -1,6 +1,7 @@
 export * as Workroom from "./workroom.js"
 
 import path from "path"
+import { fileURLToPath } from "url"
 import { Effect, Schedule, Schema } from "effect"
 import { AbsolutePath } from "@opencode/schema/schema"
 import type { FSUtil } from "@opencode/util/fs-util"
@@ -110,6 +111,85 @@ export const create = Effect.fn("Workroom.create")(function* (
     return { directory, name: candidate }
   }
   return yield* new WorkroomError({ reason: `${base} and 98 numbered copies already exist in ${parent}` })
+})
+
+/** An attachment the app sent with a message: a file on this PC (`file://`) or pasted data (`data:`). */
+export interface Attachment {
+  readonly uri: string
+  readonly name?: string
+}
+
+const EXTENSIONS: Readonly<Record<string, string>> = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/gif": ".gif",
+  "image/webp": ".webp",
+  "application/pdf": ".pdf",
+  "text/plain": ".txt",
+}
+
+const inside = (folder: string, file: string) => {
+  const relative = path.relative(folder, file)
+  return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative)
+}
+
+/** Where a kept file goes: its own name, else 「이름 (2).확장자」 …; nowhere when a file of that name and size is there. */
+const place = Effect.fnUntraced(function* (deps: Dependencies, folder: string, name: string, size: number) {
+  const safe = path.basename(name).replace(INVALID, " ").trim() || "첨부"
+  const { name: stem, ext } = path.parse(safe)
+  for (let index = 1; index <= 99; index++) {
+    const candidate = path.join(folder, index === 1 ? safe : `${stem} (${index})${ext}`)
+    if (!(yield* deps.fs.existsSafe(candidate))) return candidate
+    const info = yield* deps.fs.stat(candidate).pipe(Effect.option)
+    if (info._tag === "Some" && Number(info.value.size) === size) return undefined
+  }
+  return undefined
+})
+
+const keepOne = Effect.fnUntraced(function* (deps: Dependencies, folder: string, file: Attachment) {
+  if (file.uri.startsWith("file:")) {
+    const from = fileURLToPath(file.uri)
+    if (inside(folder, from)) return undefined
+    const info = yield* deps.fs.stat(from)
+    if (info.type !== "File") return undefined
+    const target = yield* place(deps, folder, file.name ?? path.basename(from), Number(info.size))
+    if (!target) return undefined
+    yield* deps.fs.copyFile(from, target)
+    return path.basename(target)
+  }
+  // data:<mime>[;<parameter>…][;base64],<body>
+  const comma = file.uri.indexOf(",")
+  if (!file.uri.startsWith("data:") || comma === -1) return undefined
+  const [mime = "", ...parameters] = file.uri.slice("data:".length, comma).split(";")
+  const body = file.uri.slice(comma + 1)
+  const bytes = parameters.includes("base64") ? Buffer.from(body, "base64") : Buffer.from(decodeURIComponent(body))
+  const target = yield* place(deps, folder, file.name ?? `첨부${EXTENSIONS[mime] ?? ""}`, bytes.length)
+  if (!target) return undefined
+  yield* deps.fs.writeWithDirs(target, bytes)
+  return path.basename(target)
+})
+
+/**
+ * Keeps a message's attachments in its 작업실, so the folder holds everything the conversation worked from and can
+ * be handed over as it is. Only folders 「새 작업실」 made take copies; the originals stay where they were. A file
+ * already in the folder, or one of the same name and size, is not copied again. Returns the names kept.
+ */
+export const keep = Effect.fn("Workroom.keep")(function* (
+  deps: Dependencies,
+  input: { readonly directory: string; readonly files: readonly Attachment[] },
+) {
+  const folder = path.resolve(input.directory)
+  if (!owned(deps.global, folder) || !(yield* deps.fs.isDir(folder))) return []
+  const kept: string[] = []
+  for (const file of input.files) {
+    const saved = yield* keepOne(deps, folder, file).pipe(
+      Effect.catchCause((cause) =>
+        Effect.logWarning("an attachment was not kept in its 작업실", { cause }).pipe(Effect.as(undefined)),
+      ),
+    )
+    if (saved) kept.push(saved)
+  }
+  return kept
 })
 
 const FORBIDDEN = /[<>:"/\\|?*\u0000-\u001f]/

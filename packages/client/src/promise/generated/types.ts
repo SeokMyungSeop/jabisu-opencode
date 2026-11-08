@@ -6238,3 +6238,17 @@ export type JabisuWorkroomReleaseInput = {
 }
 
 export type JabisuWorkroomReleaseOutput = void
+
+export type JabisuWorkroomKeepInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly directory: {
+    readonly directory: string
+    readonly files: ReadonlyArray<{ readonly uri: string; readonly name?: string | undefined }>
+  }["directory"]
+  readonly files: {
+    readonly directory: string
+    readonly files: ReadonlyArray<{ readonly uri: string; readonly name?: string | undefined }>
+  }["files"]
+}
+
+export type JabisuWorkroomKeepOutput = { kept: Array<string> }

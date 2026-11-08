@@ -84,6 +84,15 @@ it.live("renames a 작업실 with its folder, and its conversation follows it", 
     expect(yield* Effect.promise(() => fs.readFile(path.join(target, "메모.txt"), "utf8"))).toBe("예산\n")
     expect((yield* call("GET", `/api/session/${conversation}`)).body.data.location.directory).toBe(target)
 
+    // What a message brings is kept in its 작업실.
+    expect(
+      yield* call("POST", "/api/jabisu/workroom/keep", {
+        directory: target,
+        files: [{ uri: "data:text/plain,%EC%95%88%EB%85%95", name: "인사.txt" }],
+      }),
+    ).toEqual({ status: 200, body: { kept: ["인사.txt"] } })
+    expect(yield* Effect.promise(() => fs.readFile(path.join(target, "인사.txt"), "utf8"))).toBe("안녕")
+
     // Throwing a 작업실 away starts on the server, which lets go of the folder; the desktop moves it to the bin.
     const mcp = `/api/mcp?${new URLSearchParams({ "location[directory]": target })}`
     expect((yield* call("GET", mcp)).status).toBe(200)

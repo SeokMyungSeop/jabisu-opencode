@@ -444,4 +444,24 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
         }),
       ),
   )
+  .add(
+    HttpApiEndpoint.post("jabisu.workroom.keep", "/api/jabisu/workroom/keep", {
+      query: LocationQuery,
+      payload: Schema.Struct({
+        directory: Schema.String,
+        files: Schema.Array(Schema.Struct({ uri: Schema.String, name: Schema.optional(Schema.String) })),
+      }),
+      success: Schema.Struct({ kept: Schema.Array(Schema.String) }),
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.keep",
+          summary: "Keep attachments in a 작업실",
+          description:
+            "Copy a message's attachments (file:// paths on this computer or data: URLs) into its 작업실 made with 「새 작업실」, leaving the originals where they were. Files already there are not copied again; other folders take no copies. Returns the names kept.",
+        }),
+      ),
+  )
   .annotateMerge(OpenApi.annotations({ title: "jabisu", description: "자비수 routes." }))

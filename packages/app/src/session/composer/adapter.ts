@@ -38,6 +38,8 @@ export function createActiveComposerAdapter(input: {
       data,
       current: () => data.session.get(id),
       admitted: (messageID) => data.session.input.has(id, messageID) || !!data.session.message.get(id, messageID),
+      keep: (files) =>
+        server.api.jabisu.workroom.keep({ directory: location().directory, files }).then(() => undefined),
     }),
     interrupt: () =>
       server.api.session

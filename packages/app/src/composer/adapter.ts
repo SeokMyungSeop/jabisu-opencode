@@ -91,6 +91,8 @@ export type ComposerSession = {
     | undefined
   >
   admitted: (messageID: string) => boolean
+  /** Copies a sent message's attachments into its 작업실; folders 「새 작업실」 did not make take none. */
+  keep?: (files: ReadonlyArray<{ uri: string; name?: string }>) => Promise<void>
 }
 
 type ComposerAdapterBase = {

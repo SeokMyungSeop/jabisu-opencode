@@ -73,6 +73,51 @@ describe("Workroom", () => {
     }),
   )
 
+  it.live("keeps a message's attachments in its 작업실 and leaves the originals where they were", () =>
+    Effect.gen(function* () {
+      const { deps, root } = yield* setup
+      const room = (yield* Workroom.create(deps, { text: "회의록 만들어 줘", files: [] })).directory
+      const elsewhere = path.join(path.dirname(root), "받은 파일")
+      const recording = path.join(elsewhere, "회의 녹음.m4a")
+      yield* Effect.promise(() => fs.mkdir(elsewhere, { recursive: true }))
+      yield* Effect.promise(() => fs.writeFile(recording, "소리"))
+      yield* Effect.promise(() => fs.writeFile(path.join(room, "메모.txt"), "이미 있음"))
+      const file = (target: string) => ({ uri: Bun.pathToFileURL(target).href })
+
+      const kept = yield* Workroom.keep(deps, {
+        directory: room,
+        files: [
+          file(recording),
+          { uri: `data:image/png;base64,${Buffer.from("그림").toString("base64")}`, name: "캡처.png" },
+          { uri: "data:text/plain,%EC%95%88%EB%85%95" },
+          // Already in the folder: nothing to copy.
+          file(path.join(room, "메모.txt")),
+        ],
+      })
+
+      expect(kept).toEqual(["회의 녹음.m4a", "캡처.png", "첨부.txt"])
+      expect(yield* Effect.promise(() => fs.readFile(path.join(room, "회의 녹음.m4a"), "utf8"))).toBe("소리")
+      expect(yield* Effect.promise(() => fs.readFile(path.join(room, "캡처.png"), "utf8"))).toBe("그림")
+      expect(yield* Effect.promise(() => fs.readFile(path.join(room, "첨부.txt"), "utf8"))).toBe("안녕")
+      expect(yield* Effect.promise(() => fs.readFile(recording, "utf8"))).toBe("소리")
+
+      // The same file sent again is there already; a different one with its name is numbered.
+      expect(yield* Workroom.keep(deps, { directory: room, files: [file(recording)] })).toEqual([])
+      yield* Effect.promise(() => fs.writeFile(recording, "다른 녹음"))
+      expect(yield* Workroom.keep(deps, { directory: room, files: [file(recording)] })).toEqual(["회의 녹음 (2).m4a"])
+
+      // Folders the user added from elsewhere take no copies.
+      expect(yield* Workroom.keep(deps, { directory: elsewhere, files: [file(recording)] })).toEqual([])
+      // A file that cannot be read is skipped, and the others are still kept.
+      expect(
+        yield* Workroom.keep(deps, {
+          directory: room,
+          files: [file(path.join(elsewhere, "없는 파일.hwpx")), { uri: "data:,%EB%8B%A4%EC%9D%8C", name: "다음.txt" }],
+        }),
+      ).toEqual(["다음.txt"])
+    }),
+  )
+
   it.live("makes the folder under 자비수 작업실 and numbers a name already taken", () =>
     Effect.gen(function* () {
       const { deps, root } = yield* setup

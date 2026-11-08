@@ -190,6 +190,10 @@ export function createNewSessionComposerAdapter(props: {
           current: () => data.session.get(created.id),
           admitted: (messageID) =>
             data.session.input.has(created.id, messageID) || !!data.session.message.get(created.id, messageID),
+          keep: (files) =>
+            afterCreation(() =>
+              serverSDK.api.jabisu.workroom.keep({ directory: sessionDirectory, files }).then(() => undefined),
+            ),
         },
       }
     },

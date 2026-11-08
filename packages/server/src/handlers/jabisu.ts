@@ -240,6 +240,9 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
       .handle("jabisu.workroom.release", (ctx) =>
         Workroom.release(workroom, ctx.payload.directory).pipe(Effect.asVoid, Effect.mapError(workroomError)),
       )
+      .handle("jabisu.workroom.keep", (ctx) =>
+        Workroom.keep({ fs, global }, ctx.payload).pipe(Effect.map((kept) => ({ kept }))),
+      )
       .handle("jabisu.skills.list", () => JabisuSkills.list({ fs, global }))
       .handle("jabisu.skills.copy", (ctx) =>
         JabisuSkills.copy({ fs, global }, ctx.payload.name).pipe(
