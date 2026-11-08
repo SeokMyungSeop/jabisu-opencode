@@ -73,6 +73,18 @@ describe("WorkIndex", () => {
     }),
   )
 
+  it.live("finds a file named on a Mac, whose Hangul is decomposed, by a word typed as usual", () =>
+    Effect.gen(function* () {
+      const { folder, db } = yield* setup
+
+      yield* write(path.join(folder, "출장 결과보고.txt".normalize("NFD")), "세종 출장")
+      yield* WorkIndex.scan(db, folder)
+
+      const hits = WorkIndex.search(db, { words: ["결과보고"], where: "name", limit: 10 })
+      expect(hits.map((hit) => path.basename(hit.path).normalize("NFC"))).toEqual(["출장 결과보고.txt"])
+    }),
+  )
+
   it.live("lists the newest files, filtered by type and date, without words", () =>
     Effect.gen(function* () {
       const { folder, db } = yield* setup

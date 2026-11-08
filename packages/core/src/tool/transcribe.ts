@@ -284,6 +284,25 @@ try {
 `
 
 const toWav = Effect.fn("Transcribe.toWav")(function* (deps: Dependencies, file: string, target: string) {
+  // macOS converts with its own afconvert, which reads MP3, M4A, AAC, WAV, AIFF, CAF and FLAC through Core Audio.
+  // A WAV is converted too, since the parts are cut from 16 kHz mono samples.
+  if (process.platform === "darwin") {
+    yield* deps.fs.makeDirectory(path.dirname(target), { recursive: true }).pipe(Effect.ignore)
+    const result = yield* deps.process
+      .run(
+        ChildProcess.make(
+          "/usr/bin/afconvert",
+          ["-f", "WAVE", "-d", "LEI16@16000", "-c", "1", path.resolve(file), path.resolve(target)],
+          { stdin: "ignore" },
+        ),
+      )
+      .pipe(Effect.mapError(() => new TranscribeError({ reason: "macOS afconvert could not be started to convert it" })))
+    if (result.exitCode !== 0)
+      return yield* new TranscribeError({
+        reason: `macOS could not convert it to WAV (${result.stderr.toString("utf8").trim() || `exit ${result.exitCode}`}); MP3, M4A, AAC, WAV, AIFF and FLAC work`,
+      })
+    return
+  }
   if (process.platform !== "win32") {
     if (path.extname(file).toLowerCase() === ".wav") return yield* deps.fs.copyFile(file, target).pipe(Effect.orDie)
     return yield* new TranscribeError({ reason: "only WAV recordings can be transcribed on this system" })

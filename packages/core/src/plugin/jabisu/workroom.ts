@@ -35,7 +35,12 @@ export interface Dependencies {
 /** The folder that holds every 작업실 made with 「새 작업실」. */
 export const root = (global: Pick<Global.Interface, "home">) => path.join(global.home, "Documents", ROOT)
 
-const same = (a: string, b: string) => (process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b)
+// Windows and macOS folder names ignore letter case by default, and macOS may hand back Hangul decomposed (NFD).
+const same = (a: string, b: string) => {
+  if (process.platform === "win32") return a.toLowerCase() === b.toLowerCase()
+  if (process.platform === "darwin") return a.normalize("NFC").toLowerCase() === b.normalize("NFC").toLowerCase()
+  return a === b
+}
 
 /** Whether a folder is one 「새 작업실」 made, directly inside the 작업실 folder. */
 export function owned(global: Pick<Global.Interface, "home">, directory: string) {

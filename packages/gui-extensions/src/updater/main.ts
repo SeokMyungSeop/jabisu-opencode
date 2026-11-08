@@ -9,8 +9,15 @@ import { make } from "./machine"
 const setup: MainSetup<typeof definition> = async (ctx) => {
   const build = ctx.build
   const lifecycle = ctx.lifecycle
-  // Only builds with an update feed check for updates: beta, stable, and 자비수 (its GitHub Releases).
-  const enabled = build.packaged && (build.channel === "beta" || build.channel === "prod" || build.channel === "jabisu")
+
+  // Only builds with an update feed check for updates: beta, stable, and 자비수 (its GitHub Releases). 자비수 for
+  // macOS is signed ad hoc, which cannot replace itself, and its releases carry no macOS feed, so it does not check.
+  const enabled =
+    build.packaged &&
+    (build.channel === "beta" ||
+      build.channel === "prod" ||
+      (build.channel === "jabisu" && process.platform !== "darwin"))
+
   // Holds no resources, so it needs no cleanup.
   const context = logContext(ctx.log.write)
   const runPromise = Effect.runPromiseWith(context)

@@ -115,9 +115,10 @@ export const Plugin = define({
       for (const { folder, skill } of skills) editor.add(hidden.has(folder) ? { ...skill, autoinvoke: false } : skill)
     })
     yield* ctx.tool.transform((editor) => editor.add(SkillTurnOn.tool({ fs, global })))
-    // FilmCraft's remote control needs its token, which is made only once FilmCraft is installed.
+    // FilmCraft is a Windows program, and its remote control needs its token, which is made only once it is installed.
     const filmcraft = FilmCraft.cli(process.env.ProgramFiles ?? "C:\\Program Files")
-    const filmcraftServer = (yield* fs.exists(filmcraft).pipe(Effect.orElseSucceed(() => false)))
+    const filmcraftServer =
+      process.platform === "win32" && (yield* fs.exists(filmcraft).pipe(Effect.orElseSucceed(() => false)))
       ? yield* FilmCraft.token(fs, FilmCraft.tokenFile(global.data)).pipe(
           Effect.map((token) => FilmCraft.server(filmcraft, token)),
           Effect.catchCause((cause) =>
