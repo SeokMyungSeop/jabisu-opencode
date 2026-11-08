@@ -957,7 +957,7 @@ export const dict = {
     "AI가 허락을 묻지 않고 바로 일하고 있어요. 파일 지우기·옮기기와 작업실 밖 파일 고치기는 그래도 물어봐요. 눌러서 끌 수 있어요.",
   "jabisu.autoAccept.off.title": "권한 자동 수락을 끌까요?",
   "jabisu.autoAccept.off.description":
-    "끄면 AI가 파일을 만들거나 고치거나 명령을 실행하기 전에 매번 허락을 물어요. 모든 작업실에 적용돼요. 다시 켜려면 설정 → 일반 → 「권한 자동 수락」을 켜세요.",
+    "끄면 AI가 파일을 만들거나 고치거나 명령을 실행하기 전에 매번 허락을 물어요. 모든 작업실에 적용돼요. 다시 켜려면 설정 → 환경 설정 → 「권한 자동 수락」을 켜세요.",
   "jabisu.autoAccept.off.confirm": "끄기",
   "jabisu.conversation.delete": "대화 삭제",
   "jabisu.conversation.delete.title": "「{{name}}」 대화를 삭제할까요?",

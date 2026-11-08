@@ -1111,7 +1111,7 @@ export const dict = {
     "The AI works without asking first. Deleting or moving files and changing files outside the workroom still ask. Click to turn it off.",
   "jabisu.autoAccept.off.title": "Turn off auto-approve?",
   "jabisu.autoAccept.off.description":
-    "The AI will ask before it creates or changes files or runs a command. This applies to every workroom. To turn it back on, go to Settings → General → Auto-accept permissions.",
+    "The AI will ask before it creates or changes files or runs a command. This applies to every workroom. To turn it back on, go to Settings → Preferences → Auto-accept permissions.",
   "jabisu.autoAccept.off.confirm": "Turn off",
   "jabisu.conversation.delete": "Delete conversation",
   "jabisu.conversation.delete.title": "Delete the conversation 「{{name}}」?",
