@@ -1,5 +1,9 @@
 import { Marked } from "marked"
 
+// Only ~~double~~ tildes strike text through. GFM also strikes a single pair, but a single tilde is how Korean
+// writes ranges, as in 「제86조~제87조, 제88조~제93조」, which would otherwise lose everything between them to a line.
+const doubleTildeDel = /^~~(?=[^\s~])([\s\S]*?[^\s~])~~(?!~)/
+
 export function createMarkdownBase() {
   return new Marked({
     renderer: {
@@ -7,6 +11,16 @@ export function createMarkdownBase() {
         const titleAttr = title ? ` title="${title}"` : ""
 
         return `<a href="${href}"${titleAttr} class="external-link" target="_blank" rel="noopener noreferrer">${this.parser.parseInline(tokens)}</a>`
+      },
+    },
+    tokenizer: {
+      // Returning nothing (not false) keeps marked's own single-tilde rule from running after this one.
+      del(src) {
+        const match = doubleTildeDel.exec(src)
+
+        if (!match) return
+
+        return { type: "del", raw: match[0], text: match[1], tokens: this.lexer.inlineTokens(match[1]) }
       },
     },
   })
