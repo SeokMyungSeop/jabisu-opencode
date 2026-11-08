@@ -93,7 +93,8 @@ jobs:
           ls "$app/Contents/Resources" | grep LICENSE
           ls -la *.dmg
 
-      # Opens the app for a while to catch a crash at launch, such as a signature that keeps a framework from loading.
+      # Opens the app for a while to catch a crash at launch, such as a signature that keeps a framework from loading,
+      # and photographs the screen so the first window can be seen without a Mac.
       - name: Open the app
         continue-on-error: true
         working-directory: packages/desktop/dist
@@ -101,15 +102,16 @@ jobs:
           app=$(find . -maxdepth 2 -name "Jabisu.app" -type d | head -1)
           "$app/Contents/MacOS/Jabisu" > launch.log 2>&1 &
           pid=$!
-          sleep 30
+          sleep 45
+          screencapture -x "$GITHUB_WORKSPACE/screenshot-mac-${{ matrix.settings.arch }}.png" || echo "screencapture failed"
           if kill -0 "$pid" 2>/dev/null; then
-            echo "자비수 is still running after 30 seconds"
+            echo "자비수 is still running after 45 seconds"
             kill "$pid"
             # The engine it started runs on as a background service from its staged copy.
             pkill -f opencode-cli || true
             exit 0
           fi
-          echo "자비수 exited within 30 seconds"
+          echo "자비수 exited within 45 seconds"
           tail -50 launch.log
           exit 1
 
@@ -119,6 +121,13 @@ jobs:
           path: packages/desktop/dist/*.dmg
           if-no-files-found: error
           compression-level: 0
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: screenshot-mac-${{ matrix.settings.arch }}
+          path: screenshot-mac-*.png
+          if-no-files-found: warn
 
   linux:
     if: github.repository == 'SeokMyungSeop/jabisu-opencode'
@@ -164,24 +173,30 @@ jobs:
           ls linux-unpacked | grep LICENSE
           dpkg-deb --field *.deb Package Version Maintainer
 
-      # Opens the app under a virtual display for a while to catch a crash at launch.
+      # Opens the app under a virtual display for a while to catch a crash at launch, and photographs that display so
+      # the first window can be seen without a Linux PC.
       - name: Open the app
         continue-on-error: true
         working-directory: packages/desktop/dist
         run: |
-          command -v xvfb-run || { sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb; }
-          xvfb-run -a ./linux-unpacked/io.github.seokmyungseop.jabisu --no-sandbox > launch.log 2>&1 &
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb imagemagick
+          cat > open-app.sh <<'SH'
+          ./linux-unpacked/io.github.seokmyungseop.jabisu --no-sandbox > launch.log 2>&1 &
           pid=$!
-          sleep 30
+          sleep 45
+          import -window root "$GITHUB_WORKSPACE/screenshot-linux-x64.png" || echo "screen capture failed"
           if kill -0 "$pid" 2>/dev/null; then
-            echo "자비수 is still running after 30 seconds"
+            echo "자비수 is still running after 45 seconds"
             kill "$pid"
             pkill -f opencode-cli || true
             exit 0
           fi
-          echo "자비수 exited within 30 seconds"
+          echo "자비수 exited within 45 seconds"
           tail -50 launch.log
           exit 1
+          SH
+          xvfb-run -a -s "-screen 0 1440x900x24" bash open-app.sh
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -191,3 +206,10 @@ jobs:
             packages/desktop/dist/*.deb
           if-no-files-found: error
           compression-level: 0
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: screenshot-linux-x64
+          path: screenshot-linux-*.png
+          if-no-files-found: warn
