@@ -86,6 +86,13 @@ export interface WorkflowEstimate {
 // Fewer earlier runs than this are too few to go by.
 const HISTORY_MIN = 3
 
+// People mind work that runs past its estimate more than work that ends early, so the shown estimate is the expected
+// length with half again and 20 seconds on top.
+const GENEROUS = { factor: 1.5, extra: 20 } as const
+
+/** Seconds left of a generous estimate for work expected to take `total` seconds, `elapsed` seconds in. */
+const generous = (total: number, elapsed: number) => Math.ceil(total * GENEROUS.factor + GENEROUS.extra - elapsed)
+
 /** The run to remember once a request has finished. */
 export function finishedRun(flow: Workflow): WorkflowRun | undefined {
   if (flow.running || flow.finished === undefined) return
@@ -98,9 +105,9 @@ export function finishedRun(flow: Workflow): WorkflowRun | undefined {
 }
 
 /**
- * How long a running request may still take. With the AI's own to-do list, from the pace of the steps done so far;
- * otherwise, or before a step is done, from the middle length of earlier requests on this PC that did the same kind
- * of work. Nothing while there is no basis.
+ * How long a running request may still take, generously. The expected length comes from the pace of the steps done so
+ * far when the AI wrote a to-do list; otherwise, or before a step is done, from the middle length of earlier requests
+ * on this PC that did the same kind of work. Nothing while there is no basis.
  */
 export function estimate(
   flow: Workflow,
@@ -117,7 +124,11 @@ export function estimate(
     // The step at work is about half done.
     const active = flow.steps.some((step) => step.status === "active") ? 0.5 : 0
 
-    if (done > 0) return { remaining: Math.round((elapsed / done) * (waiting + active)), basis: "plan" }
+    if (done > 0) {
+      const total = elapsed + (elapsed / done) * (waiting + active)
+
+      return { remaining: generous(total, elapsed), basis: "plan" }
+    }
   }
 
   const law = flow.steps.some((step) => step.kind === "law")
@@ -126,7 +137,7 @@ export function estimate(
 
   if (similar.length < HISTORY_MIN) return
 
-  return { remaining: Math.round(similar[Math.floor(similar.length / 2)]! - elapsed), basis: "history" }
+  return { remaining: generous(similar[Math.floor(similar.length / 2)]!, elapsed), basis: "history" }
 }
 
 const TODO_STATUS: Record<string, WorkflowStatus> = {

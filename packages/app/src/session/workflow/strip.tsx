@@ -91,11 +91,11 @@ export function SessionWorkflow(props: {
 
     if (value.remaining <= 5) return { text: language.t("jabisu.workflow.eta.soon"), hint }
 
-    // Coarse on purpose: tens of seconds under a minute, whole minutes above.
+    // Coarse and rounded up on purpose: tens of seconds under a minute, whole minutes above.
     const time =
       value.remaining < 60
-        ? language.t("jabisu.workflow.elapsed.seconds", { seconds: Math.max(10, Math.round(value.remaining / 10) * 10) })
-        : language.t("jabisu.workflow.eta.minutes", { minutes: Math.round(value.remaining / 60) })
+        ? language.t("jabisu.workflow.elapsed.seconds", { seconds: Math.max(10, Math.ceil(value.remaining / 10) * 10) })
+        : language.t("jabisu.workflow.eta.minutes", { minutes: Math.ceil(value.remaining / 60) })
 
     return { text: language.t("jabisu.workflow.eta", { time }), hint }
   })

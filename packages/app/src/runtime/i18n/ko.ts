@@ -968,16 +968,16 @@ export const dict = {
   "jabisu.room.rename.save": "바꾸기",
   "jabisu.room.delete.title": "「{{name}}」 작업실을 삭제할까요?",
   "jabisu.room.delete.owned":
-    "「폴더도 삭제」를 누르면 폴더는 휴지통으로 가서 되살릴 수 있어요. 「목록에서만 삭제」는 폴더와 대화를 그대로 두고 목록에서만 빼요.",
+    "「폴더 및 대화도 삭제」를 누르면 폴더는 휴지통으로 가서 되살릴 수 있어요. 「목록에서만 삭제」는 폴더와 대화를 그대로 두고 목록에서만 빼요.",
   "jabisu.room.delete.conversations":
-    "⚠ 「폴더도 삭제」를 누르면 이 작업실의 대화 {{count}}개도 함께 삭제돼요. 대화 내용은 되살릴 수 없으니 주의하세요.",
+    "⚠ 「폴더 및 대화도 삭제」를 누르면 이 작업실의 대화 {{count}}개도 함께 삭제돼요. 대화 내용은 되살릴 수 없으니 주의하세요.",
   "jabisu.room.failed.conversations": "일부 대화를 삭제하지 못했어요",
   "jabisu.room.failed.conversations.description":
     "폴더는 휴지통으로 옮겼지만 대화 {{count}}개가 남아 있어요. 홈 화면 대화 목록에서 지워 주세요.",
   "jabisu.room.delete.listOnly": "작업실 목록에서 빠져요. 자비수가 만든 폴더가 아니어서 실제 폴더는 그대로 둬요.",
   "jabisu.room.delete.kept": "작업실 목록에서 빠져요. 폴더는 데스크톱 앱에서만 지울 수 있어서 그대로 둬요.",
   "jabisu.room.delete.keepFolder": "목록에서만 삭제",
-  "jabisu.room.delete.withFolder": "폴더도 삭제",
+  "jabisu.room.delete.withFolder": "폴더 및 대화도 삭제",
   "jabisu.room.delete.confirm": "삭제",
   "jabisu.room.failed.rename": "작업실 이름을 바꾸지 못했어요",
   "jabisu.room.failed.delete": "폴더를 삭제하지 못했어요",

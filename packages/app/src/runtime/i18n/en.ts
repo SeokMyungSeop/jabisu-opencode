@@ -1122,9 +1122,9 @@ export const dict = {
   "jabisu.room.rename.save": "Rename",
   "jabisu.room.delete.title": "Delete 「{{name}}」?",
   "jabisu.room.delete.owned":
-    "Delete the folder too sends the folder to the Recycle Bin, where you can restore it. Only from the list keeps the folder and its conversations and just removes it from the list.",
+    "Delete folder and conversations sends the folder to the Recycle Bin, where you can restore it. Only from the list keeps the folder and its conversations and just removes it from the list.",
   "jabisu.room.delete.conversations":
-    "⚠ Delete the folder too also deletes this workroom's {{count}} conversations. They can't be restored.",
+    "⚠ Delete folder and conversations also deletes this workroom's {{count}} conversations. They can't be restored.",
   "jabisu.room.failed.conversations": "Some conversations weren't deleted",
   "jabisu.room.failed.conversations.description":
     "The folder went to the Recycle Bin, but {{count}} conversations are still there. Delete them from the home list.",
@@ -1132,7 +1132,7 @@ export const dict = {
     "It leaves the workroom list. Jabisu did not make this folder, so the folder itself stays.",
   "jabisu.room.delete.kept": "It leaves the workroom list. The folder stays, since only the desktop app can delete it.",
   "jabisu.room.delete.keepFolder": "Only from the list",
-  "jabisu.room.delete.withFolder": "Delete the folder too",
+  "jabisu.room.delete.withFolder": "Delete folder and conversations",
   "jabisu.room.delete.confirm": "Delete",
   "jabisu.room.failed.rename": "Couldn't rename the workroom",
   "jabisu.room.failed.delete": "Couldn't delete the folder",

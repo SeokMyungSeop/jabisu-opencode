@@ -77,7 +77,8 @@ function WorkingDot(props: { end?: boolean }) {
       role="img"
       aria-label={language.t("jabisu.nav.working")}
       title={language.t("jabisu.nav.working")}
-      class="size-2 shrink-0 rounded-full bg-v2-state-fg-success motion-safe:animate-pulse"
+      // 녹청색 (verdigris), apart from the theme's green so the light reads as 「at work」 rather than 「done」.
+      class="size-2 shrink-0 rounded-full bg-[#14a08f] shadow-[0_0_6px_#14a08f] motion-safe:animate-pulse"
       classList={{ "ms-auto": !!props.end }}
     />
   )

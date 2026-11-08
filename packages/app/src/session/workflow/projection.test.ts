@@ -118,22 +118,23 @@ describe("예상 남은 시간", () => {
   const runs = (law: boolean, seconds: number[]): WorkflowRun[] =>
     seconds.map((value, index) => ({ started: index, law, seconds: value }))
 
-  test("follows the pace of the finished steps when the AI wrote a to-do list", () => {
-    // Two steps in 60 seconds, one at work and one waiting: about 45 seconds to go.
+  test("follows the pace of the finished steps when the AI wrote a to-do list, generously", () => {
+    // Two steps in 60 seconds, one at work and one waiting: about 105 seconds in all. Shown with half again and 20
+    // seconds on top (177.5), so 118 seconds to go rather than 45.
     expect(estimate(plan(["done", "done", "active", "waiting"]), 60_000, [])).toEqual({
-      remaining: 45,
+      remaining: 118,
       basis: "plan",
     })
   })
 
-  test("goes by earlier similar requests on this PC, telling law lookups apart", () => {
+  test("goes by earlier similar requests on this PC, telling law lookups apart, generously", () => {
     const history = [...runs(true, [100, 140, 120, 400]), ...runs(false, [20, 30, 25])]
 
-    // The middle of 100, 120, 140, 400 is 140; 40 seconds in, about 100 to go.
-    expect(estimate(tools(["read", "law"]), 40_000, history)).toEqual({ remaining: 100, basis: "history" })
-    expect(estimate(tools(["read", "write"]), 10_000, history)).toEqual({ remaining: 15, basis: "history" })
-    // Running past the estimate is reported as such, not as time left.
-    expect(estimate(tools(["read", "law"]), 200_000, history)?.remaining).toBe(-60)
+    // The middle of 100, 120, 140, 400 is 140, shown as 230; 40 seconds in, 190 to go.
+    expect(estimate(tools(["read", "law"]), 40_000, history)).toEqual({ remaining: 190, basis: "history" })
+    expect(estimate(tools(["read", "write"]), 10_000, history)).toEqual({ remaining: 48, basis: "history" })
+    // Past even the generous estimate is reported as such, not as time left.
+    expect(estimate(tools(["read", "law"]), 300_000, history)?.remaining).toBe(-70)
   })
 
   test("says nothing without a basis or once the request has finished", () => {
