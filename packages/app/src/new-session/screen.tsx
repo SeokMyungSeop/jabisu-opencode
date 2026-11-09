@@ -110,6 +110,7 @@ export default function NewSessionPage(props: { draftId: string }) {
           project={project}
           workspace={workspace}
           workroom={JABISU && draftTab()?.workroom === true}
+          starters={JABISU ? composer.adapter.state : undefined}
         />
       </div>
     </div>

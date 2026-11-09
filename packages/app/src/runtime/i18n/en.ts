@@ -327,7 +327,8 @@ export const dict = {
   "prompt.toast.promptSendFailed.title": "Failed to send prompt",
 
   "dialog.mcp.title": "MCPs",
-  "dialog.mcp.description": "{{enabled}} of {{total}} on in this workroom · to keep one on everywhere, use Settings → Extensions → MCP",
+  "dialog.mcp.description":
+    "{{enabled}} of {{total}} on in this workroom · to keep one on everywhere, use Settings → Extensions → MCP",
   "dialog.mcp.empty": "No MCPs configured",
 
   "mcp.status.connected": "connected",
@@ -1064,6 +1065,22 @@ export const dict = {
   "jabisu.workroom.hero.title": "What would you like me to do?",
   "jabisu.workroom.hero.lead":
     "Write the task as you would say it, or drop files here. Your first message names the workroom, and what I make is saved in its folder.",
+  "jabisu.starter.label": "Common work",
+  "jabisu.starter.report.label": "Report",
+  "jabisu.starter.report.frame":
+    "Please write a report.\n- About: (e.g. complaints handled in the first half)\n- For: (e.g. my manager)\n- From: (drop files into this box or write the folder)\n- Shape: (e.g. one-page Hangul file: summary, status, problems, fixes)",
+  "jabisu.starter.minutes.label": "Meeting minutes",
+  "jabisu.starter.minutes.frame":
+    "Please write the minutes.\n- Meeting: (e.g. November team meeting, 2026-11-10)\n- From: (drop the recording or notes into this box)\n- Attendees: (e.g. Manager Kim, Officer Lee)\n- Shape: (e.g. Hangul file: discussion, decisions and to-dos per item)",
+  "jabisu.starter.press.label": "Press release",
+  "jabisu.starter.press.frame":
+    "Please write a press release.\n- Announcing: (e.g. the citizens' AI class opens)\n- Key dates and numbers: (e.g. opens 11/12, 30 places)\n- From: (drop the plan or other files into this box)\n- Shape: (e.g. Hangul file: title, subtitle, four paragraphs, contact)",
+  "jabisu.starter.law.label": "Find a law",
+  "jabisu.starter.law.frame":
+    "Please find the law.\n- Question: (e.g. which rule covers domestic travel expenses for officials?)\n- For: (e.g. the basis for a travel expense memo)\n- Shape: (e.g. the article's text with a plain explanation, local ordinances too)",
+  "jabisu.starter.automation.label": "Automate a chore",
+  "jabisu.starter.automation.frame":
+    "Please automate a repeated task.\n- The chore: (e.g. merging 30 spreadsheets into one every month)\n- Files: (e.g. the .xlsx files in Documents\\Budget\\Monthly)\n- Result: (e.g. one merged sheet with totals per team)\n- How often: (e.g. once a month)",
   "jabisu.workflow.title": "Progress",
   "jabisu.workflow.progress": "Step {{current}} of {{total}}",
   "jabisu.workflow.done": "Done",

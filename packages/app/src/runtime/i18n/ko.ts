@@ -910,6 +910,22 @@ export const dict = {
   "jabisu.workroom.hero.title": "무엇을 맡기시겠어요?",
   "jabisu.workroom.hero.lead":
     "할 일을 평소 말투로 적거나 파일을 끌어다 놓으세요. 첫 메시지를 보내면 작업실 이름이 저절로 정해지고, 만든 파일은 그 작업실 폴더에 저장됩니다.",
+  "jabisu.starter.label": "자주 하는 일",
+  "jabisu.starter.report.label": "보고서",
+  "jabisu.starter.report.frame":
+    "보고서를 써 주세요.\n- 무엇을: (예: 상반기 민원 처리 현황)\n- 누구에게: (예: 과장님께 보고)\n- 무슨 자료로: (파일을 이 입력창에 끌어다 놓거나 폴더 위치를 적어 주세요)\n- 어떤 모양으로: (예: 한글 파일 1쪽, 개요·현황·문제점·개선 방안)",
+  "jabisu.starter.minutes.label": "회의록",
+  "jabisu.starter.minutes.frame":
+    "회의록을 만들어 주세요.\n- 무슨 회의: (예: 11월 업무 협의회, 2026. 11. 10.)\n- 무슨 자료로: (녹음 파일이나 메모를 이 입력창에 끌어다 놓아 주세요)\n- 참석자: (예: 김○○ 과장, 이○○ 주무관)\n- 어떤 모양으로: (예: 한글 파일, 안건별 논의·결정 사항·할 일)",
+  "jabisu.starter.press.label": "보도자료",
+  "jabisu.starter.press.frame":
+    "보도자료를 써 주세요.\n- 무엇을 알리나요: (예: 시민 AI 교실 개강)\n- 핵심 날짜와 숫자: (예: 11. 12. 개강, 30명 모집)\n- 무슨 자료로: (계획서 같은 파일을 이 입력창에 끌어다 놓아 주세요)\n- 어떤 모양으로: (예: 한글 파일, 제목·부제·본문 네 문단·문의처)",
+  "jabisu.starter.law.label": "법령 찾기",
+  "jabisu.starter.law.frame":
+    "법령을 찾아 주세요.\n- 궁금한 것: (예: 공무원 국내 출장 여비는 어떤 규정을 따르나요?)\n- 어디에 쓰나요: (예: 출장비 정산 공문의 근거)\n- 어떤 모양으로: (예: 근거 조문 원문과 쉬운 설명, 우리 지역 조례도 함께)",
+  "jabisu.starter.automation.label": "반복 업무 자동화",
+  "jabisu.starter.automation.frame":
+    "반복 업무를 자동으로 처리해 주세요.\n- 줄이고 싶은 일: (예: 매달 엑셀 30개를 한 장으로 합치기)\n- 쓰는 파일: (예: 문서\\예산\\월별 집계 폴더의 .xlsx)\n- 원하는 결과: (예: 합친 엑셀 한 장과 부서별 합계)\n- 얼마나 자주: (예: 매달 한 번)",
   "jabisu.workflow.title": "진행 흐름",
   "jabisu.workflow.progress": "{{total}}단계 중 {{current}}단계",
   "jabisu.workflow.done": "끝났어요",

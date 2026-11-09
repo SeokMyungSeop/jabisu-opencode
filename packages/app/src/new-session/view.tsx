@@ -22,6 +22,8 @@ import { Persist, persisted } from "@/runtime/persistence/storage"
 import { Persistence } from "@/runtime/persistence/schema"
 import type { NewSessionWorkspaceController } from "./workspace/controller"
 import { NewSessionWordmark } from "./wordmark"
+import { NewSessionStarters } from "./starters"
+import type { ComposerStateTarget } from "@/composer/submission-state"
 
 const providerTipDismissalDuration = 30 * 24 * 60 * 60 * 1000
 
@@ -45,6 +47,8 @@ export function NewSessionView(props: {
   workspace: NewSessionWorkspaceController
   /** 자비수's 「새 작업실」: greet instead of the wordmark, and name the 작업실 still to be made. */
   workroom?: boolean
+  /** 자비수's chips for common office work fill this composer with a question frame. */
+  starters?: ComposerStateTarget
 }) {
   const language = useLanguage()
 
@@ -86,7 +90,12 @@ export function NewSessionView(props: {
               </div>
             </Show>
             <div class="mt-8 flex flex-col gap-8">
-              <Composer model={props.composer} />
+              <div class="flex flex-col gap-4">
+                <Composer model={props.composer} />
+                <Show when={props.starters}>
+                  {(state) => <NewSessionStarters state={state()} onFilled={props.composer.restoreFocus} />}
+                </Show>
+              </div>
               <Show when={props.workroom}>
                 <div class="flex min-h-7 items-center justify-center gap-1.5 text-[13px] text-v2-text-text-faint">
                   <Icon name="folder" size="small" />
