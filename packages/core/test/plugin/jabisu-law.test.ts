@@ -7,8 +7,10 @@ import { LawAmendment } from "@opencode/core/plugin/jabisu/law/amendment"
 import { LawCases } from "@opencode/core/plugin/jabisu/law/cases"
 import { LawCitation } from "@opencode/core/plugin/jabisu/law/citation"
 import { LawCompare } from "@opencode/core/plugin/jabisu/law/compare"
+import { LawRegion } from "@opencode/core/plugin/jabisu/law/region"
 import { LawSettings } from "@opencode/core/plugin/jabisu/law/settings"
 import { LawTools } from "@opencode/core/plugin/jabisu/law/tools"
+import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
 import { FSUtil } from "@opencode/util/fs-util"
 import { LayerNode } from "@opencode/util/effect/layer-node"
 import { testEffect } from "../lib/effect"
@@ -106,6 +108,29 @@ const ORDINANCE_TEXT = {
   },
 }
 
+const ordinance = (id: string, name: string, org: string) => ({
+  자치법규일련번호: id,
+  자치법규명: name,
+  지자체기관명: org,
+  자치법규종류: "조례",
+})
+
+// Ordinance searches by their words without spaces, as law.go.kr finds every word in the name.
+const ORDINANCES: Record<string, unknown[]> = {
+  세종특별자치시여비: [
+    ordinance("1", "세종특별자치시 지방공무원 여비 조례", "세종특별자치시"),
+    ordinance("2", "세종특별자치시의회 공무원 여비 조례", "세종특별자치시"),
+  ],
+  여비: [
+    ordinance("3", "가평군 지방공무원 여비 조례", "경기도 가평군"),
+    ordinance("1", "세종특별자치시 지방공무원 여비 조례", "세종특별자치시"),
+  ],
+  중구주차장: [
+    ordinance("4", "대구광역시 중구 주차장 설치 및 관리 조례", "대구광역시 중구"),
+    ordinance("5", "대전광역시 중구 주차장설치 및 관리 조례", "대전광역시 중구"),
+  ],
+}
+
 // A fake law.go.kr; `failures` makes the named target answer with a server error.
 const server = (failures: readonly string[] = []) => {
   const calls: URLSearchParams[] = []
@@ -130,6 +155,8 @@ const server = (failures: readonly string[] = []) => {
       if (target === "law") return json({ LawSearch: { totalCnt: "0" } })
       if (target === "ordin" && query === ORDINANCE.replace(/\s/g, ""))
         return json({ OrdinSearch: { totalCnt: "1", law: { 자치법규일련번호: "2035933", 자치법규명: ORDINANCE } } })
+      const local = ORDINANCES[query]
+      if (target === "ordin" && local) return json({ OrdinSearch: { totalCnt: String(local.length), law: local } })
       if (target === "ordin") return json({ OrdinSearch: { totalCnt: "0" } })
       if (target === "admrul") return json({ AdmRulSearch: { totalCnt: "0" } })
       return json({ PrecSearch: { totalCnt: "0" } })
@@ -145,13 +172,15 @@ const server = (failures: readonly string[] = []) => {
   return { http, calls }
 }
 
-const setup = (options: { key?: boolean; failures?: readonly string[] } = {}) =>
+const setup = (options: { key?: boolean; failures?: readonly string[]; profile?: string } = {}) =>
   Effect.gen(function* () {
     const fs = yield* FSUtil.Service
-    const global = { config: (yield* tmpdirScoped()).path }
+    const dir = (yield* tmpdirScoped()).path
+    const global = { config: dir, home: dir }
     const fake = server(options.failures)
 
     if (options.key !== false) yield* LawSettings.write({ fs, global }, KEY)
+    if (options.profile) yield* fs.writeWithDirs(WorkProfile.file(global), options.profile)
 
     return { tools: LawTools.tools({ fs, global, http: fake.http }), calls: fake.calls, fs, global }
   })
@@ -324,7 +353,8 @@ const json = (body: unknown) => new Response(JSON.stringify(body))
 const setupBeyond = (answers: Parameters<typeof beyond>[0]) =>
   Effect.gen(function* () {
     const fs = yield* FSUtil.Service
-    const global = { config: (yield* tmpdirScoped()).path }
+    const dir = (yield* tmpdirScoped()).path
+    const global = { config: dir, home: dir }
     const fake = beyond(answers)
 
     yield* LawSettings.write({ fs, global }, KEY)
@@ -1006,7 +1036,8 @@ describe("LawTools for more bodies, cases, ordinances and amendments", () => {
   it.live("makes the comparison table of an amendment from the current articles and saves it as a Hangul file", () =>
     Effect.gen(function* () {
       const fs = yield* FSUtil.Service
-      const global = { config: (yield* tmpdirScoped()).path }
+      const dir = (yield* tmpdirScoped()).path
+      const global = { config: dir, home: dir }
       const fake = beyond({
         "search:law": () =>
           json({ LawSearch: { totalCnt: "1", law: { 법령ID: "001823", 법령명한글: "건축법", 현행연혁코드: "현행" } } }),
@@ -1147,6 +1178,103 @@ describe("LawAmendment, LawCases and LawCompare", () => {
         LawCompare.basis("이 조례는 「주차장법」, 같은 법 시행령 및 시행규칙에서 위임한 사항을 정한다.", "주차장 조례"),
       ).toEqual(["주차장법", "주차장법 시행령", "주차장법 시행규칙"])
       expect(LawAmendment.dashes("이 법은 공포한 날부터 시행한다.")).toBe(`${"-".repeat(17)}.`)
+    }),
+  )
+})
+
+describe("LawRegion", () => {
+  it.live("reads the user's 지자체 from the 소속 in their 업무 프로필, in the names people write", () =>
+    Effect.sync(() => {
+      expect(
+        LawRegion.fromProfile("# 내 업무\n\n- 소속: 세종특별자치시 미래전략본부 미래산업과\n- 직급: 주무관"),
+      ).toEqual({
+        name: "세종특별자치시",
+        word: "세종특별자치시",
+        partial: false,
+      })
+      expect(LawRegion.fromProfile("# 내 업무\n\n- 직급: 주무관")).toBeUndefined()
+      expect(LawRegion.parse("경기도청 기획담당관실")?.name).toBe("경기도")
+      expect(LawRegion.parse("경기도 도시주택실")?.name).toBe("경기도")
+      expect(LawRegion.parse("경기도 수원시청 교통정책과")).toEqual({
+        name: "경기도 수원시",
+        word: "수원시",
+        partial: false,
+        province: "경기도",
+      })
+      expect(LawRegion.parse("대구광역시 중구 경제과")?.name).toBe("대구광역시 중구")
+      expect(LawRegion.parse("세종시")?.name).toBe("세종특별자치시")
+      expect(LawRegion.parse("강원도 고성군")?.name).toBe("강원특별자치도 고성군")
+      // 광주광역시 and 전라남도 are now 전남광주통합특별시.
+      expect(LawRegion.parse("광주광역시 광산구")?.name).toBe("전남광주통합특별시 광산구")
+      expect(LawRegion.parse("충청북도교육청 행정과")).toEqual({
+        name: "충청북도교육청",
+        word: "충청북도",
+        partial: false,
+      })
+      expect(LawRegion.parse("세종시교육청")?.name).toBe("세종특별자치시교육청")
+      expect(LawRegion.parse("수원시청 교통정책과")).toEqual({ name: "수원시", word: "수원시", partial: true })
+      expect(LawRegion.parse("행정안전부 지방자치균형발전실")).toBeUndefined()
+    }),
+  )
+
+  it.live("searches the user's own 지자체's ordinances first and says so", () =>
+    Effect.gen(function* () {
+      const { tools, calls } = yield* setup({ profile: "# 내 업무\n\n- 소속: 세종특별자치시 미래산업과\n" })
+      const result = yield* tools.search.execute({ query: "여비", kind: "ordinance" })
+
+      expect(calls[0]?.get("query")).toBe("세종특별자치시 여비")
+      expect(calls[0]?.get("display")).toBe("100")
+      expect(result.output.region).toBe("세종특별자치시")
+      expect(result.output.found.map((item) => item.id)).toEqual(["1", "2"])
+      expect(result.content).toContain("Kept to 세종특별자치시, the user's 지자체")
+    }),
+  )
+
+  it.live("keeps to the 지자체 named, though its word names others too, and points to its 시·도", () =>
+    Effect.gen(function* () {
+      const { tools } = yield* setup()
+      const result = yield* tools.search.execute({ query: "주차장", kind: "ordinance", region: "대구광역시 중구" })
+
+      expect(result.output.found.map((item) => item.name)).toEqual(["대구광역시 중구 주차장 설치 및 관리 조례"])
+      expect(result.content).toContain("Kept to 대구광역시 중구.")
+      expect(result.content).toContain("search again with region 대구광역시")
+    }),
+  )
+
+  it.live("searches every 지자체 when the user's own has nothing on it, or when asked to", () =>
+    Effect.gen(function* () {
+      const { tools } = yield* setup({ profile: "- 소속: 세종특별자치시 미래산업과" })
+      const elsewhere = yield* tools.search.execute({ query: ORDINANCE, kind: "ordinance" })
+
+      expect(elsewhere.output.found.map((item) => item.id)).toEqual(["2035933"])
+      expect(elsewhere.output.region).toBeUndefined()
+      expect(elsewhere.content).toContain("세종특별자치시 has no ordinance on this")
+
+      const everywhere = yield* tools.search.execute({ query: "여비", kind: "ordinance", region: "전국" })
+
+      expect(everywhere.output.found.map((item) => item.id)).toEqual(["3", "1"])
+      expect(everywhere.content).not.toContain("Kept to")
+
+      // law.go.kr lists a text search's results in 가나다 order, so it is never kept to one 지자체.
+      const text = yield* tools.search.execute({ query: "여비", kind: "ordinance", text: true, region: "세종시" })
+
+      expect(text.output.found.map((item) => item.id)).toEqual(["3", "1"])
+      expect(text.content).toContain("A text search covers every 지자체, not only 세종시")
+    }),
+  )
+
+  it.live("refuses a region for other kinds and a region that is no 지자체", () =>
+    Effect.gen(function* () {
+      const { tools } = yield* setup()
+
+      expect(
+        Exit.isFailure(yield* Effect.exit(tools.search.execute({ query: "여비", region: "세종특별자치시" }))),
+      ).toBe(true)
+      expect(
+        Exit.isFailure(
+          yield* Effect.exit(tools.search.execute({ query: "여비", kind: "ordinance", region: "행정안전부" })),
+        ),
+      ).toBe(true)
     }),
   )
 })

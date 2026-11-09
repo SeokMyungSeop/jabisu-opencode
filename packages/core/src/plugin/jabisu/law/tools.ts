@@ -15,7 +15,9 @@ import { LawApi } from "./api.js"
 import { LawCases } from "./cases.js"
 import { LawCitation } from "./citation.js"
 import { LawCompare } from "./compare.js"
+import { LawRegion } from "./region.js"
 import { LawSettings } from "./settings.js"
+import { WorkProfile } from "../work/profile.js"
 
 // The law tools every 자비수 session has: search the official law database, read articles in their official words,
 // trace a law's amendments and the rules under it, draft the comparison table of an amendment, and check that the
@@ -31,7 +33,8 @@ export type Save = (
 
 export interface Dependencies {
   readonly fs: FSUtil.Interface
-  readonly global: Pick<Global.Interface, "config">
+  /** The 업무 프로필 under home names the user's 지자체, whose ordinances a search looks in first. */
+  readonly global: Pick<Global.Interface, "config" | "home">
   readonly http: HttpClient.HttpClient
   readonly save?: Save
 }
@@ -113,6 +116,10 @@ export const SearchInput = Schema.Struct({
     description:
       "Annex kinds only: the law, rule or ordinance whose annexes and forms to list, such as 식품위생법 시행규칙; query then keeps those whose title has its words",
   }),
+  region: Schema.optional(Schema.String).annotate({
+    description:
+      "Ordinances only: the 지자체 whose ordinances to search, such as 세종특별자치시, 경기도 수원시 or 대구광역시 중구. Left out, an ordinance search looks in the user's own 지자체 (the 소속 in their 업무 프로필) first; 전국 searches every 지자체. A text search always covers every 지자체",
+  }),
   limit: Schema.optional(Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 20 }))).annotate({
     description: "Maximum results (default: 10)",
   }),
@@ -130,6 +137,8 @@ export const SearchOutput = Schema.Struct({
   configured: Schema.Boolean,
   total: Schema.Number,
   found: Schema.Array(FoundOutput),
+  /** The 지자체 an ordinance search kept to. */
+  region: Schema.optional(Schema.String),
 })
 
 export const TextInput = Schema.Struct({
@@ -234,6 +243,24 @@ export const VerifyOutput = Schema.Struct({
 export type Check = { readonly citation: string; readonly result: (typeof RESULTS)[number]; readonly note: string }
 
 const failure = (error: LawApi.LawError) => new ToolFailure({ message: error.reason })
+
+// law.go.kr gives at most 100 results a call; a 지자체's ordinances on a topic fit in that.
+const REGION_SCAN = 100
+
+/** What the model is told about the 지자체 an ordinance search kept to. */
+export function regionNote(region: LawRegion.Region, own: boolean, partial: boolean) {
+  return [
+    own
+      ? `Kept to ${region.name}, the user's 지자체 (the 소속 in their 업무 프로필). For another 지자체 give region; for every 지자체 give region 전국.`
+      : `Kept to ${region.name}.`,
+    ...(region.province
+      ? [
+          `${region.province}'s own ordinances may apply too: search again with region ${region.province} when they might.`,
+        ]
+      : []),
+    ...(partial ? ["Only law.go.kr's first 100 results were looked through: add words to narrow the search."] : []),
+  ].join(" ")
+}
 
 /** The search results as the model reads them. */
 export function searchContent(kind: LawApi.Kind, total: number, found: readonly LawApi.Found[]) {
@@ -585,6 +612,12 @@ export function tools(deps: Dependencies) {
     return key === undefined ? undefined : LawApi.transport(deps.http, key)
   })
 
+  // The user's 지자체, read on every search so an edited 업무 프로필 applies at once.
+  const ownRegion = deps.fs.readFileStringSafe(WorkProfile.file(deps.global)).pipe(
+    Effect.orElseSucceed(() => undefined),
+    Effect.map((text) => (text === undefined ? undefined : LawRegion.fromProfile(text))),
+  )
+
   // An annex is read from the files its search result names, so each annex found is kept by its id.
   const annexes = new Map<string, LawApi.Found>()
   const download = LawApi.download(deps.http)
@@ -687,6 +720,22 @@ export function tools(deps: Dependencies) {
     }
   })
 
+  // law.go.kr names an ordinance after its 지자체, so the 지자체's word finds its ordinances by name; the results are
+  // kept to that 기관, since one word can name several 지자체 (중구, 고성군).
+  const within = (
+    call: LawApi.Transport,
+    region: LawRegion.Region,
+    input: { readonly kind: LawApi.Kind; readonly query: string; readonly limit: number },
+  ) =>
+    search(call, { kind: input.kind, query: LawRegion.query(region, input.query), limit: REGION_SCAN }).pipe(
+      Effect.map(({ total, found }) => {
+        const kept = found.filter((item) => LawRegion.matches(region, item.org))
+
+        return { total: kept.length, found: kept.slice(0, input.limit), partial: total > found.length }
+      }),
+      Effect.mapError(failure),
+    )
+
   const searchTool = {
     name: "law_search",
     options: { codemode: false },
@@ -711,35 +760,66 @@ export function tools(deps: Dependencies) {
           return yield* new ToolFailure({
             message: "law lists annexes: use it with kind annex, rule_annex or ordinance_annex.",
           })
+        if (input.region !== undefined && kind !== "ordinance")
+          return yield* new ToolFailure({
+            message: "region keeps an ordinance search to one 지자체: use it with kind ordinance.",
+          })
+        // An ordinance search by name keeps to one 지자체: the one named, else the user's own. law.go.kr gives a text
+        // search's results in 가나다 order, so the first 100 rarely reach that 지자체; a text search covers them all.
+        const named = input.region?.trim() || undefined
+        const everywhere = named !== undefined && LawRegion.EVERYWHERE.includes(named)
+        const textual = input.text === true
+        const region =
+          kind !== "ordinance" || everywhere || textual ? undefined : named ? LawRegion.parse(named) : yield* ownRegion
+
+        if (named && !everywhere && !textual && !region)
+          return yield* new ToolFailure({
+            message: `「${named}」 is not a 지자체 name: give one such as 세종특별자치시, 경기도 수원시 or 대구광역시 중구, or 전국.`,
+          })
         // A case asked for by its number is found by it; its text would only find the cases that cite it.
         const number = kind === "precedent" || kind === "constitutional" ? LawCases.find(input.query)[0] : undefined
-        const result = input.law
-          ? yield* search(call, { kind, query: input.law, limit: 100, law: true }).pipe(
-              Effect.map(({ found }) => {
-                // The annexes of that law whose title has every word of the query, unless the query is the law again.
-                const words =
-                  LawCitation.key(input.query) === LawCitation.key(input.law ?? "") ? [] : input.query.split(/\s+/)
-                const kept = found.filter((item) => words.every((word) => item.name.includes(word)))
+        const local = region ? yield* within(call, region, { kind, query: input.query, limit }) : undefined
+        // The user's own 지자체 may have nothing on it; then every 지자체's ordinances are searched.
+        const kept = local && (local.found.length > 0 || named) ? local : undefined
+        const result = kept
+          ? kept
+          : input.law
+            ? yield* search(call, { kind, query: input.law, limit: 100, law: true }).pipe(
+                Effect.map(({ found }) => {
+                  // The annexes of that law whose title has every word of the query, unless the query is the law again.
+                  const words =
+                    LawCitation.key(input.query) === LawCitation.key(input.law ?? "") ? [] : input.query.split(/\s+/)
+                  const kept = found.filter((item) => words.every((word) => item.name.includes(word)))
 
-                return { total: kept.length, found: kept.slice(0, limit) }
-              }),
-              Effect.mapError(failure),
-            )
-          : yield* search(call, {
-              kind,
-              query: input.query,
-              limit,
-              ...(input.text ? { text: true } : {}),
-              ...(number ? { number } : {}),
-            }).pipe(Effect.mapError(failure))
+                  return { total: kept.length, found: kept.slice(0, limit) }
+                }),
+                Effect.mapError(failure),
+              )
+            : yield* search(call, {
+                kind,
+                query: input.query,
+                limit,
+                ...(input.text ? { text: true } : {}),
+                ...(number ? { number } : {}),
+              }).pipe(Effect.mapError(failure))
+
+        const note =
+          kind === "ordinance" && textual && named && !everywhere
+            ? `A text search covers every 지자체, not only ${named}: to keep to it, search the names (without text).`
+            : !region
+              ? undefined
+              : kept
+                ? regionNote(region, named === undefined, kept.partial)
+                : `${region.name} has no ordinance on this, so these are from every 지자체.`
 
         return {
           output: {
             configured: true,
             total: result.total,
-            found: result.found.map(({ short: _short, files: _files, ...item }) => item),
+            found: result.found.map(({ short: _short, files: _files, org: _org, ...item }) => item),
+            ...(kept && region ? { region: region.name } : {}),
           },
-          content: searchContent(kind, result.total, result.found),
+          content: [...(note ? [note] : []), searchContent(kind, result.total, result.found)].join("\n"),
         }
       }),
   }

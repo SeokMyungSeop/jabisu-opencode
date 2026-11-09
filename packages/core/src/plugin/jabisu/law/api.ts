@@ -171,6 +171,8 @@ export interface Found {
   readonly detail: string
   readonly current: boolean
   readonly files?: Files
+  /** An ordinance's 지자체기관명, such as 경기도 수원시. */
+  readonly org?: string
 }
 
 /** A paragraph (항) of an article and its items (호), each by number. */
@@ -411,6 +413,7 @@ const SEARCH = {
       short: "",
       detail: joined(str(item["자치법규종류"]), str(item["지자체기관명"]), since(item["시행일자"])),
       current: true,
+      org: str(item["지자체기관명"]),
     }),
   },
   rule: { root: "AdmRulSearch", items: "admrul", found: ruleFound },
@@ -682,10 +685,18 @@ export const search = Effect.fn("LawApi.search")(function* (
     const value = record(item)
 
     if (!value) return []
-    const { short, files, ...rest } = shape.found(value) as Omit<Found, "kind">
+    const { short, files, org, ...rest } = shape.found(value) as Omit<Found, "kind">
 
     return rest.id && rest.name
-      ? [{ kind: input.kind, ...rest, ...(short ? { short } : {}), ...(files ? { files } : {}) } satisfies Found]
+      ? [
+          {
+            kind: input.kind,
+            ...rest,
+            ...(short ? { short } : {}),
+            ...(files ? { files } : {}),
+            ...(org ? { org } : {}),
+          } satisfies Found,
+        ]
       : []
   })
 
