@@ -73,7 +73,7 @@ export function tool(deps: JabisuMcp.Dependencies, here: Here) {
           }
 
         return yield* new ToolFailure({
-          message: `${input.id} did not connect (${status ? (status.status === "failed" || status.status === "needs_auth" ? `${status.status}: ${status.error}` : status.status) : "still starting after 15 seconds"}). Tell the user it can be turned on in 설정 → 확장 → MCP, and do not compute the answer by hand.`,
+          message: `${input.id} did not connect (${status ? (status.status === "failed" || status.status === "needs_auth" ? `${status.status}: ${status.error}` : status.status) : "still starting after 15 seconds"}). Tell the user it can be turned on in 설정 → 확장 → MCP, and do not do that server's work another way.`,
         })
       }),
   }

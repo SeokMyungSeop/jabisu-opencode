@@ -61,7 +61,7 @@ $p = "D:\영상\결과\회의-편집.fcproj"
 
 사용자가 편집하는 모습을 보고 싶어 하거나, 화면에서 해야 쉬운 일이면 실행 중인 FilmCraft를 직접 조종한다.
 
-1. filmcraft MCP 도구(`ui_screenshot`, `command_run` 등)가 없으면, 사용자에게 **Ctrl+;**(또는 채팅창에 `/mcp`)를 눌러 「filmcraft」를 켜 달라고 한다. 다른 방법으로 연결하려 하지 않는다.
+1. filmcraft MCP 도구(`ui_screenshot`, `command_run` 등)가 없으면, 사용자에게 다시 묻지 말고 `mcp_turn_on` 도구로 `filmcraft`를 켠다(화면에서 조종하자고 한 것이 곧 켜자는 뜻이다). 도구가 filmcraft라는 서버가 없다고 하면 FilmCraft가 설치되지 않은 것이니 그렇게 알린다. 켜지지 않으면 도구가 알려 준 이유를 전하고, 「설정 → 확장 → MCP」에서 「filmcraft」를 켤 수 있다고 안내한다. 다른 방법으로 연결하려 하지 않는다.
 2. FilmCraft를 원격 조종으로 연다.
    `powershell -NoProfile -ExecutionPolicy Bypass -File "<기본 폴더>/scripts/start-filmcraft.ps1"`
    FilmCraft가 이미 원격 조종 없이 열려 있으면, 사용자에게 저장하고 닫아 달라고 한 뒤 다시 실행한다.
