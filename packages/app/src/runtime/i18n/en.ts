@@ -327,7 +327,7 @@ export const dict = {
   "prompt.toast.promptSendFailed.title": "Failed to send prompt",
 
   "dialog.mcp.title": "MCPs",
-  "dialog.mcp.description": "{{enabled}} of {{total}} enabled",
+  "dialog.mcp.description": "{{enabled}} of {{total}} on in this workroom · to keep one on everywhere, use Settings → Extensions → MCP",
   "dialog.mcp.empty": "No MCPs configured",
 
   "mcp.status.connected": "connected",
@@ -744,6 +744,7 @@ export const dict = {
   "settings.extensions.tab.skills": "Skills",
   "settings.extensions.availableAll": "Available to all projects",
   "settings.extensions.manageConfig": "Manage in opencode.json",
+  "settings.extensions.mcp.saved": "Kept for every workroom, even after a restart",
   "settings.extensions.addSkills": "How to add skills",
   "project.settings.title": "Edit project",
   "project.settings.autoAccept.description": "Approve this project's permission requests without asking",

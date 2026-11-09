@@ -5,6 +5,7 @@ import { Plugin } from "@opencode/core/plugin"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { LawApi } from "@opencode/core/plugin/jabisu/law/api"
 import { LawSettings } from "@opencode/core/plugin/jabisu/law/settings"
+import { JabisuMcp } from "@opencode/core/plugin/jabisu/mcp-switches"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { WorkIndex } from "@opencode/core/plugin/jabisu/work/index"
 import { WorkIndexer } from "@opencode/core/plugin/jabisu/work/indexer"
@@ -269,6 +270,13 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
         JabisuSkills.turn({ fs, global }, ctx.payload.name, ctx.payload.on).pipe(
           Effect.andThen(JabisuSkills.list({ fs, global })),
           Effect.mapError(invalid("jabisu_skills")),
+        ),
+      )
+      .handle("jabisu.mcp.list", () => JabisuMcp.chosen({ fs, global }).pipe(Effect.map((on) => ({ on }))))
+      .handle("jabisu.mcp.turn", (ctx) =>
+        JabisuMcp.turn({ fs, global }, ctx.payload.name, ctx.payload.on).pipe(
+          Effect.map((on) => ({ on })),
+          Effect.mapError(invalid("jabisu_mcp")),
         ),
       )
   }),

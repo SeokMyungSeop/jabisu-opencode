@@ -23,6 +23,8 @@ import { FilmCraft } from "./jabisu/filmcraft.js"
 import { FreeConsole } from "./jabisu/free-console.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
 import { LawTools } from "./jabisu/law/tools.js"
+import { JabisuMcp } from "./jabisu/mcp-switches.js"
+import { McpTurnOn } from "./jabisu/mcp-turn-on.js"
 import { JabisuSafety } from "./jabisu/safety.js"
 import { JabisuWorkflow } from "./jabisu/workflow.js"
 import { SkillCatalog } from "./jabisu/skill-catalog.js"
@@ -115,6 +117,25 @@ export const Plugin = define({
       for (const { folder, skill } of skills) editor.add(hidden.has(folder) ? { ...skill, autoinvoke: false } : skill)
     })
     yield* ctx.tool.transform((editor) => editor.add(SkillTurnOn.tool({ fs, global })))
+
+    // Which MCP servers are on: the user's choices in 설정, which hold for every 작업실, and the servers a skill turned
+    // on in this 작업실 until 자비수 restarts.
+    const servers = { chosen: yield* JabisuMcp.chosen({ fs, global }), kept: new Set<string>() }
+    yield* ctx.tool.transform((editor) =>
+      editor.add(
+        McpTurnOn.tool(
+          { fs, global },
+          {
+            keep: (id) => void servers.kept.add(id),
+            reload: Effect.suspend(() => ctx.mcp.reload()),
+            servers: Effect.suspend(() => ctx.mcp.list()).pipe(
+              Effect.map((result) => result.data),
+              Effect.orElseSucceed(() => []),
+            ),
+          },
+        ),
+      ),
+    )
     // FilmCraft's remote control needs its token, which is made only once FilmCraft is installed.
     const filmcraft = FilmCraft.cli(process.env.ProgramFiles ?? "C:\\Program Files")
     const filmcraftServer = (yield* fs.exists(filmcraft).pipe(Effect.orElseSucceed(() => false)))
@@ -176,6 +197,12 @@ export const Plugin = define({
       if (!editor.get("myungkyung")) editor.set("myungkyung", { type: "remote", url: MYUNGKYUNG_URL, disabled: true })
 
       if (filmcraftServer && !editor.get("filmcraft")) editor.set("filmcraft", filmcraftServer)
+
+      // A choice made in 설정 holds over the default and the user's config alike; a server turned on here stays on.
+      for (const [name] of editor.list()) {
+        const on = servers.kept.has(name) || servers.chosen[name]
+        if (on !== undefined) editor.update(name, (server) => void (server.disabled = !on))
+      }
     })
 
     // A 집현전's sessions search its sources; its AGENTS.md, loaded as their instructions, says to use the tool and cite.
@@ -279,6 +306,25 @@ export const Plugin = define({
     yield* discovery.transform((editor) => {
       if (offered.content) editor.add(new InstructionDiscovery.File({ path: switchesFile, content: offered.content }))
     })
+
+    // A server turned on or off in 설정, here or in another 작업실, is connected or dropped in this one too.
+    yield* (yield* watcher.subscribe({ path: JabisuMcp.switches(global), type: "file" })).pipe(
+      Stream.debounce("200 millis"),
+      Stream.runForEach(() =>
+        JabisuMcp.chosen({ fs, global }).pipe(
+          Effect.tap((chosen) =>
+            Effect.sync(() => {
+              // Turning a server off in 설정 also ends its being kept on here.
+              for (const [name, on] of Object.entries(chosen))
+                if (!on && servers.chosen[name] !== false) servers.kept.delete(name)
+              servers.chosen = chosen
+            }),
+          ),
+          Effect.andThen(ctx.mcp.reload()),
+        ),
+      ),
+      Effect.forkScoped({ startImmediately: true }),
+    )
 
     // The to-do list the 진행 흐름 draws.
     yield* discovery.transform((editor) =>

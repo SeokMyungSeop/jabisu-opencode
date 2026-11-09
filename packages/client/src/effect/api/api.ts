@@ -2557,6 +2557,18 @@ export type JabisuSkillsTurnOperation<E = never> = (
   input: JabisuSkillsTurnInput,
 ) => Effect.Effect<JabisuSkillsTurnOutput, E>
 
+export type JabisuMcpListInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type JabisuMcpListOutput = { readonly on: { readonly [x: string]: boolean } }
+export type JabisuMcpListOperation<E = never> = (input?: JabisuMcpListInput) => Effect.Effect<JabisuMcpListOutput, E>
+
+export type JabisuMcpTurnInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly name: string
+  readonly on: boolean
+}
+export type JabisuMcpTurnOutput = { readonly on: { readonly [x: string]: boolean } }
+export type JabisuMcpTurnOperation<E = never> = (input: JabisuMcpTurnInput) => Effect.Effect<JabisuMcpTurnOutput, E>
+
 export type JabisuWorkGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 export type JabisuWorkGetOutput = {
   readonly jabisu: {
@@ -2704,6 +2716,7 @@ export interface JabisuApi<E = never> {
     readonly reset: JabisuSkillsResetOperation<E>
     readonly turn: JabisuSkillsTurnOperation<E>
   }
+  readonly mcp: { readonly list: JabisuMcpListOperation<E>; readonly turn: JabisuMcpTurnOperation<E> }
   readonly work: { readonly get: JabisuWorkGetOperation<E>; readonly update: JabisuWorkUpdateOperation<E> }
   readonly law: { readonly get: JabisuLawGetOperation<E>; readonly update: JabisuLawUpdateOperation<E> }
   readonly workroom: {

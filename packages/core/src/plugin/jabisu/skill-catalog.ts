@@ -9,6 +9,8 @@ export interface Entry {
   readonly summary: string
   readonly keywords: readonly string[]
   readonly on: boolean
+  /** The MCP server the skill works through, which is turned on and off with it. */
+  readonly mcp?: string
 }
 
 export const ENTRIES: Readonly<Record<string, Entry>> = {
@@ -90,12 +92,13 @@ export const ENTRIES: Readonly<Record<string, Entry>> = {
     keywords: ["코드 설계", "구조", "리팩터링"],
     on: false,
   },
-  // For fun, not work: it needs the 명경 MCP server, which is also off until the user turns it on.
+  // For fun, not work: it computes through the 명경 MCP server, which is off with it and comes on with it.
   myungkyung: {
     title: "명경 사주풀이",
     summary: "생년월일시로 사주팔자 원국·오행·대운·올해 운을 계산하고 풀이해요",
     keywords: ["사주", "팔자", "운세", "사주풀이", "대운", "세운", "올해 운", "띠", "일주", "만세력"],
     on: false,
+    mcp: "myungkyung",
   },
 }
 
@@ -111,11 +114,13 @@ export function offered(names: readonly string[]) {
     "# 꺼 둔 기본 스킬 (자비수)",
     "",
     "아래 스킬은 설치돼 있지만 꺼져 있다. 사용자의 요청이 그중 하나의 일(괄호 안 낱말)에 해당하면, 파일을 찾거나 다른 방법으로 일을 시작하기 전에 먼저 question 도구로 켤지 묻는다(선택지: 이번 대화만 켜기 / 항상 켜기 / 괜찮아요). 한 대화에서 같은 스킬은 한 번만 묻는다. 이번 대화만이면 skill 도구로 그 ID를 불러 쓰고, 항상 켜기면 skill_turn_on 도구로 켠 뒤 불러 쓴다.",
+    "「MCP:」가 붙은 스킬은 그 MCP 서버의 도구로 일한다. 켜기를 고르면 skill 도구로 부르기 전에 mcp_turn_on 도구로 그 서버도 켠다(항상 켜기면 always: true). 서버를 켤지 다시 묻지 않는다.",
     "",
     ...names.map((name) => {
       const entry = ENTRIES[name]
 
-      return entry ? `- ${name}: ${entry.summary} (${entry.keywords.join(", ")})` : `- ${name}`
+      if (!entry) return `- ${name}`
+      return `- ${name}: ${entry.summary} (${entry.keywords.join(", ")})${entry.mcp ? ` MCP: ${entry.mcp}` : ""}`
     }),
   ].join("\n")
 }

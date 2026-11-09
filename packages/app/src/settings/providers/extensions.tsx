@@ -1,12 +1,12 @@
-import { Component, For, createEffect, createMemo, createResource } from "solid-js"
+import { Component, For, createEffect, createMemo, createResource, createSignal } from "solid-js"
 import { Icon } from "@opencode/ui/icon"
 import { Switch } from "@opencode/ui/switch"
 import { Tabs } from "@opencode/ui/tabs"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useData } from "@/runtime/server/current"
 import { useServerSDK } from "@/runtime/server/client"
-import { useMcpToggle } from "@/providers/connect/mcp"
 import { pluginLabels } from "@/providers/catalog/plugin"
+import { showToast } from "@/shell/notifications/toast"
 import { ExternalLink } from "@/runtime/platform/external-link"
 import { SettingsList } from "@/settings/list"
 import type { SettingsView } from "@/settings/surface"
@@ -40,18 +40,43 @@ export const SettingsExtensions: Component<{
     { initialValue: [] },
   )
 
-  const toggleMcp = useMcpToggle(() => undefined, refetchMcp)
+  // 자비수 keeps a server turned on or off here for every 작업실 and after a restart; Ctrl+; changes one 작업실 for now.
+  const [mcpChoices, { mutate: setMcpChoices }] = createResource(
+    () => serverSdk.connection.status() === "connected",
+    () =>
+      serverSdk.api.jabisu.mcp
+        .list()
+        .then((result): Record<string, boolean> => result.on)
+        .catch((): Record<string, boolean> => ({})),
+    { initialValue: {} as Record<string, boolean> },
+  )
+  const [mcpTurning, setMcpTurning] = createSignal(false)
 
   const mcps = createMemo<McpRowItem[]>(() => {
     return (mcpList.latest ?? []).map((server) => ({
       name: server.name,
-      enabled: server.status.status === "connected",
+      enabled: mcpChoices.latest?.[server.name] ?? server.status.status !== "disabled",
     }))
   })
 
   const handleMcpToggle = (item: McpRowItem, checked: boolean) => {
-    if (item.enabled === checked || toggleMcp.isPending) return
-    toggleMcp.mutate(item.name)
+    if (item.enabled === checked || mcpTurning()) return
+    setMcpTurning(true)
+    void serverSdk.api.jabisu.mcp
+      .turn({ name: item.name, on: checked })
+      .then((result) => {
+        setMcpChoices(result.on)
+        // Every 작업실 reconnects on its own; this list shows the default one once it has.
+        setTimeout(() => void refetchMcp(), 2000)
+      })
+      .catch((error: unknown) =>
+        showToast({
+          variant: "error",
+          title: language.t("common.requestFailed"),
+          description: error instanceof Error ? error.message : String(error),
+        }),
+      )
+      .finally(() => setMcpTurning(false))
   }
 
   const [pluginList] = createResource(
@@ -105,7 +130,7 @@ export const SettingsExtensions: Component<{
                   {language.t("settings.extensions.availableAll")}
                 </span>
                 <span class="text-13-regular text-v2-text-text-muted">
-                  {language.t("settings.extensions.manageConfig")}
+                  {language.t("settings.extensions.mcp.saved")}
                 </span>
               </div>
               <SettingsList variant="catalog">

@@ -305,6 +305,10 @@ import type {
   JabisuSkillsResetOutput,
   JabisuSkillsTurnInput,
   JabisuSkillsTurnOutput,
+  JabisuMcpListInput,
+  JabisuMcpListOutput,
+  JabisuMcpTurnInput,
+  JabisuMcpTurnOutput,
   JabisuWorkGetInput,
   JabisuWorkGetOutput,
   JabisuWorkUpdateInput,
@@ -1812,6 +1816,19 @@ const EndpointJabisuSkillsTurn = (raw: RawClient["server.jabisu"]) => (input: Ja
     }).pipe(Effect.mapError(mapClientError)),
   )
 
+const EndpointJabisuMcpList = (raw: RawClient["server.jabisu"]) => (input?: JabisuMcpListInput) =>
+  preserveEffect<JabisuMcpListOutput>()(
+    raw["jabisu.mcp.list"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuMcpTurn = (raw: RawClient["server.jabisu"]) => (input: JabisuMcpTurnInput) =>
+  preserveEffect<JabisuMcpTurnOutput>()(
+    raw["jabisu.mcp.turn"]({
+      query: { location: input["location"] },
+      payload: { name: input["name"], on: input["on"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const EndpointJabisuWorkGet = (raw: RawClient["server.jabisu"]) => (input?: JabisuWorkGetInput) =>
   preserveEffect<JabisuWorkGetOutput>()(
     raw["jabisu.work.get"]({ query: { location: input?.["location"] } }).pipe(Effect.mapError(mapClientError)),
@@ -1890,6 +1907,7 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
     reset: EndpointJabisuSkillsReset(raw),
     turn: EndpointJabisuSkillsTurn(raw),
   },
+  mcp: { list: EndpointJabisuMcpList(raw), turn: EndpointJabisuMcpTurn(raw) },
   work: { get: EndpointJabisuWorkGet(raw), update: EndpointJabisuWorkUpdate(raw) },
   law: { get: EndpointJabisuLawGet(raw), update: EndpointJabisuLawUpdate(raw) },
   workroom: {

@@ -8,6 +8,7 @@ import path from "path"
 import { SkillFile } from "../../config/plugin/skill-file.js"
 import { JabisuBundle } from "./bundle.js"
 import { FilmCraft } from "./filmcraft.js"
+import { JabisuMcp } from "./mcp-switches.js"
 import { SkillCatalog } from "./skill-catalog.js"
 import pythonHelper from "./python/jabisu_python.py" with { type: "text" }
 import pythonSetup from "./python/python-setup.md" with { type: "text" }
@@ -178,7 +179,7 @@ export const list = Effect.fn("JabisuSkills.list")(function* (deps: Dependencies
   }
 })
 
-/** Turns a bundled skill on or off for every chat from now on. */
+/** Turns a bundled skill on or off for every chat from now on, with the MCP server it works through. */
 export const turn = Effect.fn("JabisuSkills.turn")(function* (deps: Dependencies, name: string, on: boolean) {
   yield* find(deps, name)
   const choices = yield* chosen(deps)
@@ -186,6 +187,10 @@ export const turn = Effect.fn("JabisuSkills.turn")(function* (deps: Dependencies
   yield* deps.fs
     .writeWithDirs(switches(deps.global), JSON.stringify({ on: { ...choices, [name]: on } }, null, 2))
     .pipe(Effect.mapError(() => new SkillsError({ reason: `${switches(deps.global)} cannot be written` })))
+
+  const server = SkillCatalog.ENTRIES[name]?.mcp
+  if (server)
+    yield* JabisuMcp.turn(deps, server, on).pipe(Effect.mapError((error) => new SkillsError({ reason: error.reason })))
 })
 
 const find = Effect.fn("JabisuSkills.find")(function* (deps: Dependencies, name: string) {

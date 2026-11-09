@@ -8,6 +8,9 @@ import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
 import { FreeConsole } from "@opencode/core/plugin/jabisu/free-console"
+import { JabisuMcp } from "@opencode/core/plugin/jabisu/mcp-switches"
+import { McpTurnOn } from "@opencode/core/plugin/jabisu/mcp-turn-on"
+import { SkillCatalog } from "@opencode/core/plugin/jabisu/skill-catalog"
 import { JabisuSafety } from "@opencode/core/plugin/jabisu/safety"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
@@ -85,6 +88,26 @@ const run = (
     const home = folders.home ?? (yield* tmpdirScoped()).path
     const base = host()
     const tools: string[] = []
+    // The tools by name, for tests that run one.
+    const added = new Map<string, unknown>()
+    // MCP transforms run again on reload, as the server's MCP state does; every server not disabled is connected.
+    const mcpTransforms: Parameters<Plugin.Context["mcp"]["transform"]>[0][] = []
+    const mcpEditor = {
+      list: () => Object.entries(servers),
+      get: (name: string) => servers[name],
+      set: (name: string, server: Mcp.ServerConfig) => {
+        // SAFETY: the plugin hands over a fresh config object, which this fake owns from here on.
+        servers[name] = server as Types.DeepMutable<Mcp.ServerConfig>
+      },
+      update: (name: string, update: (server: Types.DeepMutable<Mcp.ServerConfig>) => void) => {
+        const server = servers[name]
+        if (server) update(server)
+      },
+      remove: (name: string) => {
+        delete servers[name]
+      },
+    }
+    const reloads = { count: 0 }
     // What the free console registers: its integration and connect method, its provider and model, and its hook.
     const free = {
       integrations: new Map<string, string>(),
@@ -125,6 +148,7 @@ const run = (
                 namespace: () => {},
                 add: (tool) => {
                   tools.push(tool.name)
+                  added.set(tool.name, tool)
                 },
                 update: () => {},
                 remove: () => {},
@@ -219,24 +243,24 @@ const run = (
           ...base.mcp,
           transform: (transform) =>
             Effect.sync(() => {
-              transform({
-                list: () => Object.entries(servers),
-                get: (name) => servers[name],
-                set: (name, server) => {
-                  // SAFETY: the plugin hands over a fresh config object, which this fake owns from here on.
-                  servers[name] = server as Types.DeepMutable<Mcp.ServerConfig>
-                },
-                update: (name, update) => {
-                  const server = servers[name]
-                  if (server) update(server)
-                },
-                remove: (name) => {
-                  delete servers[name]
-                },
-              })
+              mcpTransforms.push(transform)
+              transform(mcpEditor)
 
               return { dispose: Effect.void }
             }),
+          reload: () =>
+            Effect.sync(() => {
+              reloads.count++
+              for (const transform of mcpTransforms) transform(mcpEditor)
+            }),
+          list: () =>
+            Effect.sync(() => ({
+              location: { directory: base.location.directory },
+              data: Object.entries(servers).map(([name, server]) => ({
+                name,
+                status: server.disabled ? { status: "disabled" as const } : { status: "connected" as const },
+              })),
+            })),
         },
       }),
     ).pipe(
@@ -249,7 +273,20 @@ const run = (
 
     const instructions = yield* (yield* InstructionDiscovery.Service).list()
 
-    return { skills: yield* skill.list(), servers, data, cache, config, home, tools, instructions, agents, free }
+    return {
+      skills: yield* skill.list(),
+      servers,
+      data,
+      cache,
+      config,
+      home,
+      tools,
+      added,
+      reloads,
+      instructions,
+      agents,
+      free,
+    }
   })
 
 const runWithCache = (cache?: string, config?: string) => run("jabisu", {}, undefined, { cache, config })
@@ -474,6 +511,70 @@ describe("JabisuPlugin.Plugin", () => {
       const { servers } = yield* run("jabisu", { myungkyung: configured })
 
       expect(servers.myungkyung).toBe(configured)
+    }),
+  )
+
+  it.live("turns servers on and off as chosen in 설정, over the default and the user's own config", () =>
+    Effect.gen(function* () {
+      const config = (yield* tmpdirScoped()).path
+      yield* Effect.promise(() =>
+        fs.writeFile(
+          JabisuMcp.switches({ config }),
+          JSON.stringify({ on: { myungkyung: true, context7: false, law: false } }),
+        ),
+      )
+      const law: Types.DeepMutable<Mcp.ServerConfig> = { type: "remote", url: "https://example.com/mcp" }
+      const { servers } = yield* run("jabisu", { law }, undefined, { config })
+
+      expect(servers.myungkyung?.disabled).toBe(false)
+      expect(servers.context7?.disabled).toBe(true)
+      expect(servers.law?.disabled).toBe(true)
+    }),
+  )
+
+  it.live("turns a skill's server on in this 작업실, or in every one when the user keeps it on", () =>
+    Effect.gen(function* () {
+      const { servers, added, reloads, config } = yield* run("jabisu", {})
+      // SAFETY: the plugin added this tool under its name; the test gives it what the model would.
+      const turnOn = added.get(McpTurnOn.name) as ReturnType<typeof McpTurnOn.tool>
+      const saved = Effect.promise(() =>
+        fs.readFile(JabisuMcp.switches({ config }), "utf8").catch(() => undefined),
+      )
+
+      const once = yield* turnOn.execute({ id: "myungkyung" })
+      expect(servers.myungkyung?.disabled).toBe(false)
+      expect(reloads.count).toBe(1)
+      expect(once.content).toContain("this 작업실")
+      // Nothing is kept for other 작업실 or after a restart.
+      expect(yield* saved).toBeUndefined()
+
+      yield* turnOn.execute({ id: "context7", always: true })
+      expect(servers.context7?.disabled).toBe(false)
+      expect(JSON.parse((yield* saved) ?? "")).toEqual({ on: { context7: true } })
+
+      const unknown = yield* turnOn.execute({ id: "nope" }).pipe(Effect.flip)
+      expect(unknown.message).toContain("nope is not an MCP server here")
+    }),
+  )
+
+  it.live("turns 명경 on and off with the saju skill, and offers to turn it on with the skill", () =>
+    Effect.gen(function* () {
+      const deps = {
+        fs: yield* FSUtil.Service,
+        global: Global.make({ config: (yield* tmpdirScoped()).path, data: (yield* tmpdirScoped()).path }),
+      }
+
+      yield* JabisuSkills.turn(deps, "myungkyung", true)
+      expect(yield* JabisuMcp.chosen(deps)).toEqual({ myungkyung: true })
+      yield* JabisuSkills.turn(deps, "myungkyung", false)
+      expect(yield* JabisuMcp.chosen(deps)).toEqual({ myungkyung: false })
+      // A skill that needs no server leaves the servers alone.
+      yield* JabisuSkills.turn(deps, "handoff", true)
+      expect(yield* JabisuMcp.chosen(deps)).toEqual({ myungkyung: false })
+
+      const offered = SkillCatalog.offered(["myungkyung", "handoff"]) ?? ""
+      expect(offered).toContain("MCP: myungkyung")
+      expect(offered).toContain("mcp_turn_on")
     }),
   )
 

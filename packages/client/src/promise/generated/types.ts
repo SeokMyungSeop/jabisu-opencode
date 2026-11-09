@@ -342,6 +342,8 @@ export type JabisuSkill = {
   directory?: string | undefined
 }
 
+export type JabisuMcpChoices = { on: { [x: string]: boolean } }
+
 export type JabisuWorkFolder = { path: string; files: number; documents: number; ready: number; pending: number }
 
 export type JabisuLaw = { configured: boolean; masked?: string | undefined; apply: string }
@@ -6207,6 +6209,20 @@ export type JabisuSkillsTurnInput = {
 }
 
 export type JabisuSkillsTurnOutput = JabisuSkillList
+
+export type JabisuMcpListInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuMcpListOutput = JabisuMcpChoices
+
+export type JabisuMcpTurnInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly name: { readonly name: string; readonly on: boolean }["name"]
+  readonly on: { readonly name: string; readonly on: boolean }["on"]
+}
+
+export type JabisuMcpTurnOutput = JabisuMcpChoices
 
 export type JabisuWorkGetInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]

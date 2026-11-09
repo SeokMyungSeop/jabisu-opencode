@@ -303,6 +303,10 @@ import type {
   JabisuSkillsResetOutput,
   JabisuSkillsTurnInput,
   JabisuSkillsTurnOutput,
+  JabisuMcpListInput,
+  JabisuMcpListOutput,
+  JabisuMcpTurnInput,
+  JabisuMcpTurnOutput,
   JabisuWorkGetInput,
   JabisuWorkGetOutput,
   JabisuWorkUpdateInput,
@@ -2525,6 +2529,33 @@ export function make(options: ClientOptions) {
             {
               method: "POST",
               path: `/api/jabisu/skills/turn`,
+              query: { location: input["location"] },
+              body: { name: input["name"], on: input["on"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      mcp: {
+        list: (input?: JabisuMcpListInput, requestOptions?: RequestOptions) =>
+          request<JabisuMcpListOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/mcp`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        turn: (input: JabisuMcpTurnInput, requestOptions?: RequestOptions) =>
+          request<JabisuMcpTurnOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/mcp/turn`,
               query: { location: input["location"] },
               body: { name: input["name"], on: input["on"] },
               successStatus: 200,

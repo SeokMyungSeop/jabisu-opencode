@@ -71,6 +71,12 @@ export const JabisuSkillList = Schema.Struct({
 }).annotate({ identifier: "JabisuSkillList" })
 export type JabisuSkillList = typeof JabisuSkillList.Type
 
+// The MCP servers the user turned on or off in 설정, by name; a server it does not name keeps its own setting.
+export const JabisuMcpChoices = Schema.Struct({ on: Schema.Record(Schema.String, Schema.Boolean) }).annotate({
+  identifier: "JabisuMcpChoices",
+})
+export type JabisuMcpChoices = typeof JabisuMcpChoices.Type
+
 const SkillName = Schema.Struct({ name: Schema.String })
 
 // A folder the work index follows, with how much of it the index holds: its files, the documents among them, and how
@@ -312,6 +318,36 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           identifier: "jabisu.skills.turn",
           summary: "Turn a bundled skill on or off",
           description: "Choose whether the model is offered a bundled skill in every chat from now.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.mcp.list", "/api/jabisu/mcp", {
+      query: LocationQuery,
+      success: JabisuMcpChoices,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.mcp.list",
+          summary: "List the MCP servers turned on or off",
+          description: "Return the MCP servers the user turned on or off for every 작업실; others keep their own setting.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.mcp.turn", "/api/jabisu/mcp/turn", {
+      query: LocationQuery,
+      payload: Schema.Struct({ name: Schema.String, on: Schema.Boolean }),
+      success: JabisuMcpChoices,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.mcp.turn",
+          summary: "Turn an MCP server on or off",
+          description: "Turn an MCP server on or off in every 작업실 from now, and keep the choice after a restart.",
         }),
       ),
   )
