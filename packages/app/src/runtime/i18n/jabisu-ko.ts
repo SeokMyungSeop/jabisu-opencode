@@ -237,9 +237,9 @@ const OVERRIDES: Record<string, string> = {
   "desktop.recovery.loadFailed": "자비수를 불러오지 못했습니다",
   "desktop.recovery.terminated": "자비수 창이 예기치 않게 종료되었습니다",
   "desktop.recovery.unresponsive": "자비수가 응답하지 않습니다",
-  "project.settings.extensions.empty.mcps.description": "자비수에서 쓸 수 있는 MCP가 여기에 표시됩니다",
-  "project.settings.extensions.empty.plugins.description": "자비수에서 쓸 수 있는 플러그인이 여기에 표시됩니다",
-  "project.settings.extensions.empty.skills.description": "자비수에서 쓸 수 있는 스킬이 여기에 표시됩니다",
+  "project.settings.extensions.empty.mcps.description": "자비수에서 쓸 수 있는 일손빌림이 여기에 표시됩니다",
+  "project.settings.extensions.empty.plugins.description": "자비수에서 쓸 수 있는 일머리묶음이 여기에 표시됩니다",
+  "project.settings.extensions.empty.skills.description": "자비수에서 쓸 수 있는 일머리가 여기에 표시됩니다",
   "settings.workspaces.empty.description": "자비수에서 만든 작업 트리가 여기에 표시됩니다",
 }
 
