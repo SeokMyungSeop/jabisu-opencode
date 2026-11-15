@@ -13,6 +13,11 @@ export const JABISU_HIGHLIGHTS: readonly { readonly version: string; readonly it
           "LG AI연구원의 K-EXAONE 2.5를 쓸 수 있어요. exaone.ai에서 API 키를 무료로 발급받아 「AI 연결」의 EXAONE에 붙여 넣으세요. 키는 발급일부터 30일 동안 쓸 수 있어요.",
       },
       {
+        title: "화면 말을 우리말로",
+        description:
+          "스킬은 「일머리」, MCP는 「일손빌림」, 플러그인은 「일머리묶음」이라고 불러요. 하는 일은 그대로이고 이름만 바뀌었어요. 처음 나오는 곳에는 「일머리 (스킬)」처럼 원래 이름도 함께 보여요.",
+      },
+      {
         title: "법률 번호를 정확하게",
         description:
           "법령을 찾으면 「법률 제21065호」 같은 진짜 공포번호를 함께 알려 줘요. 전에는 법제처 관리 번호를 법률 번호처럼 쓰는 일이 있었어요.",
