@@ -1108,7 +1108,7 @@ function ComposerEditorAlternateDelivery(props: { controller: ComposerEditorMode
             type="button"
             variant="ghost-faint"
             size="small"
-            class="me-3 gap-1.5 px-1.5 ![font-weight:530] duration-150 motion-reduce:animate-none"
+            class="me-3 gap-1.5 px-1.5 ![font-weight:530] duration-(--motion-fast) motion-reduce:animate-none"
             classList={{
               "animate-in fade-in": presence.animate() && presence.show(),
               "animate-out fade-out fill-mode-forwards": presence.animate() && !presence.show(),

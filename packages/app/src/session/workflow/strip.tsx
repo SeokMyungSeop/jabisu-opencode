@@ -1,3 +1,4 @@
+import { DoneCheck, doneMoment } from "@opencode/ui/done-check"
 import { Icon } from "@opencode/ui/icon"
 import { Schema } from "effect"
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
@@ -100,6 +101,20 @@ export function SessionWorkflow(props: {
     return { text: language.t("jabisu.workflow.eta", { time }), hint }
   })
 
+  // A request that finishes on screen is greeted once: the last step's check draws itself and the strip glows. One
+  // that was already finished when the strip appeared, or that finishes in a window nobody sees, is not.
+  const [greeted, setGreeted] = createSignal(false)
+  let wasRunning = false
+
+  createEffect(() => {
+    const running = flow()?.running ?? false
+
+    if (running) setGreeted(false)
+
+    if (wasRunning && !running && flow() && doneMoment()) setGreeted(true)
+    wasRunning = running
+  })
+
   const label = (step: WorkflowStep) => step.title ?? language.t(`jabisu.workflow.kind.${step.kind ?? "tool"}`)
 
   const status = (step: WorkflowStep) => (step.status === "active" && props.permission() ? "permission" : step.status)
@@ -109,6 +124,7 @@ export function SessionWorkflow(props: {
       {(value) => (
         <section
           data-component="jabisu-workflow"
+          data-done-glow={greeted() ? "" : undefined}
           aria-label={language.t("jabisu.workflow.title")}
           class="mb-2 rounded-[14px] bg-v2-background-bg-deep px-4 py-3 text-v2-text-text-base"
         >
@@ -155,7 +171,11 @@ export function SessionWorkflow(props: {
                     aria-current={step.status === "active" ? "step" : undefined}
                   >
                     <div class="flex items-center">
-                      <StepNode status={status(step)} number={index() + 1} />
+                      <StepNode
+                        status={status(step)}
+                        number={index() + 1}
+                        greet={greeted() && index() === value().steps.length - 1}
+                      />
                       <Show when={index() < value().steps.length - 1}>
                         <span
                           class="mx-2 h-0 flex-1 border-t-2"
@@ -208,7 +228,7 @@ export function SessionWorkflow(props: {
   )
 }
 
-function StepNode(props: { status: string; number: number }) {
+function StepNode(props: { status: string; number: number; greet?: boolean }) {
   return (
     <span
       class="flex size-[26px] shrink-0 items-center justify-center rounded-full text-[12px] font-[700]"
@@ -223,7 +243,9 @@ function StepNode(props: { status: string; number: number }) {
       aria-hidden="true"
     >
       <Show when={props.status === "done"}>
-        <Icon name="check" size="small" />
+        <Show when={props.greet} fallback={<Icon name="check" size="small" />}>
+          <DoneCheck greet />
+        </Show>
       </Show>
       <Show when={props.status === "active"}>
         <span class="size-2 rounded-full bg-v2-text-text-accent motion-safe:animate-pulse" />

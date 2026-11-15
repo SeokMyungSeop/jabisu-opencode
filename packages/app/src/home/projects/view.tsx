@@ -125,7 +125,7 @@ export function HomeProjectsView(props: HomeProjectsViewProps) {
           <Popover.Content
             aria-label={props.language.t("home.projects")}
             dir={props.language.direction()}
-            class="z-50 max-h-[min(70dvh,var(--kb-popper-content-available-height))] overflow-hidden rounded-[10px] bg-v2-background-bg-base p-1.5 shadow-[var(--v2-elevation-floating)] outline-none data-[expanded]:animate-in data-[expanded]:fade-in data-[expanded]:slide-in-from-top-2 duration-150 ease-out motion-reduce:animate-none"
+            class="z-50 max-h-[min(70dvh,var(--kb-popper-content-available-height))] overflow-hidden rounded-[10px] bg-v2-background-bg-base p-1.5 shadow-[var(--v2-elevation-floating)] outline-none data-[expanded]:animate-in data-[expanded]:fade-in data-[expanded]:slide-in-from-top-2 duration-(--motion-fast) ease-out motion-reduce:animate-none"
           >
             <HomeProjectsPanel
               {...props}
@@ -423,7 +423,7 @@ function HomeServerRow(props: {
             <Icon
               name="chevron-down"
               size="small"
-              class="transition-transform duration-150 ease-in-out"
+              class="transition-transform duration-(--motion-fast) ease-in-out"
               style={{ transform: `rotate(${props.collapsed || !canToggle() ? -90 : 0}deg)` }}
             />
           </span>
@@ -818,7 +818,7 @@ function HomeProjectNavButton(props: JSX.ButtonHTMLAttributes<HTMLButtonElement>
       {...rest}
       class={`
         flex h-7 min-w-0 w-full shrink-0 cursor-default items-center gap-2 rounded-[6px] bg-transparent px-1.5 text-left
-        text-v2-text-text-muted [font-weight:440] transition-[background-color,color,box-shadow] duration-[120ms] ease-in-out
+        text-v2-text-text-muted [font-weight:440] transition-[background-color,color,box-shadow] duration-(--motion-fast) ease-in-out
         hover:bg-v2-background-bg-layer-01 hover:text-v2-text-text-base
         data-[selected]:bg-v2-background-bg-layer-03 data-[selected]:text-v2-text-text-base
         data-[selected]:hover:bg-v2-background-bg-layer-03

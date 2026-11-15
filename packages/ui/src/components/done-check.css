@@ -1,0 +1,38 @@
+/* A finished piece of work: the check draws its line once. See the motion rules in styles/animations.css. */
+[data-component="done-check"][data-greet] path {
+  stroke-dasharray: 1;
+  animation: done-check-draw calc(var(--motion-done) / 2) ease-out both;
+}
+
+@keyframes done-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The workflow strip, full to its end, glows once in the success colour. */
+[data-done-glow] {
+  animation: done-glow var(--motion-done) ease-out both;
+}
+
+@keyframes done-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--v2-state-fg-success) 0%, transparent);
+  }
+  35% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--v2-state-fg-success) 28%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--v2-state-fg-success) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="done-check"][data-greet] path,
+  [data-done-glow] {
+    animation: none;
+  }
+}

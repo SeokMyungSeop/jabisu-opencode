@@ -391,7 +391,7 @@ function SessionScreenContent(props: {
           <div
             classList={{
               "@container relative z-10 min-w-0 shrink-0 flex flex-col min-h-0 h-full flex-1 md:flex-none transition-[width]": true,
-              "duration-[240ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width] motion-reduce:transition-none":
+              "duration-(--motion-slow) ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width] motion-reduce:transition-none":
                 !screen.size.active() && sidePresence.animate(),
               "transition-none": screen.size.active() || !sidePresence.animate(),
             }}
@@ -455,7 +455,7 @@ function SessionScreenContent(props: {
                 <div
                   data-slot="session-side-region"
                   classList={{
-                    "absolute inset-x-0 top-0 min-h-0 overflow-visible transition-[height] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
+                    "absolute inset-x-0 top-0 min-h-0 overflow-visible transition-[height] duration-(--motion-slow) ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
                     "will-change-[height]": !screen.size.active() && store.sideHeightMotion && regionAnimating(),
                     "transition-none": screen.size.active() || !store.sideHeightMotion || !regionAnimating(),
                   }}
@@ -500,7 +500,7 @@ function SessionScreenContent(props: {
                   <div
                     data-slot="session-side-panel-gap"
                     classList={{
-                      "relative z-0 shrink-0 overflow-visible bg-v2-background-bg-deep transition-[height] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
+                      "relative z-0 shrink-0 overflow-visible bg-v2-background-bg-deep transition-[height] duration-(--motion-slow) ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
                       "transition-none": screen.size.active() || !store.sideHeightMotion || !regionAnimating(),
                     }}
                     style={{ height: screen.side.gap.height() }}
@@ -525,7 +525,7 @@ function SessionScreenContent(props: {
                   <div
                     data-slot="session-side-terminal-region"
                     classList={{
-                      "relative z-10 min-h-0 shrink-0 overflow-visible transition-[height] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
+                      "relative z-10 min-h-0 shrink-0 overflow-visible transition-[height] duration-(--motion-slow) ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none": true,
                       "will-change-[height]": !screen.size.active() && store.sideHeightMotion && regionAnimating(),
                       "transition-none": screen.size.active() || !store.sideHeightMotion || !regionAnimating(),
                     }}

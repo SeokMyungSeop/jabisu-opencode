@@ -77,7 +77,7 @@ function ComposerModelControl(props: {
         {(provider) => (
           <ProviderModelIcon
             provider={provider()}
-            class="shrink-0 opacity-40 transition-opacity duration-150 group-hover:opacity-100"
+            class="shrink-0 opacity-40 transition-opacity duration-(--motion-fast) group-hover:opacity-100"
           />
         )}
       </Show>

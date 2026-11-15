@@ -29,7 +29,7 @@ export function NewSessionStarters(props: { state: ComposerStateTarget; onFilled
           <button
             type="button"
             tabIndex={room() ? 0 : -1}
-            class="h-8 rounded-full border border-v2-border-border-base px-3.5 text-[13px] text-v2-text-text-muted transition-[background-color,color] duration-150 ease-in-out hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-text-text-base focus-visible:outline-none"
+            class="h-8 rounded-full border border-v2-border-border-base px-3.5 text-[13px] text-v2-text-text-muted transition-[background-color,color] duration-(--motion-fast) ease-in-out hover:bg-v2-overlay-simple-overlay-hover hover:text-v2-text-text-base focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:text-v2-text-text-base focus-visible:outline-none"
             onClick={() => fill(starter)}
           >
             {language.t(`jabisu.starter.${starter}.label`)}

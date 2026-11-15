@@ -438,7 +438,7 @@ function MessageTimelineView(
             <div
               ref={setBackgroundHintRef}
               data-component="session-background-hint-row"
-              class="duration-150 motion-reduce:animate-none"
+              class="duration-(--motion-fast) motion-reduce:animate-none"
               classList={{
                 "animate-in fade-in": backgroundHintPresence.animate() && backgroundHintPresence.show(),
                 "animate-out fade-out fill-mode-forwards":

@@ -103,7 +103,7 @@ export function SideRegion(props: {
           "h-full shrink-0": !props.stacked,
           "h-full min-h-0": props.stacked,
           "pointer-events-none": !open(),
-          "transition-[width] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
+          "transition-[width] duration-(--motion-slow) ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
             !props.size.active(),
           "flex-1": tabsVisible(),
         }}
@@ -259,7 +259,7 @@ export function SideRegion(props: {
                 id="file-tree-panel"
                 class="relative min-w-0 h-full shrink-0 overflow-hidden"
                 classList={{
-                  "transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
+                  "transition-[width] duration-(--motion-base) ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none":
                     !props.size.active(),
                 }}
                 style={{ width: treeWidth() }}

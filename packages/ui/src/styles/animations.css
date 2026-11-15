@@ -1,3 +1,32 @@
+/*
+ * Motion rules, the same in every theme. Everyday motion is calm: opacity and transform only, no bounce, nothing over
+ * --motion-slow. What leaves is one step shorter than what arrives, and what arrives travels 4 to 8px.
+ *   --motion-fast  hover, press, toggle, check
+ *   --motion-base  lists unfolding, menus, tooltips, chips
+ *   --motion-slow  side panels, dialogs, workflow steps
+ * Curves are Tailwind's: ease-out to arrive, ease-in to leave, ease-in-out to move. Use as `duration-(--motion-fast)`.
+ * The one exception is a finished piece of work (see done-check.css): once, within --motion-done.
+ */
+:root {
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --motion-done: 600ms;
+  /* The tool rows and rolling numbers take their timing from these; without them they run 480 to 560ms. */
+  --tool-motion-spring-ms: var(--motion-slow);
+  --tool-motion-fade-ms: var(--motion-base);
+  --tool-motion-odometer-ms: var(--motion-slow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+    --motion-done: 0ms;
+  }
+}
+
 :root {
   --animate-pulse: pulse-opacity 2s ease-in-out infinite;
   --animate-pulse-scale: pulse-scale 1.2s ease-in-out infinite;

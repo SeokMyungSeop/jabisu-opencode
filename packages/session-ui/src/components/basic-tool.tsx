@@ -62,7 +62,7 @@ export interface BasicToolProps {
   compact?: boolean
 }
 
-const SPRING = { type: "spring" as const, visualDuration: 0.35, bounce: 0 }
+const SPRING = { type: "spring" as const, visualDuration: 0.25, bounce: 0 }
 
 const deferredMounts: Array<{ active: boolean; fn: () => void }> = []
 

@@ -152,7 +152,7 @@ export function SessionRunningMenu(props: {
           if (!props.title) setAppearance("group", element)
         }}
         inert={!props.title && !presence.show()}
-        class="flex min-w-0 shrink-0 items-center gap-0.5 duration-150 ease-out motion-reduce:animate-none"
+        class="flex min-w-0 shrink-0 items-center gap-0.5 duration-(--motion-fast) ease-out motion-reduce:animate-none"
         classList={{
           "max-w-[45%]": !!props.title,
           "animate-in fade-in": !props.title && presence.animate() && presence.show() && !appearance.entered,
@@ -209,7 +209,7 @@ export function SessionRunningMenu(props: {
                   <span
                     id={`${id}-count`}
                     ref={(element) => setAppearance("group", element)}
-                    class="shrink-0 ps-0.5 pe-1 tabular-nums text-v2-text-text-muted duration-150 ease-out motion-reduce:animate-none"
+                    class="shrink-0 ps-0.5 pe-1 tabular-nums text-v2-text-text-muted duration-(--motion-fast) ease-out motion-reduce:animate-none"
                     classList={{
                       "animate-in fade-in": presence.animate() && presence.show() && !appearance.entered,
                       "animate-out fade-out fill-mode-forwards": presence.animate() && !presence.show(),

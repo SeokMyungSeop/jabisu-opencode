@@ -847,7 +847,7 @@ export function createTimelineVirtualizer(input: Input) {
         data-local-session={!props.workspaceSession() ? "" : undefined}
       >
         <div
-          class="absolute left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-200 ease-out"
+          class="absolute left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-(--motion-base) ease-out"
           classList={{
             "bottom-8": true,
             "opacity-100 translate-y-0 scale-100": input.scroll().overflow && input.scroll().jump,

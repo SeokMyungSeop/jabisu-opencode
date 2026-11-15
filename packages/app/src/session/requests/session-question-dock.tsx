@@ -134,7 +134,7 @@ export const SessionQuestionDock: Component<{ request: FormInfo; onSubmit: () =>
   const customLabel = () => language.t("ui.question.custom.answerPlaceholder")
 
   const last = createMemo(() => store.tab >= total() - 1)
-  const collapse = useSpring(() => (store.minimized ? 1 : 0), { visualDuration: 0.3, bounce: 0 })
+  const collapse = useSpring(() => (store.minimized ? 1 : 0), { visualDuration: 0.25, bounce: 0 })
   const hidden = createMemo(() => Math.max(0, Math.min(1, collapse())))
   const optionsOff = createMemo(() => hidden() > 0.98)
 

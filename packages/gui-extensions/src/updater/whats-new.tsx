@@ -291,7 +291,7 @@ function DialogReleaseNotes(props: { highlights: Highlight[]; dialog: DialogHand
                   {(_, i) => (
                     <button
                       type="button"
-                      class="h-6 flex items-center cursor-pointer bg-transparent border-none p-0 transition-all duration-200"
+                      class="h-6 flex items-center cursor-pointer bg-transparent border-none p-0 transition-all duration-(--motion-base)"
                       classList={{
                         "w-8": i === index(),
                         "w-3": i !== index(),
@@ -299,7 +299,7 @@ function DialogReleaseNotes(props: { highlights: Highlight[]; dialog: DialogHand
                       onClick={() => setIndex(i)}
                     >
                       <div
-                        class="w-full h-0.5 rounded-[1px] transition-colors duration-200"
+                        class="w-full h-0.5 rounded-[1px] transition-colors duration-(--motion-base)"
                         classList={{
                           "bg-icon-strong-base": i === index(),
                           "bg-icon-weak-base": i !== index(),

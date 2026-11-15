@@ -33,7 +33,7 @@ export function ComposerDropzone(props: {
       <div
         data-slot="session-dropzone-blur"
         data-visible={props.active}
-        class="pointer-events-none absolute inset-0 z-[79] rounded-[inherit] opacity-0 transition-[opacity,backdrop-filter] duration-200 ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=true]:opacity-100 data-[visible=true]:backdrop-blur-[1.5px] data-[visible=true]:will-change-[opacity,backdrop-filter] motion-reduce:transition-none"
+        class="pointer-events-none absolute inset-0 z-[79] rounded-[inherit] opacity-0 transition-[opacity,backdrop-filter] duration-(--motion-base) ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=true]:opacity-100 data-[visible=true]:backdrop-blur-[1.5px] data-[visible=true]:will-change-[opacity,backdrop-filter] motion-reduce:transition-none"
         style={{
           "-webkit-mask-image":
             "linear-gradient(to right, transparent 0%, black 25%, black 75%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 28%, black 72%, transparent 100%)",
@@ -48,7 +48,7 @@ export function ComposerDropzone(props: {
           ref={(element) => setElements("dropzone", element)}
           data-component="session-dropzone"
           data-visible={props.active}
-          class="pointer-events-none absolute inset-0 z-[80] grid place-items-center overflow-hidden rounded-[inherit] bg-[color-mix(in_srgb,var(--v2-text-text-base)_var(--session-dropzone-wash),transparent)] opacity-100 transition-opacity duration-200 ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=false]:opacity-0 motion-reduce:transition-none"
+          class="pointer-events-none absolute inset-0 z-[80] grid place-items-center overflow-hidden rounded-[inherit] bg-[color-mix(in_srgb,var(--v2-text-text-base)_var(--session-dropzone-wash),transparent)] opacity-100 transition-opacity duration-(--motion-base) ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=false]:opacity-0 motion-reduce:transition-none"
         >
           <div class="absolute inset-0 bg-v2-background-bg-base/25" />
           <div
@@ -73,7 +73,7 @@ export function ComposerDropzone(props: {
           </div>
           <div
             data-slot="session-dropzone-content"
-            class="relative flex translate-y-0 flex-col items-center gap-5 opacity-100 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=false]:translate-y-1 data-[visible=false]:opacity-0 motion-reduce:transition-none"
+            class="relative flex translate-y-0 flex-col items-center gap-5 opacity-100 transition-[opacity,transform] duration-(--motion-base) ease-[cubic-bezier(0.215,0.61,0.355,1)] data-[visible=false]:translate-y-1 data-[visible=false]:opacity-0 motion-reduce:transition-none"
             data-visible={props.active}
           >
             <div

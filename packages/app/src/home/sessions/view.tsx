@@ -323,7 +323,7 @@ function HomeSessionSearch(
           class={`
             relative z-20 flex h-9 w-full items-center gap-2 rounded-[6px] py-1 ps-3 pe-2
             bg-v2-background-bg-layer-02/60 text-v2-icon-icon-muted transition-[background-color,box-shadow]
-            duration-[120ms] ease-in-out hover:bg-v2-background-bg-layer-02 focus-within:bg-v2-background-bg-layer-02
+            duration-(--motion-fast) ease-in-out hover:bg-v2-background-bg-layer-02 focus-within:bg-v2-background-bg-layer-02
           `}
         >
           <Icon name="magnifying-glass" />
@@ -422,7 +422,7 @@ function HomeSessionSearchResultRow(
       aria-selected={props.selected}
       class={`
         flex h-10 w-full shrink-0 cursor-default items-center border-0 py-3 pl-[18px] pr-6 text-left
-        transition-[background-color] duration-[120ms] ease-in-out
+        transition-[background-color] duration-(--motion-fast) ease-in-out
         hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none
       `}
       classList={{
@@ -652,7 +652,7 @@ function HomeSessionRow(
           class={`
             flex h-10 min-w-0 w-full flex-1 shrink-0 cursor-default items-center rounded-[6px] border-0
             bg-transparent py-3 ps-1.5 pe-3 md:ps-3 md:pe-10 text-start text-v2-text-text-muted [font-weight:530]
-            transition-[background-color,color,box-shadow] duration-[120ms] ease-in-out
+            transition-[background-color,color,box-shadow] duration-(--motion-fast) ease-in-out
             hover:bg-v2-overlay-simple-overlay-hover focus-visible:bg-v2-overlay-simple-overlay-hover focus-visible:outline-none
           `}
           classList={{ "gap-1.5": props.desktop, "gap-2": !props.desktop }}
@@ -846,7 +846,7 @@ function HomeSessionLocation(props: {
       classList={{
         "-ms-1.5 max-w-0 opacity-0": !props.show,
         "max-w-[60%] opacity-100": props.show,
-        "transition-[max-width,opacity] duration-[120ms]": !props.instantHide,
+        "transition-[max-width,opacity] duration-(--motion-fast)": !props.instantHide,
         "transition-none": props.instantHide,
       }}
     >
