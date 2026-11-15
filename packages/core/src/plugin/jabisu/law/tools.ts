@@ -270,9 +270,14 @@ export function searchContent(kind: LawApi.Kind, total: number, found: readonly 
     `${KIND_NAMES[kind]} ${found.length} of ${total}:`,
     ...found.map(
       (item) =>
-        `- ${item.name}${item.short ? ` (약칭 ${item.short})` : ""} · id ${item.id} · ${item.detail}${item.current ? "" : " · 연혁(현행 아님)"}`,
+        `- ${item.name}${item.short ? ` (약칭 ${item.short})` : ""} · ${kind === "law" ? "법령ID(id)" : "id"} ${item.id} · ${item.detail}${item.current ? "" : " · 연혁(현행 아님)"}`,
     ),
     "",
+    ...(kind === "law"
+      ? [
+          "법령ID is law.go.kr's lookup number for law_text, not a law's number. Cite a law's number only as the 공포번호 written above (법률 제N호), and leave it out when none is written.",
+        ]
+      : []),
     "Read it with law_text before relying on it.",
   ].join("\n")
 }

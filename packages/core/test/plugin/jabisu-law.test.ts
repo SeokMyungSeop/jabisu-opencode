@@ -27,6 +27,7 @@ const LAWS = [
     법령명한글: "산업기술혁신 촉진법",
     법령약칭명: "산업기술혁신법",
     법령구분명: "법률",
+    공포번호: "021065",
     소관부처명: "산업통상부",
     시행일자: "20260918",
     현행연혁코드: "현행",
@@ -238,8 +239,11 @@ describe("LawTools", () => {
       expect(calls[0]?.get("type")).toBe("JSON")
       expect(result.output.found.map((item) => item.id)).toEqual(["001461", "003778"])
       expect(result.content).toContain(
-        "산업기술혁신 촉진법 (약칭 산업기술혁신법) · id 001461 · 법률 · 산업통상부 · 시행 2026. 9. 18.",
+        "산업기술혁신 촉진법 (약칭 산업기술혁신법) · 법령ID(id) 001461 · 법률 제21065호 · 산업통상부 · 시행 2026. 9. 18.",
       )
+      // A law with no 공포번호 in the answer is listed by its kind alone, never by its 법령ID.
+      expect(result.content).toContain("산업기술혁신 촉진법 시행령 · 법령ID(id) 003778 · 대통령령 · 산업통상부")
+      expect(result.content).toContain("법령ID is law.go.kr's lookup number")
     }),
   )
 

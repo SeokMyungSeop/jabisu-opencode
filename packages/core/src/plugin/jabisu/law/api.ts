@@ -391,6 +391,16 @@ const ministryFound = (item: Json) => ({
   current: true,
 })
 
+/**
+ * A law's kind with its 공포번호, as it is cited: 법률 제21065호. The 법령ID a search result carries is law.go.kr's own
+ * lookup number and is never this number.
+ */
+const promulgated = (kind: unknown, number: unknown) => {
+  const digits = str(number)
+
+  return /^\d+$/.test(digits) && str(kind) ? `${str(kind)} 제${Number(digits)}호` : str(kind)
+}
+
 // Where each kind's results sit in a search answer, and how one becomes a Found.
 const SEARCH = {
   law: {
@@ -400,7 +410,7 @@ const SEARCH = {
       id: str(item["법령ID"]),
       name: str(item["법령명한글"]),
       short: str(item["법령약칭명"]),
-      detail: joined(str(item["법령구분명"]), str(item["소관부처명"]), since(item["시행일자"])),
+      detail: joined(promulgated(item["법령구분명"], item["공포번호"]), str(item["소관부처명"]), since(item["시행일자"])),
       current: str(item["현행연혁코드"]) !== "연혁",
     }),
   },
@@ -925,7 +935,7 @@ const readers = {
 
     return {
       name,
-      detail: joined(str(info["법종구분"]), str(info["소관부처"]), since(info["시행일자"])),
+      detail: joined(promulgated(info["법종구분"], info["공포번호"]), str(info["소관부처"]), since(info["시행일자"])),
       link: link("law", id, name),
       articles: units,
       sections: [],
