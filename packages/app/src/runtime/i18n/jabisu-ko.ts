@@ -193,6 +193,8 @@ export const MISSING: Record<string, string> = {
 const OVERRIDES: Record<string, string> = {
   "project.settings.name.description": "자비수 곳곳에서 이 작업실에 표시되는 이름",
   "settings.permissions.tool.external_directory.description": "작업실 폴더 밖의 파일에 접근",
+  "settings.permissions.tool.sketchy_install.description":
+    "그림 도구(Sketchy) 내려받기 · 약 28MB, 처음 한 번만 · github.com에서 받아요",
   "settings.projects.description": "작업실별 설정 관리",
   "settings.projects.empty.title": "아직 작업실이 없습니다",
   "settings.projects.empty.description": "작업실을 추가해 시작하세요",

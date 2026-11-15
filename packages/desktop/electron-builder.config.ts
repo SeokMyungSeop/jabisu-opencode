@@ -299,6 +299,11 @@ export function getConfig() {
             from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.hwpx-skill"),
             to: "LICENSE.hwpx-skill.txt",
           },
+          // Sketchy, the drawing tool the CLI downloads on first use.
+          {
+            from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.sketchy"),
+            to: "LICENSE.sketchy.txt",
+          },
           // SheetJS, unpdf and PDF.js, which read documents for the CLI and the file preview.
           {
             from: path.join(rootDir, "packages/core/src/plugin/jabisu/LICENSE.document-libraries"),

@@ -100,6 +100,13 @@ export const ENTRIES: Readonly<Record<string, Entry>> = {
     on: false,
     mcp: "myungkyung",
   },
+  // Draws through the Sketchy MCP server, which its own tool downloads once and turns on; so no 「MCP:」 here.
+  "sketchy-explain": {
+    title: "그려서 설명하기",
+    summary: "설명을 손그림 그림과 단계별 넘겨 보기로 보여 줘요 (처음 한 번 그림 도구 내려받기)",
+    keywords: ["그림으로 설명", "그려서 설명", "단계별로 설명", "도식", "흐름도", "구조도", "손그림", "다이어그램"],
+    on: false,
+  },
 }
 
 /** Whether a bundled skill is on: the user's choice, else its default; a skill the catalog lacks is on. */

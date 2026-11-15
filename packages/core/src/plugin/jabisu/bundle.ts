@@ -68,12 +68,13 @@ import file60 from "./skills/hwpx/templates/report/section0.xml" with { type: "t
 import file61 from "./skills/myungkyung/SKILL.md" with { type: "text" }
 import file62 from "./skills/pptx/SKILL.md" with { type: "text" }
 import file63 from "./skills/pptx/scripts/md2pptx.py" with { type: "text" }
-import file64 from "./skills/tdd/SKILL.md" with { type: "text" }
-import file65 from "./skills/tdd/mocking.md" with { type: "text" }
-import file66 from "./skills/tdd/tests.md" with { type: "text" }
-import file67 from "./skills/work-profile/SKILL.md" with { type: "text" }
-import file68 from "./skills/xlsx/SKILL.md" with { type: "text" }
-import file69 from "./skills/xlsx/scripts/csv2xlsx.py" with { type: "text" }
+import file64 from "./skills/sketchy-explain/SKILL.md" with { type: "text" }
+import file65 from "./skills/tdd/SKILL.md" with { type: "text" }
+import file66 from "./skills/tdd/mocking.md" with { type: "text" }
+import file67 from "./skills/tdd/tests.md" with { type: "text" }
+import file68 from "./skills/work-profile/SKILL.md" with { type: "text" }
+import file69 from "./skills/xlsx/SKILL.md" with { type: "text" }
+import file70 from "./skills/xlsx/scripts/csv2xlsx.py" with { type: "text" }
 
 /** Each bundled skill file by its path under the skills folder, as text or as the path of an embedded file. */
 export const files: ReadonlyArray<{ readonly path: string; readonly text: string } | { readonly path: string; readonly file: string }> = [
@@ -141,10 +142,11 @@ export const files: ReadonlyArray<{ readonly path: string; readonly text: string
   { path: "myungkyung/SKILL.md", text: String(file61) },
   { path: "pptx/SKILL.md", text: String(file62) },
   { path: "pptx/scripts/md2pptx.py", text: String(file63) },
-  { path: "tdd/SKILL.md", text: String(file64) },
-  { path: "tdd/mocking.md", text: String(file65) },
-  { path: "tdd/tests.md", text: String(file66) },
-  { path: "work-profile/SKILL.md", text: String(file67) },
-  { path: "xlsx/SKILL.md", text: String(file68) },
-  { path: "xlsx/scripts/csv2xlsx.py", text: String(file69) },
+  { path: "sketchy-explain/SKILL.md", text: String(file64) },
+  { path: "tdd/SKILL.md", text: String(file65) },
+  { path: "tdd/mocking.md", text: String(file66) },
+  { path: "tdd/tests.md", text: String(file67) },
+  { path: "work-profile/SKILL.md", text: String(file68) },
+  { path: "xlsx/SKILL.md", text: String(file69) },
+  { path: "xlsx/scripts/csv2xlsx.py", text: String(file70) },
 ]

@@ -28,6 +28,7 @@ import { JabisuMcp } from "./jabisu/mcp-switches.js"
 import { McpTurnOn } from "./jabisu/mcp-turn-on.js"
 import { JabisuSafety } from "./jabisu/safety.js"
 import { JabisuWorkflow } from "./jabisu/workflow.js"
+import { Sketchy } from "./jabisu/sketchy.js"
 import { SkillCatalog } from "./jabisu/skill-catalog.js"
 import { SkillTurnOn } from "./jabisu/skill-turn-on.js"
 import { JabisuSkills } from "./jabisu/skills.js"
@@ -38,7 +39,8 @@ import { WorkSearch } from "./jabisu/work/search-tool.js"
 // 자비수(諮備秀) ships six of Matt Pocock's skills (mattpocock/skills 1.3.1, MIT — jabisu/LICENSE.mattpocock-skills),
 // the hwpx skill (jkf87/hwpx-skill, MIT — jabisu/LICENSE.hwpx-skill), its own docx, xlsx, pptx, craft-apps and
 // myungkyung skills, and offers Context7, 명경 (명상's saju server), and FilmCraft when it is installed, as MCP servers
-// that stay off until the user turns them on. Other channels get none of these.
+// that stay off until the user turns them on. Sketchy (ddkbs/sketchy, MIT — jabisu/LICENSE.sketchy), which draws
+// explanations by hand, is downloaded the first time it is used. Other channels get none of these.
 
 // 명경(明鏡) computes saju charts on 명상's server; its tool names and inputs are a public promise and only grow.
 const MYUNGKYUNG_URL = "https://myungkyung.sejong-nexus.ai.kr/api/mcp"
@@ -213,8 +215,59 @@ export const Plugin = define({
       })
     })
 
-    // Configured servers are applied before this plugin, so a configured context7, myungkyung or filmcraft is kept as
-    // it is.
+    // Sketchy draws explanations by hand. It is downloaded the first time it is wanted, so its server exists only
+    // once it is unpacked; each 작업실 runs its own, saving drawings into that 작업실 where the app's browser opens them.
+    const http = yield* HttpClient.HttpClient
+    const permission = yield* Permission.Service
+    const sketchyRoot = Sketchy.folder(global.data)
+    const sketchy = { ready: yield* Sketchy.installed(fs, sketchyRoot) }
+    yield* ctx.tool.transform((editor) =>
+      editor.add(
+        Sketchy.tool({
+          ready: Effect.sync(() => sketchy.ready),
+          ask: (context) =>
+            permission
+              .assert({
+                action: Sketchy.ACTION,
+                resources: [Sketchy.URL],
+                save: [],
+                metadata: { megabytes: Math.round(Sketchy.BYTES / 1_000_000) },
+                sessionID: context.sessionID,
+                agent: context.agent,
+                source: { type: "tool", messageID: context.messageID, id: context.id },
+              })
+              .pipe(
+                Effect.mapError(
+                  (error) => new ToolFailure({ message: "The user did not approve the download.", error }),
+                ),
+              ),
+          install: Sketchy.install({ fs, http }, sketchyRoot).pipe(
+            Effect.tap(() => Effect.sync(() => void (sketchy.ready = true))),
+          ),
+          start: Effect.gen(function* () {
+            servers.kept.add(Sketchy.ID)
+            yield* ctx.mcp.reload()
+            for (const _ of Array.from({ length: 40 })) {
+              const status = (yield* ctx.mcp.list().pipe(
+                Effect.map((result) => result.data),
+                Effect.orElseSucceed(() => []),
+              )).find((server) => server.name === Sketchy.ID)?.status
+
+              if (status?.status === "connected") return undefined
+              if (status && status.status !== "pending")
+                return status.status === "failed" || status.status === "needs_auth"
+                  ? `${status.status}: ${status.error}`
+                  : status.status
+              yield* Effect.sleep(500)
+            }
+            return "still starting after 20 seconds"
+          }),
+        }),
+      ),
+    )
+
+    // Configured servers are applied before this plugin, so a configured context7, myungkyung, filmcraft or sketchy is
+    // kept as it is.
     yield* ctx.mcp.transform((editor) => {
       if (!editor.get("context7"))
         editor.set("context7", { type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
@@ -222,6 +275,9 @@ export const Plugin = define({
       if (!editor.get("myungkyung")) editor.set("myungkyung", { type: "remote", url: MYUNGKYUNG_URL, disabled: true })
 
       if (filmcraftServer && !editor.get("filmcraft")) editor.set("filmcraft", filmcraftServer)
+
+      if (sketchy.ready && !editor.get(Sketchy.ID))
+        editor.set(Sketchy.ID, Sketchy.server(process.execPath, sketchyRoot, global.data, ctx.location.directory))
 
       // A choice made in 설정 holds over the default and the user's config alike; a server turned on here stays on.
       for (const [name] of editor.list()) {
@@ -245,10 +301,8 @@ export const Plugin = define({
 
     // Every session can look up laws in the official database and check the articles an answer cites. A comparison
     // table it is asked to save is written like any edit, with the same approval.
-    const http = yield* HttpClient.HttpClient
     const access = yield* FileAccess.Service
     const mutation = yield* FileMutation.Service
-    const permission = yield* Permission.Service
     const save: LawTools.Save = (file, bytes, context) =>
       Effect.gen(function* () {
         const target = yield* access.resolve({ path: file, kind: "file" })

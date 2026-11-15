@@ -47,6 +47,8 @@ export const rules: Permission.Ruleset = [
     ...CALLS.map((call) => `*${call}*`),
     ...REDIRECTS,
   ].map((resource) => ({ action: "shell", resource, effect: "ask" as const, attended: true })),
+  // Downloading the drawing tools is asked every time it comes up, whatever else is approved automatically.
+  { action: "sketchy_install", resource: "*", effect: "ask" as const, attended: true },
 ]
 
 /** The rules every chat gets in words, for what a command can do that no rule above can see. */

@@ -327,6 +327,7 @@ describe("JabisuPlugin.Plugin", () => {
         "hwpx",
         "myungkyung",
         "pptx",
+        "sketchy-explain",
         "tdd",
         "work-profile",
         "xlsx",
@@ -349,6 +350,10 @@ describe("JabisuPlugin.Plugin", () => {
       expect(byId.get("myungkyung")?.autoinvoke).toBe(false)
       for (const tool of ["saju_chart", "saju_reading", "saju_year"])
         expect(byId.get("myungkyung")?.content).toContain(tool)
+      // The drawing skill is off too, and its server is not there until its tool has downloaded it.
+      expect(byId.get("sketchy-explain")?.autoinvoke).toBe(false)
+      expect(byId.get("sketchy-explain")?.content).toContain("sketchy_turn_on")
+      expect(servers.sketchy).toBeUndefined()
     }),
   )
 
