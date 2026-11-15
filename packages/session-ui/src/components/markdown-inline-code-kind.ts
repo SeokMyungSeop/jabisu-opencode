@@ -16,6 +16,16 @@ const fileNames = new Set([
   "Vagrantfile",
 ])
 
+const DOCUMENTS = new Set(["hwpx", "hwp", "docx", "xlsx", "pptx"])
+
+/** Whether a path names a Hangul, Word, Excel or PowerPoint file: the documents 자비수 makes for the user. */
+export function isDocumentPath(text: string) {
+  const path = parsePathLineSuffix(text.trim()).path
+  const dot = path.lastIndexOf(".")
+
+  return dot > 0 && DOCUMENTS.has(path.slice(dot + 1).toLowerCase())
+}
+
 /**
  * `url` for an http(s) URL, `path` for anything that could name a file. A `path` only becomes a link once the host
  * confirms the file exists, so this stays a cheap syntax check.

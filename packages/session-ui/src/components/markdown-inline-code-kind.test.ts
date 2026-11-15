@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { inlineCodeKind } from "./markdown-inline-code-kind"
+import { inlineCodeKind, isDocumentPath } from "./markdown-inline-code-kind"
 
 describe("inlineCodeKind", () => {
   test.each([
@@ -37,5 +37,17 @@ describe("inlineCodeKind", () => {
 
   test("detects http urls", () => {
     expect(inlineCodeKind("https://opencode.ai/docs")).toBe("url")
+  })
+})
+
+describe("isDocumentPath", () => {
+  test("names the documents 자비수 makes, whatever the folder or the case", () => {
+    for (const path of ["보고서.hwpx", "out/계획.DOCX", "C:/work/예산.xlsx", "발표.pptx:1", "옛.hwp"])
+      expect(isDocumentPath(path)).toBe(true)
+  })
+
+  test("leaves other files and bare extensions alone", () => {
+    for (const path of ["notes.md", "report.pdf", "data.csv", ".hwpx", "hwpx", "make_docx.py", ""])
+      expect(isDocumentPath(path)).toBe(false)
   })
 })

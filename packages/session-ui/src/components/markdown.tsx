@@ -34,7 +34,8 @@ import {
   touchCachedMarkdown,
   type MarkdownCacheEntry,
 } from "./markdown-cache"
-import { inlineCodeKind } from "./markdown-inline-code-kind"
+import { doneMoment } from "@opencode/ui/done-check"
+import { inlineCodeKind, isDocumentPath } from "./markdown-inline-code-kind"
 import { renderMermaidSvg } from "./markdown-mermaid"
 import { createMarkdownRenderer } from "./markdown-solid"
 import {
@@ -410,6 +411,25 @@ function markInlineCode(
       })
       .catch(() => undefined)
   }
+}
+
+// A document the answer names, once the answer has finished on screen and the file is there, is greeted with a small
+// check after its name: once, and not for answers loaded from history. See the motion rules in ui's animations.css.
+function greetDocument(block: HTMLDivElement, localFileExists?: MarkdownLocalFileExists) {
+  if (!localFileExists) return
+  const named = [...block.querySelectorAll<HTMLElement>(":not(pre) > code, a[data-local-link]")].flatMap((node) => {
+    const path = node.dataset.localLink ?? (node.closest("a") ? "" : (node.textContent ?? "").trim())
+
+    return isDocumentPath(path) ? [{ node, path }] : []
+  })
+  const first = named[0]
+
+  if (!first) return
+  void Promise.resolve(localFileExists(first.path))
+    .then((exists) => {
+      if (exists && first.node.isConnected && doneMoment()) first.node.dataset.documentDone = ""
+    })
+    .catch(() => undefined)
 }
 
 function localLinkTarget(target: EventTarget | null) {
@@ -898,6 +918,7 @@ function updateBlock(
     if (existing.dataset.markdownMode === "live" && block.mode !== "live") {
       existing.dataset.markdownMode = block.mode
       markInlineCode(existing, existing, false, localFileExists)
+      greetDocument(existing, localFileExists)
     }
 
     return

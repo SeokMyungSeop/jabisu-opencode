@@ -5,6 +5,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  untrack,
   createUniqueId,
   For,
   Match,
@@ -27,6 +28,8 @@ import { useFileComponent } from "@opencode/ui/context/file"
 import { type UiI18n, useI18n } from "@opencode/ui/context/i18n"
 import { BasicTool, GenericTool } from "../components/basic-tool"
 import { FileIcon } from "@opencode/ui/file-icon"
+import { DoneCheck, doneMoment } from "@opencode/ui/done-check"
+import { artifactKind } from "@opencode/util/artifact"
 import { Icon } from "@opencode/ui/icon"
 import { ToolErrorCard } from "../components/tool-error-card"
 import { DiffChanges } from "@opencode/ui/diff-changes"
@@ -1499,6 +1502,24 @@ ToolRegistry.register({
     const marker = "__OPENCODE_LOADED_PATH__"
     const parts = createMemo(() => i18n.t("ui.tool.loadedFile", { path: marker }).split(marker))
 
+    // A recording is read as its transcript, which takes minutes the first time. One that finishes on screen is
+    // greeted once with a check; one already read when the row appeared is not.
+    const recording = createMemo(() => {
+      const kind = artifactKind(toolInput(props.input).path ?? "")
+
+      return kind === "audio" || kind === "video"
+    })
+    const [transcribed, setTranscribed] = createSignal(false)
+    let waited = false
+
+    createEffect(() => {
+      const done = props.status === "completed"
+
+      if (!done) waited = true
+
+      if (done && waited && recording() && !untrack(transcribed) && doneMoment()) setTranscribed(true)
+    })
+
     return (
       <>
         <BasicTool
@@ -1514,6 +1535,11 @@ ToolRegistry.register({
             title: i18n.t("ui.tool.read"),
             subtitle: getFilename(toolInput(props.input).path ?? ""),
             args: readArgs(toolInput(props.input)),
+            action: transcribed() ? (
+              <span style={{ display: "inline-flex", color: "var(--v2-state-fg-success)" }}>
+                <DoneCheck greet />
+              </span>
+            ) : undefined,
           }}
         >
           <Show when={image()} keyed>

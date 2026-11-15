@@ -142,10 +142,10 @@ export function TextReveal(props: {
       class={props.class}
       aria-label={props.text ?? ""}
       style={{
-        "--text-reveal-duration": ms(props.duration, 450),
+        "--text-reveal-duration": ms(props.duration, 250),
         "--text-reveal-edge": pct(props.edge, 17),
         "--text-reveal-travel": px(props.travel, 0),
-        "--text-reveal-spring": props.spring ?? "cubic-bezier(0.34, 1.08, 0.64, 1)",
+        "--text-reveal-spring": props.spring ?? "cubic-bezier(0.34, 1, 0.64, 1)",
         "--text-reveal-spring-soft": props.springSoft ?? "cubic-bezier(0.34, 1, 0.64, 1)",
       }}
     >
