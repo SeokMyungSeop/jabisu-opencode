@@ -75,16 +75,29 @@ export function showWhatsNew(
 
       if (highlights.length === 0) return input.markSeen()
 
-      timers.add(
-        setTimeout(() => {
-          input.markSeen()
-          ctx.dialogs.open((dialog) => <DialogReleaseNotes highlights={highlights} dialog={dialog} />, {
-            replace: true,
-          })
-        }, 500),
-      )
+      timers.add(setTimeout(() => open(ctx, highlights, input.markSeen), 500))
     })
     .catch(() => undefined)
+}
+
+/**
+ * Shows highlights the app already holds, as 자비수 does with its own releases, and remembers the current version as
+ * seen. Nothing to show only remembers the version.
+ */
+export function showHighlights(
+  ctx: SetupContext<typeof definition>,
+  input: { readonly highlights: readonly Highlight[]; readonly markSeen: () => void },
+) {
+  if (input.highlights.length === 0) return input.markSeen()
+
+  const timer = setTimeout(() => open(ctx, [...input.highlights], input.markSeen), 500)
+
+  ctx.signal.addEventListener("abort", () => clearTimeout(timer))
+}
+
+function open(ctx: SetupContext<typeof definition>, highlights: Highlight[], markSeen: () => void) {
+  markSeen()
+  ctx.dialogs.open((dialog) => <DialogReleaseNotes highlights={highlights} dialog={dialog} />, { replace: true })
 }
 
 function releases(changelog: typeof Changelog.Type) {

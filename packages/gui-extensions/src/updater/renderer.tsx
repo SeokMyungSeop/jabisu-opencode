@@ -104,6 +104,14 @@ function whatsNew(ctx: SetupContext<typeof definition>) {
 
   if (!previous || !ctx.stores.releaseNotes.value.enabled) return markSeen()
 
+  // 자비수 tells its own releases, which it carries; the changelog below is OpenCode's.
+  if (ctx.build.channel === "jabisu")
+    return void Promise.all([import("./whats-new"), import("./jabisu-highlights")]).then(([module, jabisu]) => {
+      if (ctx.signal.aborted) return
+
+      module.showHighlights(ctx, { highlights: jabisu.highlightsSince(previous, version), markSeen })
+    })
+
   void import("./whats-new").then((module) => {
     if (ctx.signal.aborted) return
 
