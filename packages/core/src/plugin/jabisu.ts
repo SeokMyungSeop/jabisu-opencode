@@ -20,6 +20,7 @@ import { Integration } from "../integration.js"
 import { Permission } from "../permission.js"
 import { JabisuAnswer } from "./jabisu/answer.js"
 import { FilmCraft } from "./jabisu/filmcraft.js"
+import { Exaone } from "./jabisu/exaone.js"
 import { FreeConsole } from "./jabisu/free-console.js"
 import { Jiphyeonjeon } from "./jabisu/jiphyeonjeon.js"
 import { LawTools } from "./jabisu/law/tools.js"
@@ -187,6 +188,30 @@ export const Plugin = define({
         }),
       { providerID: FreeConsole.ID },
     )
+
+    // EXAONE is not in the model catalog: its provider and one model are defined here, behind the person's own key.
+    yield* ctx.integration.transform((editor) => {
+      editor.update(Exaone.ID, (integration) => {
+        integration.name = Exaone.NAME
+      })
+      editor.method.update({ integrationID: Exaone.ID, method: Exaone.method })
+      editor.method.update({ integrationID: Exaone.ID, method: { type: "env", names: [Exaone.ENV] } })
+    })
+    yield* ctx.provider.transform((providers) => {
+      providers.update(Exaone.ID, (provider) => {
+        provider.name = Exaone.NAME
+        provider.integrationID = Integration.ID.make(Exaone.ID)
+        provider.package = "@opencode/ai/providers/openai-compatible"
+        provider.settings = { baseURL: Exaone.URL }
+      })
+      providers.models.update(Exaone.ID, Exaone.MODEL, (model) => {
+        model.name = Exaone.MODEL_NAME
+        model.capabilities = { tools: true, input: ["text"], output: ["text"] }
+        model.limit = { context: Exaone.CONTEXT, output: Exaone.OUTPUT }
+        model.compatibility = { reasoningField: "reasoning_content", ...model.compatibility }
+        model.body = { ...Exaone.BODY, ...model.body }
+      })
+    })
 
     // Configured servers are applied before this plugin, so a configured context7, myungkyung or filmcraft is kept as
     // it is.

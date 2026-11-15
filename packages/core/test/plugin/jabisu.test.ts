@@ -7,6 +7,7 @@ import { AppNodeBuilder } from "@opencode/core/effect/app-node-builder"
 import { JabisuPlugin } from "@opencode/core/plugin/jabisu"
 import { JabisuBundle } from "@opencode/core/plugin/jabisu/bundle"
 import { FilmCraft } from "@opencode/core/plugin/jabisu/filmcraft"
+import { Exaone } from "@opencode/core/plugin/jabisu/exaone"
 import { FreeConsole } from "@opencode/core/plugin/jabisu/free-console"
 import { JabisuMcp } from "@opencode/core/plugin/jabisu/mcp-switches"
 import { McpTurnOn } from "@opencode/core/plugin/jabisu/mcp-turn-on"
@@ -594,6 +595,28 @@ describe("JabisuPlugin.Plugin", () => {
 
       expect((yield* run("jabisu", {}, directory)).tools).toContain("source_search")
       expect((yield* run("jabisu", {})).tools).not.toContain("source_search")
+    }),
+  )
+
+  it.live("offers EXAONE behind the person's own key, never through the free console", () =>
+    Effect.gen(function* () {
+      const { free } = yield* run("jabisu", {})
+
+      expect(free.integrations.get(Exaone.ID)).toBe(Exaone.NAME)
+      const methods = free.methods.filter((item) => item.integrationID === Exaone.ID).map((item) => item.method)
+      expect(methods.map((method) => method.type).sort()).toEqual(["env", "key"])
+      // The key lasts 30 days, which the person learns where they paste it.
+      expect(methods.find((method) => method.type === "key")?.label).toContain("30일")
+
+      const provider = free.providers.get(Exaone.ID)
+      expect(provider?.integrationID).toBe(Integration.ID.make(Exaone.ID))
+      // No key of 명상's and no console address: the request goes straight to EXAONE with the person's key.
+      expect(provider?.settings).toEqual({ baseURL: "https://api.exaone.ai/v1" })
+      const model = free.models.get(`${Exaone.ID}/${Exaone.MODEL}`)
+      expect(model?.name).toBe("K-EXAONE 2.5")
+      expect(model?.capabilities).toEqual({ tools: true, input: ["text"], output: ["text"] })
+      expect(model?.compatibility?.reasoningField).toBe("reasoning_content")
+      expect(model?.body).toEqual({ temperature: 1, top_p: 0.95, reasoning_effort: "low" })
     }),
   )
 
