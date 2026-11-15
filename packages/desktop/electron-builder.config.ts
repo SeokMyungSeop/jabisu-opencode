@@ -277,6 +277,9 @@ export function getConfig() {
           provider: "generic",
           url: "https://github.com/SeokMyungSeop/jabisu-opencode/releases/latest/download",
           channel: "latest",
+          // GitHub's release storage answers 501 to a multi-range request, which turned every update into a full
+          // download. One range per request is slower per block and still far smaller than the whole installer.
+          useMultipleRangeRequest: false,
         },
         extraMetadata: {
           ...base.extraMetadata,
