@@ -11,6 +11,7 @@ import { Exaone } from "@opencode/core/plugin/jabisu/exaone"
 import { FreeConsole } from "@opencode/core/plugin/jabisu/free-console"
 import { JabisuMcp } from "@opencode/core/plugin/jabisu/mcp-switches"
 import { McpTurnOn } from "@opencode/core/plugin/jabisu/mcp-turn-on"
+import { Sketchy } from "@opencode/core/plugin/jabisu/sketchy"
 import { SkillCatalog } from "@opencode/core/plugin/jabisu/skill-catalog"
 import { JabisuSafety } from "@opencode/core/plugin/jabisu/safety"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
@@ -74,7 +75,7 @@ const run = (
   channel: string,
   servers: Record<string, Types.DeepMutable<Mcp.ServerConfig>>,
   directory?: string,
-  folders: { readonly cache?: string; readonly config?: string; readonly home?: string } = {},
+  folders: { readonly cache?: string; readonly config?: string; readonly home?: string; readonly data?: string } = {},
   // The free console's connection, when the test has one: made by agreeing in the connect dialog.
   connection?: ConnectionInfo,
   credential?: Credential.Value,
@@ -82,7 +83,7 @@ const run = (
   Effect.gen(function* () {
     const skill = yield* Skill.Service
     const cache = folders.cache ?? (yield* tmpdirScoped()).path
-    const data = (yield* tmpdirScoped()).path
+    const data = folders.data ?? (yield* tmpdirScoped()).path
     // The plugin reads the user's skills folder under config, so the test never sees the real one.
     const config = folders.config ?? (yield* tmpdirScoped()).path
     // The work profile lives under Documents in home, which tests also keep temporary.
@@ -517,6 +518,30 @@ describe("JabisuPlugin.Plugin", () => {
       const { servers } = yield* run("jabisu", { myungkyung: configured })
 
       expect(servers.myungkyung).toBe(configured)
+    }),
+  )
+
+  it.live("offers the drawing server once it is unpacked, off, run by the engine and saving into the 작업실", () =>
+    Effect.gen(function* () {
+      const data = (yield* tmpdirScoped()).path
+      const directory = (yield* tmpdirScoped()).path
+      const root = Sketchy.folder(data)
+      yield* Effect.promise(() => fs.mkdir(root, { recursive: true }))
+      yield* Effect.promise(() => fs.writeFile(path.join(root, ".installed"), Sketchy.SHA256))
+      const { servers } = yield* run("jabisu", {}, directory, { data })
+
+      expect(servers.sketchy).toEqual({
+        type: "local",
+        command: [process.execPath, path.join(root, "dist", "index.js")],
+        environment: {
+          BUN_BE_BUN: "1",
+          SKETCHY_PHOTOS: "off",
+          SKETCHY_DATA_DIR: path.join(data, "jabisu", "sketchy", "data"),
+          SKETCHY_STANDALONE_DIR: path.join(directory, "그림"),
+        },
+        codemode: false,
+        disabled: true,
+      })
     }),
   )
 
