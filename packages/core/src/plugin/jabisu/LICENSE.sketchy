@@ -1,7 +1,7 @@
 자비수 offers Sketchy (https://github.com/ddkbs/sketchy, MIT License) as a drawing tool that is downloaded the first
 time it is used. It runs a version adapted by 명상(明想) at https://github.com/SeokMyungSeop/sketchy, which draws
 Hangul, keeps Korean titles in file names and saves drawings into the 작업실. The downloaded folder carries this
-license, the licenses of its fonts (Kalam and Nanum Pen Script, both SIL Open Font License 1.1) and
+license, the licenses of its fonts (Kalam and Gaegu, both SIL Open Font License 1.1) and
 THIRD_PARTY_NOTICES.md for everything else it builds on.
 
 MIT License

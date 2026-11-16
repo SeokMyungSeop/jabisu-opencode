@@ -15,11 +15,11 @@ import type { Tool } from "../../tool.js"
 // to say what the archive should be.
 
 export const ID = "sketchy"
-export const VERSION = "0.2.0-jabisu.2"
+export const VERSION = "0.2.0-jabisu.3"
 export const URL = `https://github.com/SeokMyungSeop/sketchy/releases/download/v${VERSION}/sketchy-${VERSION}.zip`
-export const SHA256 = "2e9888aef5a81cb5c9b5593d61f00fa5b0fde299a06c1e0b0b4594ea856c8481"
+export const SHA256 = "2b7cb5203291d4a45a89a81eb506bc70edad3ec54712d5de64a812bda3f3a2aa"
 /** The archive's size, which the user is told before agreeing to the download. */
-export const BYTES = 27_780_564
+export const BYTES = 28_102_228
 
 /** The permission the user answers before anything is downloaded. */
 export const ACTION = "sketchy_install"
