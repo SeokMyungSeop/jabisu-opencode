@@ -13,6 +13,9 @@ describe("inlineCodeKind", () => {
     "console.log",
     "Dockerfile",
     "Makefile:12",
+    "업무 보고.hwpx",
+    "out/3분기 집행 현황.xlsx:1",
+    "C:\문서\결과 보고 (최종).pdf",
   ])("treats %s as a possible path", (text) => {
     expect(inlineCodeKind(text)).toBe("path")
   })
@@ -31,6 +34,10 @@ describe("inlineCodeKind", () => {
     "ftp://x/y",
     "\\\\host\\share\\x.ts",
     "//host/share/x.ts",
+    "npm run build",
+    "업무 보고",
+    "보고.hwpx  초안.hwpx",
+    "git add file.ts; ls",
   ])("leaves %s as code", (text) => {
     expect(inlineCodeKind(text)).toBeUndefined()
   })

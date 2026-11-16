@@ -26,6 +26,9 @@ export function isDocumentPath(text: string) {
   return dot > 0 && DOCUMENTS.has(path.slice(dot + 1).toLowerCase())
 }
 
+// Single spaces between words, then an extension of letters and digits.
+const SPACED_FILE = /^\S+(?: \S+)*\.[a-z0-9]{1,5}$/i
+
 /**
  * `url` for an http(s) URL, `path` for anything that could name a file. A `path` only becomes a link once the host
  * confirms the file exists, so this stays a cheap syntax check.
@@ -33,7 +36,10 @@ export function isDocumentPath(text: string) {
 export function inlineCodeKind(text: string): "path" | "url" | undefined {
   if (/^https?:\/\//i.test(text)) return "url"
 
-  if (!text || /\s/.test(text) || /^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return
+  if (!text || /^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return
+
+  // A file name may hold spaces, as in 「업무 보고.hwpx」; words that do not end in an extension are a phrase.
+  if (/\s/.test(text) && !SPACED_FILE.test(parsePathLineSuffix(text).path)) return
 
   // Code, globs and markup, not paths.
   if (/[{}<>"'`;=|&*,]/.test(text)) return
