@@ -15,7 +15,22 @@ Sketchy는 장면을 몇 줄로 적어 주면 손그림처럼 그리고, 읽는 
 
 ## 그리는 법
 
-- 장면 문법은 `sketchy_sketch` 도구 설명에 있다. 그대로 따른다. ID는 영문·숫자로, 이름표(label)와 제목·단계 글은 한국어로 쓴다.
+- 장면 문법은 `sketchy_sketch` 도구 설명에 있다. 그대로 따른다. ID는 영문·숫자로, 이름표(label)와 제목·단계 글은 한국어로 쓴다. `sketchy_turn_on`을 부른 바로 그 차례에는 그리지 않는다. 도구가 다음 차례에 생기므로, 생긴 뒤 설명을 읽고 그린다.
+- 가장 많이 쓰는 꼴은 아래와 같다. 상자는 `ID 이름표`, 화살표는 `ID -> ID 글`, 단계는 `step 제목: 설명 | 짚을 ID`다.
+
+  ```
+  title 민원 처리 절차
+  dir right
+  jubsu 접수 @inbox
+  gumto 검토 @search
+  gyuljae 결재 !accent
+  jubsu -> gumto 담당자 배정
+  gumto -> gyuljae 기안
+  step 접수: 민원을 받아 담당자에게 나눈다 | jubsu jubsu->gumto
+  step 결재: 검토 결과를 승인받는다 | gyuljae
+  ```
+
+- 아이콘(`@이름`)은 없어도 된다. 쓸 때는 Lucide에 확실히 있는 이름만 쓴다(예: `@inbox` `@search` `@send` `@landmark` `@building` `@wallet` `@user` `@users` `@file-text` `@database` `@check` `@calendar`). 없는 이름을 쓰면 그림 전체가 실패한다.
 - 한 그림에는 한 가지 이야기만 담는다. 상자는 4~8개가 알맞다. 더 많으면 그림을 나눈다.
 - 이름표는 짧게 쓴다(한 줄에 12자 안팎). 긴 설명은 단계(step) 글이나 본문에 쓴다.
 - 순서나 흐름이 있으면 step을 3~5개 넣어 하나씩 짚는다. 단계마다 한 가지만 말한다.

@@ -189,7 +189,7 @@ export function tool(here: Here) {
 
         return {
           output: { installed: !had },
-          content: `${had ? "" : "The drawing tools were downloaded and installed. "}They are on in this 작업실 until 자비수 restarts. Draw by calling the ${ID}_sketch tool directly, as you called this one (it is not reached through execute or the tool search); each drawing is saved as an HTML file in the 작업실's 「${DRAWINGS}」 folder.`,
+          content: `${had ? "" : "The drawing tools were downloaded and installed. "}They are on in this 작업실 until 자비수 restarts. The ${ID}_sketch tool joins your tools on your next step: do not call it in this same step. Then call it directly, as you called this one (it is not reached through execute or the tool search), writing the scene in the syntax its description gives; each drawing is saved as an HTML file in the 작업실's 「${DRAWINGS}」 folder.`,
         }
       }),
   }
