@@ -156,7 +156,7 @@ export interface Here {
   /** Asks the user before the download; fails when they refuse. */
   readonly ask: (context: Context) => Effect.Effect<void, ToolFailure>
   readonly install: Effect.Effect<void, SketchyError>
-  /** Registers the server, keeps it on in this 작업실, and reports whether it connected. */
+  /** Registers the server, keeps it on in this 작업실, and says what went wrong unless its tools can be called. */
   readonly start: Effect.Effect<string | undefined>
 }
 

@@ -253,8 +253,11 @@ export const Plugin = define({
                 Effect.orElseSucceed(() => []),
               )).find((server) => server.name === Sketchy.ID)?.status
 
-              if (status?.status === "connected") return undefined
-              if (status && status.status !== "pending")
+              // Connected is not yet callable: the registry takes the server's tools a moment after it announces
+              // them, and a step that starts in between is told the tool does not exist.
+              if (status?.status === "connected") {
+                if ((yield* ctx.tool.list()).some((tool) => tool.options?.namespace === Sketchy.ID)) return undefined
+              } else if (status && status.status !== "pending")
                 return status.status === "failed" || status.status === "needs_auth"
                   ? `${status.status}: ${status.error}`
                   : status.status
