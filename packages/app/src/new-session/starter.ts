@@ -2,7 +2,7 @@ import { isAttachment } from "@/composer/prompt-parts"
 import type { Prompt } from "@/composer/state"
 
 /** 자비수's common office work. A chip fills the composer with that work's question frame. */
-export const STARTERS = ["report", "minutes", "press", "law", "automation"] as const
+export const STARTERS = ["report", "minutes", "press", "law", "automation", "draw"] as const
 
 export type Starter = (typeof STARTERS)[number]
 

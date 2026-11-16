@@ -2016,7 +2016,9 @@
 }
 
 .settings-extensions-tabs[data-component="tabs-v2"][data-variant="pill"] > [data-slot="tabs-v2-list"] {
-  width: min(280px, 100%);
+  /* As wide as its labels: the Korean ones are longer than a fixed width allows. */
+  width: fit-content;
+  max-width: 100%;
 }
 
 .settings-subtabs[data-component="tabs-v2"][data-variant="pill"] > [data-slot="tabs-v2-list"] {

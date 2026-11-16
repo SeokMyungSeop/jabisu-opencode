@@ -17,7 +17,9 @@ import type { Session } from "../../session.js"
 export const ROOT = "자비수 작업실"
 // The name shown until the first message, and the folder name when nothing better can be read from the message.
 export const FALLBACK = "새 작업실"
-const MAX_LENGTH = 40
+// A file's name is the user's own wording and is kept longer than a name read from what they asked.
+const FILE_LENGTH = 40
+const REQUEST_LENGTH = 24
 // A name the user types may be longer than one read from a message.
 const TYPED_LENGTH = 60
 
@@ -53,18 +55,21 @@ const MANNER = /(?:\s+(?:하나만|한\s*개만|두\s*개만|좀|간단히|짧�
 const LEADING = /^(?:이|그|저|위|아래|다음)\s+/
 const OBJECT = /(?:을|를)$/
 
-/** A folder name from free text: no characters Windows forbids, at most 40 characters cut at a space. */
-function clean(text: string) {
+/** A folder name from free text: no characters Windows forbids, cut at a space once it passes the length. */
+function clean(text: string, length: number) {
   const plain = text.replace(INVALID, " ").replace(/\s+/g, " ").trim()
+  const head = plain.slice(0, length)
+  // A cut that lands between words keeps the last one whole.
   const cut =
-    plain.length <= MAX_LENGTH ? plain : plain.slice(0, MAX_LENGTH).replace(/\s+\S*$/, "") || plain.slice(0, MAX_LENGTH)
+    plain.length <= length || /\s/.test(plain.charAt(length)) ? head : head.replace(/\s+\S*$/, "") || head
   const trimmed = cut.replace(/[.\s]+$/, "").replace(/^\.+/, "")
   if (trimmed.length < 2 || RESERVED.test(trimmed)) return undefined
   return trimmed
 }
 
 /**
- * What a request is about: its first sentence without the closing verb, the object particle and a leading pointer.
+ * What a request is about: its first sentence, up to the first comma when more follows it, without the closing verb,
+ * the object particle and a leading pointer.
  * The request comes first, as in 「출장 메모 정리해 줘. 메모는 이 폴더에 둬.」
  */
 function topic(text: string) {
@@ -74,15 +79,17 @@ function topic(text: string) {
       .map((item) => item.trim())
       .find(Boolean) ?? ""
   const sentence = line.split(/(?<=[.!?。])\s+/)[0] ?? line
-  return sentence.replace(REQUEST, "").replace(MANNER, "").replace(OBJECT, "").replace(LEADING, "")
+  // A comma between digits belongs to a number, as in 「1,200만 원」.
+  const clause = sentence.split(/,(?!\d)\s*/)[0] ?? sentence
+  return (clause.trim().length >= 2 ? clause : sentence).replace(REQUEST, "").replace(MANNER, "").replace(OBJECT, "").replace(LEADING, "")
 }
 
 /** The name of a new 작업실: the first attached file's name without a recorder's date, else the request's topic. */
 export function name(input: { readonly text: string; readonly files: readonly string[] }) {
   const file = input.files
-    .map((item) => clean(path.parse(item).name.replace(RECORDER, "")))
+    .map((item) => clean(path.parse(item).name.replace(RECORDER, ""), FILE_LENGTH))
     .find((item) => item !== undefined)
-  return file ?? clean(topic(input.text)) ?? FALLBACK
+  return file ?? clean(topic(input.text), REQUEST_LENGTH) ?? FALLBACK
 }
 
 /** Makes the folder that holds every 작업실, so a new conversation can open there. */

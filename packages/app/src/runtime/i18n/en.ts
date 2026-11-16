@@ -1081,6 +1081,9 @@ export const dict = {
   "jabisu.starter.automation.label": "Automate a chore",
   "jabisu.starter.automation.frame":
     "Please automate a repeated task.\n- The chore: (e.g. merging 30 spreadsheets into one every month)\n- Files: (e.g. the .xlsx files in Documents\\Budget\\Monthly)\n- Result: (e.g. one merged sheet with totals per team)\n- How often: (e.g. once a month)",
+  "jabisu.starter.draw.label": "Explain by drawing",
+  "jabisu.starter.draw.frame":
+    "Please explain this with a drawing.\n- What: (e.g. how a leave request gets approved)\n- For whom: (e.g. a new colleague)\n- What shape: (e.g. a step-by-step flow of about five steps)",
   "jabisu.workflow.title": "Progress",
   "jabisu.workflow.progress": "Step {{current}} of {{total}}",
   "jabisu.workflow.done": "Done",

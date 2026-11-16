@@ -926,6 +926,9 @@ export const dict = {
   "jabisu.starter.automation.label": "반복 업무 자동화",
   "jabisu.starter.automation.frame":
     "반복 업무를 자동으로 처리해 주세요.\n- 줄이고 싶은 일: (예: 매달 엑셀 30개를 한 장으로 합치기)\n- 쓰는 파일: (예: 문서\\예산\\월별 집계 폴더의 .xlsx)\n- 원하는 결과: (예: 합친 엑셀 한 장과 부서별 합계)\n- 얼마나 자주: (예: 매달 한 번)",
+  "jabisu.starter.draw.label": "그려서 설명하기",
+  "jabisu.starter.draw.frame":
+    "그림으로 그려서 설명해 주세요.\n- 무엇을: (예: 휴가 신청이 승인되기까지의 절차)\n- 누구에게: (예: 새로 온 직원)\n- 어떤 모양으로: (예: 단계별 흐름도, 다섯 단계 안팎)",
   "jabisu.workflow.title": "진행 흐름",
   "jabisu.workflow.progress": "{{total}}단계 중 {{current}}단계",
   "jabisu.workflow.done": "끝났어요",
