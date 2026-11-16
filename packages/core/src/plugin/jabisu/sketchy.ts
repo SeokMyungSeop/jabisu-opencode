@@ -169,7 +169,7 @@ export function tool(here: Here) {
   return {
     name,
     options: { codemode: false },
-    description: `Get the Sketchy drawing tools ready in this 작업실. The first time, this downloads them (about ${megabytes} MB, once) after the user approves; later it only turns them on. Call it when the sketch tool is not available.`,
+    description: `Get the Sketchy drawing tools ready in this 작업실. The first time, this downloads them (about ${megabytes} MB, once) after the user approves; later it only turns them on. Call it when the ${ID}_sketch tool is not available.`,
     input: Input,
     output: Output,
     execute: (_input: typeof Input.Type, context: Context) =>
@@ -189,7 +189,7 @@ export function tool(here: Here) {
 
         return {
           output: { installed: !had },
-          content: `${had ? "" : "The drawing tools were downloaded and installed. "}They are on in this 작업실 until 자비수 restarts. Draw with the sketch tool; each drawing is saved as an HTML file in the 작업실's 「${DRAWINGS}」 folder.`,
+          content: `${had ? "" : "The drawing tools were downloaded and installed. "}They are on in this 작업실 until 자비수 restarts. Draw by calling the ${ID}_sketch tool directly, as you called this one (it is not reached through execute or the tool search); each drawing is saved as an HTML file in the 작업실's 「${DRAWINGS}」 folder.`,
         }
       }),
   }
