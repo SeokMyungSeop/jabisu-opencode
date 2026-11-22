@@ -2,6 +2,7 @@ import { Generate } from "@opencode/core/generate"
 import { Integration } from "@opencode/core/integration"
 import { LocationServiceMap } from "@opencode/core/location-service-map"
 import { Plugin } from "@opencode/core/plugin"
+import { Carry } from "@opencode/core/plugin/jabisu/carry"
 import { Jiphyeonjeon } from "@opencode/core/plugin/jabisu/jiphyeonjeon"
 import { LawApi } from "@opencode/core/plugin/jabisu/law/api"
 import { LawSettings } from "@opencode/core/plugin/jabisu/law/settings"
@@ -15,6 +16,7 @@ import { WorkSettings } from "@opencode/core/plugin/jabisu/work/settings"
 import { Workroom } from "@opencode/core/plugin/jabisu/workroom"
 import { AbsolutePath } from "@opencode/core/schema"
 import { Session } from "@opencode/core/session"
+import { SessionTransfer } from "@opencode/core/session/transfer"
 import { OpenRouter } from "@opencode/core/tool/openrouter"
 import { Transcribe } from "@opencode/core/tool/transcribe"
 import { InvalidRequestError } from "@opencode/protocol/errors"
@@ -126,6 +128,11 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
         apply: LawSettings.APPLY,
       }
     })
+
+    // 「대화 담기」 writes a 작업실's conversations into its folder, and a folder that brings some has them read in.
+    const carry: Carry.Dependencies = { fs, sessions: yield* Session.Service, transfer: yield* SessionTransfer.Service }
+    const carryError = (error: Carry.CarryError) =>
+      new InvalidRequestError({ message: error.reason, kind: "jabisu_carry" })
 
     // The file of memory brought from another AI, as the settings screen shows it.
     const brought = Effect.gen(function* () {
@@ -269,6 +276,10 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
       .handle("jabisu.workroom.create", (ctx) =>
         Workroom.create({ fs, global }, ctx.payload).pipe(Effect.mapError(invalid("jabisu_workroom"))),
       )
+      .handle("jabisu.workroom.pack", (ctx) =>
+        Carry.pack(carry, ctx.payload.directory).pipe(Effect.mapError(carryError)),
+      )
+      .handle("jabisu.workroom.unpack", (ctx) => Carry.unpack(carry, ctx.payload.directory))
       .handle("jabisu.workroom.rename", (ctx) =>
         Workroom.rename(workroom, ctx.payload).pipe(Effect.mapError(workroomError)),
       )

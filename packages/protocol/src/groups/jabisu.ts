@@ -487,6 +487,40 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
       ),
   )
   .add(
+    HttpApiEndpoint.post("jabisu.workroom.pack", "/api/jabisu/workroom/pack", {
+      query: LocationQuery,
+      payload: Schema.Struct({ directory: Schema.String }),
+      success: Schema.Struct({ packed: Schema.Number, folder: Schema.String }),
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.pack",
+          summary: "Pack a 작업실's conversations into its folder",
+          description:
+            "Write the conversations held in a 작업실 into its folder, one file each, so they travel with the folder to another PC.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.workroom.unpack", "/api/jabisu/workroom/unpack", {
+      query: LocationQuery,
+      payload: Schema.Struct({ directory: Schema.String }),
+      success: Schema.Struct({ brought: Schema.Number, kept: Schema.Number, failed: Schema.Number }),
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.workroom.unpack",
+          summary: "Read the conversations packed in a 작업실 folder",
+          description:
+            "Read the conversations packed in a folder in as its conversations; one that is already here is left as it is.",
+        }),
+      ),
+  )
+  .add(
     HttpApiEndpoint.post("jabisu.workroom.rename", "/api/jabisu/workroom/rename", {
       query: LocationQuery,
       payload: Schema.Struct({ directory: Schema.String, name: Schema.String }),

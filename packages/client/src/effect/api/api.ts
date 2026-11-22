@@ -2683,6 +2683,24 @@ export type JabisuWorkroomCreateOperation<E = never> = (
   input: JabisuWorkroomCreateInput,
 ) => Effect.Effect<JabisuWorkroomCreateOutput, E>
 
+export type JabisuWorkroomPackInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly directory: string
+}
+export type JabisuWorkroomPackOutput = { readonly packed: number; readonly folder: string }
+export type JabisuWorkroomPackOperation<E = never> = (
+  input: JabisuWorkroomPackInput,
+) => Effect.Effect<JabisuWorkroomPackOutput, E>
+
+export type JabisuWorkroomUnpackInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly directory: string
+}
+export type JabisuWorkroomUnpackOutput = { readonly brought: number; readonly kept: number; readonly failed: number }
+export type JabisuWorkroomUnpackOperation<E = never> = (
+  input: JabisuWorkroomUnpackInput,
+) => Effect.Effect<JabisuWorkroomUnpackOutput, E>
+
 export type JabisuWorkroomRenameInput = {
   readonly location?: { readonly directory?: string | undefined } | undefined
   readonly directory: string
@@ -2738,6 +2756,8 @@ export interface JabisuApi<E = never> {
   readonly workroom: {
     readonly root: JabisuWorkroomRootOperation<E>
     readonly create: JabisuWorkroomCreateOperation<E>
+    readonly pack: JabisuWorkroomPackOperation<E>
+    readonly unpack: JabisuWorkroomUnpackOperation<E>
     readonly rename: JabisuWorkroomRenameOperation<E>
     readonly release: JabisuWorkroomReleaseOperation<E>
     readonly keep: JabisuWorkroomKeepOperation<E>

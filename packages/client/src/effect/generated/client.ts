@@ -325,6 +325,10 @@ import type {
   JabisuWorkroomRootOutput,
   JabisuWorkroomCreateInput,
   JabisuWorkroomCreateOutput,
+  JabisuWorkroomPackInput,
+  JabisuWorkroomPackOutput,
+  JabisuWorkroomUnpackInput,
+  JabisuWorkroomUnpackOutput,
   JabisuWorkroomRenameInput,
   JabisuWorkroomRenameOutput,
   JabisuWorkroomReleaseInput,
@@ -1883,6 +1887,22 @@ const EndpointJabisuWorkroomCreate = (raw: RawClient["server.jabisu"]) => (input
     }).pipe(Effect.mapError(mapClientError)),
   )
 
+const EndpointJabisuWorkroomPack = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkroomPackInput) =>
+  preserveEffect<JabisuWorkroomPackOutput>()(
+    raw["jabisu.workroom.pack"]({
+      query: { location: input["location"] },
+      payload: { directory: input["directory"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
+const EndpointJabisuWorkroomUnpack = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkroomUnpackInput) =>
+  preserveEffect<JabisuWorkroomUnpackOutput>()(
+    raw["jabisu.workroom.unpack"]({
+      query: { location: input["location"] },
+      payload: { directory: input["directory"] },
+    }).pipe(Effect.mapError(mapClientError)),
+  )
+
 const EndpointJabisuWorkroomRename = (raw: RawClient["server.jabisu"]) => (input: JabisuWorkroomRenameInput) =>
   preserveEffect<JabisuWorkroomRenameOutput>()(
     raw["jabisu.workroom.rename"]({
@@ -1930,6 +1950,8 @@ const adaptGroupJabisu = (raw: RawClient["server.jabisu"]) => ({
   workroom: {
     root: EndpointJabisuWorkroomRoot(raw),
     create: EndpointJabisuWorkroomCreate(raw),
+    pack: EndpointJabisuWorkroomPack(raw),
+    unpack: EndpointJabisuWorkroomUnpack(raw),
     rename: EndpointJabisuWorkroomRename(raw),
     release: EndpointJabisuWorkroomRelease(raw),
     keep: EndpointJabisuWorkroomKeep(raw),

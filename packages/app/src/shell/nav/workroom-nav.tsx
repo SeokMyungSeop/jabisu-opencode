@@ -283,6 +283,13 @@ export function WorkroomNav() {
                     {language.t("jabisu.room.rename")}
                   </Menu.Item>
                   <Menu.Separator />
+                  <Menu.Item onSelect={() => actions.pack(props.room.project, props.room.sessions)}>
+                    {language.t("jabisu.room.pack")}
+                  </Menu.Item>
+                  <Menu.Item onSelect={() => void actions.unpack(props.room.project)}>
+                    {language.t("jabisu.room.unpack")}
+                  </Menu.Item>
+                  <Menu.Separator />
                   <Menu.Item onSelect={() => void actions.remove(props.room.project, props.room.sessions)}>
                     {language.t("jabisu.room.delete")}
                   </Menu.Item>

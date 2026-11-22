@@ -304,6 +304,70 @@ export function useWorkroomActions(input: {
     )
   }
 
+  // 「대화 꺼내기」: reads the conversations packed in the folder in, and says how many came.
+  const unpack = async (project: LocalProject) => {
+    const ctx = input.ctx()
+    const conn = input.server()
+
+    if (!ctx || !conn) return
+    await ctx.sdk.api.jabisu.workroom.unpack({ directory: project.worktree }).then(
+      (result) => {
+        void queryClient.invalidateQueries({ queryKey: ["home-sessions", conn] })
+        showToast({
+          variant: result.brought > 0 ? "success" : "default",
+          title:
+            result.brought > 0
+              ? language.t("jabisu.room.unpack.done", { count: result.brought })
+              : language.t(result.kept > 0 ? "jabisu.room.unpack.kept" : "jabisu.room.unpack.none"),
+        })
+      },
+      (cause: unknown) =>
+        showToast({ variant: "error", title: describe(cause, language.t("jabisu.room.unpack.failed")) }),
+    )
+  }
+
+  function PackDialog(props: { project: LocalProject; count: number }) {
+    const [busy, setBusy] = createSignal(false)
+
+    const confirm = async () => {
+      const ctx = input.ctx()
+
+      if (!ctx) return dialog.close()
+      setBusy(true)
+      await ctx.sdk.api.jabisu.workroom.pack({ directory: props.project.worktree }).then(
+        (result) =>
+          showToast({
+            variant: "success",
+            title: language.t("jabisu.room.pack.done", { count: result.packed }),
+            description: result.folder,
+          }),
+        (cause: unknown) =>
+          showToast({ variant: "error", title: describe(cause, language.t("jabisu.room.pack.failed")) }),
+      )
+      setBusy(false)
+      dialog.close()
+    }
+
+    return (
+      <Dialog fit>
+        <DialogHeader hideClose>
+          <DialogTitleGroup
+            title={language.t("jabisu.room.pack.title", { name: displayName(props.project) })}
+            description={language.t("jabisu.room.pack.description", { count: props.count })}
+          />
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => dialog.close()}>
+            {language.t("common.cancel")}
+          </Button>
+          <Button variant="contrast" disabled={busy() || props.count === 0} onClick={() => void confirm()}>
+            {language.t("jabisu.room.pack")}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+    )
+  }
+
   function RetitleDialog(props: { session: SessionInfo }) {
     const [title, setTitle] = createSignal(sessionLabel(props.session))
     const [saving, setSaving] = createSignal(false)
@@ -422,6 +486,10 @@ export function useWorkroomActions(input: {
       const made = await owned(project)
       void dialog.show(() => <DeleteDialog project={project} owned={made} sessions={sessions} />)
     },
+    /** 「대화 담기」: writes the room's conversations into its folder, after saying they will travel with it. */
+    pack: (project: LocalProject, sessions: readonly SessionInfo[]) =>
+      void dialog.show(() => <PackDialog project={project} count={sessions.length} />),
+    unpack,
     /** 「대화 이름 바꾸기」 for one conversation in the list. */
     retitle: (session: SessionInfo) => void dialog.show(() => <RetitleDialog session={session} />),
     /** 「대화 삭제」 for one conversation in the list; its 작업실 and files stay. */

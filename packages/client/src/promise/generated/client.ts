@@ -323,6 +323,10 @@ import type {
   JabisuWorkroomRootOutput,
   JabisuWorkroomCreateInput,
   JabisuWorkroomCreateOutput,
+  JabisuWorkroomPackInput,
+  JabisuWorkroomPackOutput,
+  JabisuWorkroomUnpackInput,
+  JabisuWorkroomUnpackOutput,
   JabisuWorkroomRenameInput,
   JabisuWorkroomRenameOutput,
   JabisuWorkroomReleaseInput,
@@ -2670,6 +2674,32 @@ export function make(options: ClientOptions) {
               path: `/api/jabisu/workroom`,
               query: { location: input["location"] },
               body: { text: input["text"], files: input["files"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        pack: (input: JabisuWorkroomPackInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomPackOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom/pack`,
+              query: { location: input["location"] },
+              body: { directory: input["directory"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        unpack: (input: JabisuWorkroomUnpackInput, requestOptions?: RequestOptions) =>
+          request<JabisuWorkroomUnpackOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/workroom/unpack`,
+              query: { location: input["location"] },
+              body: { directory: input["directory"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,

@@ -6280,6 +6280,20 @@ export type JabisuWorkroomCreateInput = {
 
 export type JabisuWorkroomCreateOutput = JabisuWorkroom
 
+export type JabisuWorkroomPackInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly directory: { readonly directory: string }["directory"]
+}
+
+export type JabisuWorkroomPackOutput = { packed: number; folder: string }
+
+export type JabisuWorkroomUnpackInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly directory: { readonly directory: string }["directory"]
+}
+
+export type JabisuWorkroomUnpackOutput = { brought: number; kept: number; failed: number }
+
 export type JabisuWorkroomRenameInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
   readonly directory: { readonly directory: string; readonly name: string }["directory"]
