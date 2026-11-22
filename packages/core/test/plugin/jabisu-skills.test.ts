@@ -41,11 +41,12 @@ describe("JabisuSkills", () => {
       const before = yield* JabisuSkills.list(deps)
 
       expect(before.skills.filter((skill) => !skill.title || !skill.summary || !skill.keywords?.length)).toEqual([])
-      expect(before.skills.find((skill) => skill.name === "hwpx")?.on).toBe(true)
-      expect(before.skills.find((skill) => skill.name === "tdd")?.on).toBe(false)
+      // Every bundled skill is on when 자비수 is installed.
+      expect(before.skills.filter((skill) => !skill.on)).toEqual([])
 
-      yield* JabisuSkills.turn(deps, "tdd", true)
+      yield* JabisuSkills.turn(deps, "tdd", false)
       yield* JabisuSkills.turn(deps, "pptx", false)
+      yield* JabisuSkills.turn(deps, "tdd", true)
       const after = yield* JabisuSkills.list(deps)
 
       expect(after.skills.find((skill) => skill.name === "tdd")?.on).toBe(true)
