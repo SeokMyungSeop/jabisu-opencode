@@ -16203,15 +16203,10 @@
                   "type": "object",
                   "properties": {
                     "brought": {
-                      "anyOf": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string",
-                          "enum": ["Infinity", "-Infinity", "NaN"]
-                        }
-                      ]
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "kept": {
                       "anyOf": [

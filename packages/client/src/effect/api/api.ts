@@ -2696,7 +2696,11 @@ export type JabisuWorkroomUnpackInput = {
   readonly location?: { readonly directory?: string | undefined } | undefined
   readonly directory: string
 }
-export type JabisuWorkroomUnpackOutput = { readonly brought: number; readonly kept: number; readonly failed: number }
+export type JabisuWorkroomUnpackOutput = {
+  readonly brought: ReadonlyArray<string>
+  readonly kept: number
+  readonly failed: number
+}
 export type JabisuWorkroomUnpackOperation<E = never> = (
   input: JabisuWorkroomUnpackInput,
 ) => Effect.Effect<JabisuWorkroomUnpackOutput, E>

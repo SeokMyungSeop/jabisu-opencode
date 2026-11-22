@@ -132,7 +132,7 @@ export function useWorkroomActions(input: {
             description={language.t(props.owned ? "jabisu.room.rename.owned" : "jabisu.room.rename.listOnly")}
           />
         </DialogHeader>
-        <form onSubmit={(event) => void save(event)}>
+        <form class="contents" onSubmit={(event) => void save(event)}>
           <DialogBody class="px-5 pb-2">
             <TextField
               autofocus
@@ -313,11 +313,12 @@ export function useWorkroomActions(input: {
     await ctx.sdk.api.jabisu.workroom.unpack({ directory: project.worktree }).then(
       (result) => {
         void queryClient.invalidateQueries({ queryKey: ["home-sessions", conn] })
+        result.brought.forEach((id) => void ctx.data.session.message.reload(id).catch(() => {}))
         showToast({
-          variant: result.brought > 0 ? "success" : "default",
+          variant: result.brought.length > 0 ? "success" : "default",
           title:
-            result.brought > 0
-              ? language.t("jabisu.room.unpack.done", { count: result.brought })
+            result.brought.length > 0
+              ? language.t("jabisu.room.unpack.done", { count: result.brought.length })
               : language.t(result.kept > 0 ? "jabisu.room.unpack.kept" : "jabisu.room.unpack.none"),
         })
       },
@@ -407,7 +408,7 @@ export function useWorkroomActions(input: {
         <DialogHeader hideClose>
           <DialogTitleGroup title={language.t("jabisu.conversation.rename.title")} />
         </DialogHeader>
-        <form onSubmit={(event) => void save(event)}>
+        <form class="contents" onSubmit={(event) => void save(event)}>
           <DialogBody class="px-5 pb-2">
             <TextField
               autofocus

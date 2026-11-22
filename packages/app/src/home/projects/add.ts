@@ -15,6 +15,7 @@ export function addProjects(context: ServerCtx, directories: string[]) {
       .then((value) => context.sync.child(item, { bootstrap: false })[1]("project", value.project.id))
       // A 작업실 folder brought from another PC may carry its conversations; 자비수 reads them in as it is added.
       .then(() => (JABISU ? context.sdk.api.jabisu.workroom.unpack({ directory: item }) : undefined))
+      .then((unpacked) => unpacked?.brought.forEach((id) => void context.data.session.message.reload(id).catch(() => {})))
       .catch(() => undefined)
     context.projects.open(item)
   })

@@ -65,14 +65,14 @@ describe("Carry", () => {
       )
 
       // Here they already exist, so opening the folder again brings nothing twice.
-      expect(yield* Carry.unpack(deps, here)).toEqual({ brought: 0, kept: 2, failed: 0 })
+      expect(yield* Carry.unpack(deps, here)).toEqual({ brought: [], kept: 2, failed: 0 })
 
       // The folder moves to another PC: the same files under another path, and no such conversations yet.
       yield* Effect.promise(() => fs.cp(path.join(here, ".jabisu"), path.join(there, ".jabisu"), { recursive: true }))
       yield* Effect.promise(() => fs.writeFile(path.join(Carry.folder(there), "broken.json"), "{"))
       yield* sessions.remove(budget.id)
 
-      expect(yield* Carry.unpack(deps, there)).toEqual({ brought: 1, kept: 1, failed: 1 })
+      expect(yield* Carry.unpack(deps, there)).toEqual({ brought: [budget.id], kept: 1, failed: 1 })
       const arrived = yield* sessions.get(budget.id)
 
       expect(arrived.title).toBe("예산안 정리")

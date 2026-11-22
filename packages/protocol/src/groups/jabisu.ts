@@ -507,7 +507,7 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
     HttpApiEndpoint.post("jabisu.workroom.unpack", "/api/jabisu/workroom/unpack", {
       query: LocationQuery,
       payload: Schema.Struct({ directory: Schema.String }),
-      success: Schema.Struct({ brought: Schema.Number, kept: Schema.Number, failed: Schema.Number }),
+      success: Schema.Struct({ brought: Schema.Array(Schema.String), kept: Schema.Number, failed: Schema.Number }),
       error: InvalidRequestError,
     })
       .annotateMerge(locationQueryOpenApi)

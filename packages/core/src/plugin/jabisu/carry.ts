@@ -96,7 +96,8 @@ export const count = Effect.fn("Carry.count")(function* (deps: Pick<Dependencies
 
 /**
  * Reads the conversations packed in the folder into this 자비수, as conversations of this folder. One already here is
- * left as it is, so opening the folder again brings nothing twice. Returns how many came in and how many were left.
+ * left as it is, so opening the folder again brings nothing twice. Returns the conversations that came in and how many
+ * were left.
  */
 export const unpack = Effect.fn("Carry.unpack")(function* (deps: Dependencies, directory: string) {
   const read = yield* Effect.forEach(yield* files(deps, directory), (name) =>
@@ -110,7 +111,7 @@ export const unpack = Effect.fn("Carry.unpack")(function* (deps: Dependencies, d
     // A conversation started by another is read after the one that started it.
     .toSorted((a, b) => Number(a.info.parentID !== undefined) - Number(b.info.parentID !== undefined))
   const location = { directory: AbsolutePath.make(directory) }
-  const result = { brought: 0, kept: 0, failed: read.length - packed.length }
+  const result = { brought: [] as string[], kept: 0, failed: read.length - packed.length }
 
   for (const data of packed) {
     const outcome = yield* deps.transfer.import({ data, location }).pipe(
@@ -119,7 +120,8 @@ export const unpack = Effect.fn("Carry.unpack")(function* (deps: Dependencies, d
       Effect.catchTag("Session.NotFoundError", () => Effect.succeed("failed" as const)),
     )
 
-    result[outcome]++
+    if (outcome === "brought") result.brought.push(data.info.id)
+    else result[outcome]++
   }
 
   return result

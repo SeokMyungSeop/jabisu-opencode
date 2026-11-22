@@ -6292,7 +6292,7 @@ export type JabisuWorkroomUnpackInput = {
   readonly directory: { readonly directory: string }["directory"]
 }
 
-export type JabisuWorkroomUnpackOutput = { brought: number; kept: number; failed: number }
+export type JabisuWorkroomUnpackOutput = { brought: Array<string>; kept: number; failed: number }
 
 export type JabisuWorkroomRenameInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]

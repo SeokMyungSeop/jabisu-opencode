@@ -1719,6 +1719,12 @@ export function createData(config: CreateDataInput) {
             })
           })
         },
+        // A session read in from a file arrives with its messages already stored, which the created echo takes for
+        // an empty new session and skips; whoever read it in asks for them here.
+        reload(sessionID: string) {
+          sync.invalidate(`session.message:${sessionID}`)
+          return result.session.message.sync(sessionID)
+        },
         more(sessionID: string) {
           return store.session.messageCursor[sessionID] !== undefined
         },

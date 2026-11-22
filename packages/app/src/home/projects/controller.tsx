@@ -124,7 +124,8 @@ export function createHomeProjectsController(home: HomeController) {
                 Schema.fromJsonString(Schema.Record(Schema.String, Schema.Json)),
               )(await file.text())
 
-              const api = home.server.context(conn).sdk.api.session
+              const context = home.server.context(conn)
+              const api = context.sdk.api.session
 
               // SAFETY: the import endpoint validates the transcript, including exports written by earlier releases.
               const imported = await api.import({
@@ -132,6 +133,7 @@ export function createHomeProjectsController(home: HomeController) {
                 location: { directory: project.worktree },
               } as Parameters<typeof api.import>[0])
 
+              await context.data.session.message.reload(imported.id).catch(() => {})
               home.project.openProjectSession(conn, project.worktree, imported)
             },
           )
