@@ -1,6 +1,22 @@
 export * as SessionStore from "./store.js"
 
-import { and, asc, desc, eq, gt, isNotNull, isNull, like, lt, notInArray, or, sql, type SQL } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  lt,
+  notInArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm"
 import { Context, Effect, Layer, Schema } from "effect"
 import { Project } from "@opencode/schema/project"
 import { Workspace } from "@opencode/schema/workspace"
@@ -107,7 +123,26 @@ const layer = Layer.effect(
         if (input.workspaceID) conditions.push(eq(SessionTable.workspace_id, input.workspaceID))
         if ("project" in input) conditions.push(eq(SessionTable.project_id, input.project))
         if ("project" in input && input.subpath !== undefined) conditions.push(eq(SessionTable.path, input.subpath))
-        if (input.search) conditions.push(like(SessionTable.title, `%${input.search}%`))
+        if (input.search) {
+          const pattern = `%${input.search}%`
+          // A search finds a session by its title or by what was said in it. One character matches nearly every
+          // message, so the conversation text is searched from two characters on.
+          const said = exists(
+            db
+              .select({ found: sql`1` })
+              .from(SessionMessageTable)
+              .where(
+                and(
+                  eq(SessionMessageTable.session_id, SessionTable.id),
+                  inArray(SessionMessageTable.type, ["user", "assistant"]),
+                  like(SessionMessageTable.data, pattern),
+                ),
+              ),
+          )
+          conditions.push(
+            input.search.length < 2 ? like(SessionTable.title, pattern) : or(like(SessionTable.title, pattern), said)!,
+          )
+        }
         if (input.parentID !== undefined)
           conditions.push(
             input.parentID === null ? isNull(SessionTable.parent_id) : eq(SessionTable.parent_id, input.parentID),
