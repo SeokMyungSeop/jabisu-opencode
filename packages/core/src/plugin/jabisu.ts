@@ -33,6 +33,7 @@ import { SkillCatalog } from "./jabisu/skill-catalog.js"
 import { SkillTurnOn } from "./jabisu/skill-turn-on.js"
 import { JabisuSkills } from "./jabisu/skills.js"
 import { SourceSearch } from "./jabisu/source-search.js"
+import { Brought } from "./jabisu/work/brought.js"
 import { WorkProfile } from "./jabisu/work/profile.js"
 import { WorkSearch } from "./jabisu/work/search-tool.js"
 
@@ -359,6 +360,30 @@ export const Plugin = define({
           new InstructionDiscovery.File({
             path: profileFile,
             content: WorkProfile.instructions(profileFile, profile.content),
+          }),
+        )
+    })
+
+    // What the user brought from another AI is read the same way, from its own file beside the profile.
+    const broughtFile = Brought.file(global)
+    const brought = { content: undefined as string | undefined }
+    const readBrought = fs.readFileStringSafe(broughtFile).pipe(
+      Effect.orElseSucceed(() => undefined),
+      Effect.tap((content) => Effect.sync(() => void (brought.content = content))),
+    )
+
+    yield* readBrought
+    yield* (yield* watcher.subscribe({ path: broughtFile, type: "file" })).pipe(
+      Stream.debounce("200 millis"),
+      Stream.runForEach(() => readBrought.pipe(Effect.andThen(discovery.reload()))),
+      Effect.forkScoped({ startImmediately: true }),
+    )
+    yield* discovery.transform((editor) => {
+      if (brought.content?.trim())
+        editor.add(
+          new InstructionDiscovery.File({
+            path: broughtFile,
+            content: Brought.instructions(broughtFile, brought.content),
           }),
         )
     })

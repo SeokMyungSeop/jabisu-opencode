@@ -110,6 +110,15 @@ export const JabisuWork = Schema.Struct({
 }).annotate({ identifier: "JabisuWork" })
 export type JabisuWork = typeof JabisuWork.Type
 
+// What the user brought over from another AI assistant, kept as a file every session reads as instructions.
+export const JabisuBrought = Schema.Struct({
+  path: Schema.String,
+  exists: Schema.Boolean,
+  // How much is in the file, for the user to see that a paste landed.
+  chars: Schema.Number,
+}).annotate({ identifier: "JabisuBrought" })
+export type JabisuBrought = typeof JabisuBrought.Type
+
 // The key for 법제처's law database that the law tools use; the key itself stays on the server.
 export const JabisuLaw = Schema.Struct({
   configured: Schema.Boolean,
@@ -411,6 +420,37 @@ export const JabisuGroup = HttpApiGroup.make("server.jabisu")
           summary: "Save the law database key",
           description:
             "Check the key with one search of 법제처's law database and save it; an empty key removes the saved one.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.get("jabisu.brought.get", "/api/jabisu/brought", {
+      query: LocationQuery,
+      success: JabisuBrought,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.brought.get",
+          summary: "Get the memory brought from another AI",
+          description: "Return where the file of memory brought from another AI assistant is and how much it holds.",
+        }),
+      ),
+  )
+  .add(
+    HttpApiEndpoint.post("jabisu.brought.add", "/api/jabisu/brought", {
+      query: LocationQuery,
+      payload: Schema.Struct({ text: Schema.String }),
+      success: JabisuBrought,
+      error: InvalidRequestError,
+    })
+      .annotateMerge(locationQueryOpenApi)
+      .annotateMerge(
+        OpenApi.annotations({
+          identifier: "jabisu.brought.add",
+          summary: "Bring memory from another AI",
+          description:
+            "Add the pasted export of another AI assistant's memory to the file every session reads as instructions; what was brought before stays.",
         }),
       ),
   )

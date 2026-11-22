@@ -7,6 +7,7 @@ import { LawApi } from "@opencode/core/plugin/jabisu/law/api"
 import { LawSettings } from "@opencode/core/plugin/jabisu/law/settings"
 import { JabisuMcp } from "@opencode/core/plugin/jabisu/mcp-switches"
 import { JabisuSkills } from "@opencode/core/plugin/jabisu/skills"
+import { Brought } from "@opencode/core/plugin/jabisu/work/brought"
 import { WorkIndex } from "@opencode/core/plugin/jabisu/work/index"
 import { WorkIndexer } from "@opencode/core/plugin/jabisu/work/indexer"
 import { WorkProfile } from "@opencode/core/plugin/jabisu/work/profile"
@@ -126,6 +127,14 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
       }
     })
 
+    // The file of memory brought from another AI, as the settings screen shows it.
+    const brought = Effect.gen(function* () {
+      const file = Brought.file(global)
+      const text = yield* fs.readFileStringSafe(file).pipe(Effect.orElseSucceed(() => undefined))
+
+      return { path: file, exists: text !== undefined, chars: text?.length ?? 0 }
+    })
+
     return handlers
       .handle(
         "jabisu.transcription.get",
@@ -224,6 +233,31 @@ export const JabisuHandler = HttpApiBuilder.group(Api, "server.jabisu", (handler
             ),
           )
           return yield* law
+        }),
+      )
+      .handle("jabisu.brought.get", () => brought)
+      .handle(
+        "jabisu.brought.add",
+        Effect.fn("server.jabisu.brought.add")(function* (ctx) {
+          if (ctx.payload.text.length > Brought.MAX_PASTE)
+            return yield* new InvalidRequestError({
+              message: "붙여 넣은 내용이 너무 깁니다. 나눠서 가져와 주세요.",
+              kind: "jabisu_brought",
+            })
+          const file = Brought.file(global)
+          const existing = yield* fs.readFileStringSafe(file).pipe(Effect.orElseSucceed(() => undefined))
+          const next = Brought.add(existing, ctx.payload.text, new Date())
+
+          if (next === undefined || next === existing)
+            return yield* new InvalidRequestError({ message: "가져올 내용이 없습니다", kind: "jabisu_brought" })
+          yield* fs
+            .writeWithDirs(file, next)
+            .pipe(
+              Effect.mapError(
+                () => new InvalidRequestError({ message: "가져온 내용을 저장하지 못했습니다", kind: "jabisu_brought" }),
+              ),
+            )
+          return yield* brought
         }),
       )
       .handle("jabisu.workroom.root", () =>

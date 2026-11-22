@@ -37,6 +37,8 @@ import bundledSkills from "./bundled-skills"
 import bundledSkillsRenderer from "./bundled-skills/renderer"
 import work from "./work"
 import workRenderer from "./work/renderer"
+import bring from "./bring"
+import bringRenderer from "./bring/renderer"
 import law from "./law"
 import lawRenderer from "./law/renderer"
 
@@ -71,4 +73,5 @@ export const builtins = Extension.compose(
   { ...bundledSkills, renderer: eager(bundledSkillsRenderer) },
   { ...work, renderer: eager(workRenderer) },
   { ...law, renderer: eager(lawRenderer) },
+  { ...bring, renderer: eager(bringRenderer) },
 )

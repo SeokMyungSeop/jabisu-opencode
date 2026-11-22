@@ -315,6 +315,10 @@ import type {
   JabisuLawGetOutput,
   JabisuLawUpdateInput,
   JabisuLawUpdateOutput,
+  JabisuBroughtGetInput,
+  JabisuBroughtGetOutput,
+  JabisuBroughtAddInput,
+  JabisuBroughtAddOutput,
   JabisuWorkroomRootInput,
   JabisuWorkroomRootOutput,
   JabisuWorkroomCreateInput,
@@ -2612,6 +2616,33 @@ export function make(options: ClientOptions) {
               path: `/api/jabisu/law`,
               query: { location: input["location"] },
               body: { key: input["key"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+      },
+      brought: {
+        get: (input?: JabisuBroughtGetInput, requestOptions?: RequestOptions) =>
+          request<JabisuBroughtGetOutput>(
+            {
+              method: "GET",
+              path: `/api/jabisu/brought`,
+              query: { location: input?.["location"] },
+              successStatus: 200,
+              declaredStatuses: [400, 401, 404],
+              empty: false,
+            },
+            requestOptions,
+          ),
+        add: (input: JabisuBroughtAddInput, requestOptions?: RequestOptions) =>
+          request<JabisuBroughtAddOutput>(
+            {
+              method: "POST",
+              path: `/api/jabisu/brought`,
+              query: { location: input["location"] },
+              body: { text: input["text"] },
               successStatus: 200,
               declaredStatuses: [400, 401, 404],
               empty: false,

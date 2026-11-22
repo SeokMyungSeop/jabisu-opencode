@@ -18,6 +18,7 @@ import jiphyeonjeon from "./jiphyeonjeon"
 import support from "./support"
 import bundledSkills from "./bundled-skills"
 import work from "./work"
+import bring from "./bring"
 import law from "./law"
 
 /**
@@ -45,4 +46,5 @@ export const builtins = Extension.compose(
   bundledSkills,
   work,
   law,
+  bring,
 )

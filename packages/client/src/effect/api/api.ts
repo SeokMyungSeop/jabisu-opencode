@@ -2652,6 +2652,21 @@ export type JabisuLawUpdateOperation<E = never> = (
   input: JabisuLawUpdateInput,
 ) => Effect.Effect<JabisuLawUpdateOutput, E>
 
+export type JabisuBroughtGetInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
+export type JabisuBroughtGetOutput = { readonly path: string; readonly exists: boolean; readonly chars: number }
+export type JabisuBroughtGetOperation<E = never> = (
+  input?: JabisuBroughtGetInput,
+) => Effect.Effect<JabisuBroughtGetOutput, E>
+
+export type JabisuBroughtAddInput = {
+  readonly location?: { readonly directory?: string | undefined } | undefined
+  readonly text: string
+}
+export type JabisuBroughtAddOutput = { readonly path: string; readonly exists: boolean; readonly chars: number }
+export type JabisuBroughtAddOperation<E = never> = (
+  input: JabisuBroughtAddInput,
+) => Effect.Effect<JabisuBroughtAddOutput, E>
+
 export type JabisuWorkroomRootInput = { readonly location?: { readonly directory?: string | undefined } | undefined }
 export type JabisuWorkroomRootOutput = { readonly root: string }
 export type JabisuWorkroomRootOperation<E = never> = (
@@ -2719,6 +2734,7 @@ export interface JabisuApi<E = never> {
   readonly mcp: { readonly list: JabisuMcpListOperation<E>; readonly turn: JabisuMcpTurnOperation<E> }
   readonly work: { readonly get: JabisuWorkGetOperation<E>; readonly update: JabisuWorkUpdateOperation<E> }
   readonly law: { readonly get: JabisuLawGetOperation<E>; readonly update: JabisuLawUpdateOperation<E> }
+  readonly brought: { readonly get: JabisuBroughtGetOperation<E>; readonly add: JabisuBroughtAddOperation<E> }
   readonly workroom: {
     readonly root: JabisuWorkroomRootOperation<E>
     readonly create: JabisuWorkroomCreateOperation<E>

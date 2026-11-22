@@ -348,6 +348,8 @@ export type JabisuWorkFolder = { path: string; files: number; documents: number;
 
 export type JabisuLaw = { configured: boolean; masked?: string | undefined; apply: string }
 
+export type JabisuBrought = { path: string; exists: boolean; chars: number }
+
 export type JabisuWorkroomRoot = { root: string }
 
 export type JabisuWorkroom = { directory: string; name: string }
@@ -6250,6 +6252,19 @@ export type JabisuLawUpdateInput = {
 }
 
 export type JabisuLawUpdateOutput = JabisuLaw
+
+export type JabisuBroughtGetInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+}
+
+export type JabisuBroughtGetOutput = JabisuBrought
+
+export type JabisuBroughtAddInput = {
+  readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
+  readonly text: { readonly text: string }["text"]
+}
+
+export type JabisuBroughtAddOutput = JabisuBrought
 
 export type JabisuWorkroomRootInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]

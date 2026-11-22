@@ -681,6 +681,7 @@ export const builtins = Extension.compose(
   bundledSkills,
   work,
   law,
+  bring,
 )
 ```
 
@@ -715,6 +716,7 @@ export const builtins = Extension.compose(
   { ...bundledSkills, renderer: eager(bundledSkillsRenderer) },
   { ...work, renderer: eager(workRenderer) },
   { ...law, renderer: eager(lawRenderer) },
+  { ...bring, renderer: eager(bringRenderer) },
 )
 ```
 

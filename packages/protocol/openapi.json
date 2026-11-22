@@ -15114,6 +15114,192 @@
         }
       }
     },
+    "/api/jabisu/mcp": {
+      "get": {
+        "tags": ["jabisu"],
+        "operationId": "jabisu.mcp.list",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "directory": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "style": "deepObject",
+            "explode": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "JabisuMcpChoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JabisuMcpChoices"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return the MCP servers the user turned on or off for every 작업실; others keep their own setting.",
+        "summary": "List the MCP servers turned on or off"
+      }
+    },
+    "/api/jabisu/mcp/turn": {
+      "post": {
+        "tags": ["jabisu"],
+        "operationId": "jabisu.mcp.turn",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "directory": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "style": "deepObject",
+            "explode": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "JabisuMcpChoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JabisuMcpChoices"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Turn an MCP server on or off in every 작업실 from now, and keep the choice after a restart.",
+        "summary": "Turn an MCP server on or off",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "on": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["name", "on"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/api/jabisu/work": {
       "get": {
         "tags": ["jabisu"],
@@ -15477,6 +15663,187 @@
                   }
                 },
                 "required": ["key"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/jabisu/brought": {
+      "get": {
+        "tags": ["jabisu"],
+        "operationId": "jabisu.brought.get",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "directory": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "style": "deepObject",
+            "explode": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "JabisuBrought",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JabisuBrought"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return where the file of memory brought from another AI assistant is and how much it holds.",
+        "summary": "Get the memory brought from another AI"
+      },
+      "post": {
+        "tags": ["jabisu"],
+        "operationId": "jabisu.brought.add",
+        "parameters": [
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "directory": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "style": "deepObject",
+            "explode": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "JabisuBrought",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JabisuBrought"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "LocationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationNotFoundErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Add the pasted export of another AI assistant's memory to the file every session reads as instructions; what was brought before stays.",
+        "summary": "Bring memory from another AI",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": ["text"],
                 "additionalProperties": false
               }
             }
@@ -18864,6 +19231,30 @@
         "required": ["_tag", "message"],
         "additionalProperties": false
       },
+      "JabisuBrought": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "chars": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": ["Infinity", "-Infinity", "NaN"]
+              }
+            ]
+          }
+        },
+        "required": ["path", "exists", "chars"],
+        "additionalProperties": false
+      },
       "JabisuLaw": {
         "type": "object",
         "properties": {
@@ -18885,6 +19276,19 @@
           }
         },
         "required": ["configured", "apply"],
+        "additionalProperties": false
+      },
+      "JabisuMcpChoices": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": ["on"],
         "additionalProperties": false
       },
       "JabisuSkill": {
