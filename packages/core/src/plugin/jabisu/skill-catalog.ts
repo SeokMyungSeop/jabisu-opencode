@@ -1,8 +1,8 @@
 export * as SkillCatalog from "./skill-catalog.js"
 
 // 자비수's bundled skills as an office worker meets them: a Korean name, what each does, the words someone says when
-// they need it, and whether it is on from the start. A skill that is off is installed but not offered to the model;
-// the model suggests it when a request matches, and the user turns it on for one chat or for good.
+// they need it, and whether it is on from the start. Every bundled skill is on when 자비수 is installed; one the user
+// turned off stays installed but is not offered to the model, which suggests it when a request matches.
 
 export interface Entry {
   readonly title: string
@@ -54,50 +54,57 @@ export const ENTRIES: Readonly<Record<string, Entry>> = {
     title: "Craft 앱으로 편집",
     summary: "PC에 깔린 Craft 앱으로 영상·소리·사진·PDF를 편집해요",
     keywords: ["영상", "동영상", "자막", "소리", "사진", "PDF 편집", "FilmCraft"],
-    on: false,
+    on: true,
   },
   handoff: {
     title: "인수인계 정리",
     summary: "일을 멈출 때 다음 사람이 이어받을 정리 문서를 남겨요",
     keywords: ["인수인계", "이어받기", "정리 문서"],
-    on: false,
+    on: true,
   },
   "diagnosing-bugs": {
     title: "오류 원인 찾기",
     summary: "막히는 프로그램 오류를 재현·가설·확인 순서로 끝까지 추적해요",
     keywords: ["버그", "오류", "에러", "디버그"],
-    on: false,
+    on: true,
   },
   "grill-me": {
     title: "계획 캐묻기",
     summary: "만들기 전에 계획의 빈틈을 집요하게 질문해요",
     keywords: ["계획 검토", "빈틈", "캐묻기"],
-    on: false,
+    on: true,
   },
   grilling: {
     title: "결정 캐묻기",
     summary: "계획이나 결정을 하나씩 따져 묻고 확인해요",
     keywords: ["결정 검토", "따져 묻기"],
-    on: false,
+    on: true,
   },
   tdd: {
     title: "테스트 먼저 개발",
     summary: "프로그램을 만들 때 테스트를 먼저 쓰고 고쳐 나가요",
     keywords: ["테스트", "tdd", "개발"],
-    on: false,
+    on: true,
   },
   "codebase-design": {
     title: "코드 구조 설계",
     summary: "프로그램 코드를 테스트하기 좋은 구조로 설계해요",
     keywords: ["코드 설계", "구조", "리팩터링"],
-    on: false,
+    on: true,
   },
-  // For fun, not work: it computes through the 명경 MCP server, which is off with it and comes on with it.
+  // From Anthropic's skills (Apache-2.0, its LICENSE.txt beside it): plain guidance, no scripts and no network.
+  "frontend-design": {
+    title: "화면 디자인",
+    summary: "웹 화면이나 앱 화면을 만들 때 뻔한 틀을 벗어난 디자인 방향을 잡아 줘요",
+    keywords: ["화면 디자인", "웹 디자인", "UI", "홈페이지", "랜딩 페이지", "프런트엔드"],
+    on: true,
+  },
+  // For fun, not work: it computes through the 명경 MCP server, which goes on and off with it.
   myungkyung: {
     title: "명경 사주풀이",
     summary: "생년월일시로 사주팔자 원국·오행·대운·올해 운을 계산하고 풀이해요",
     keywords: ["사주", "팔자", "운세", "사주풀이", "대운", "세운", "올해 운", "띠", "일주", "만세력"],
-    on: false,
+    on: true,
     mcp: "myungkyung",
   },
   // Draws through the Sketchy MCP server, which its own tool downloads once and turns on; so no 「MCP:」 here.
@@ -105,7 +112,7 @@ export const ENTRIES: Readonly<Record<string, Entry>> = {
     title: "그려서 설명하기",
     summary: "설명을 손그림 그림과 단계별 넘겨 보기로 보여 줘요 (처음 한 번 그림 도구 내려받기)",
     keywords: ["그림으로 설명", "그려서 설명", "단계별로 설명", "도식", "흐름도", "구조도", "손그림", "다이어그램"],
-    on: false,
+    on: true,
   },
 }
 

@@ -276,7 +276,13 @@ export const Plugin = define({
       if (!editor.get("context7"))
         editor.set("context7", { type: "remote", url: "https://mcp.context7.com/mcp", disabled: true })
 
-      if (!editor.get("myungkyung")) editor.set("myungkyung", { type: "remote", url: MYUNGKYUNG_URL, disabled: true })
+      // 명경 is on or off with the saju skill, which is on from the start.
+      if (!editor.get("myungkyung"))
+        editor.set("myungkyung", {
+          type: "remote",
+          url: MYUNGKYUNG_URL,
+          disabled: SkillCatalog.ENTRIES.myungkyung?.on !== true,
+        })
 
       if (filmcraftServer && !editor.get("filmcraft")) editor.set("filmcraft", filmcraftServer)
 

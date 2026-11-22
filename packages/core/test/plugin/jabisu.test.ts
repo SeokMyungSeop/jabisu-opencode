@@ -311,7 +311,7 @@ const withProgramFiles = (directory: string) =>
   )
 
 describe("JabisuPlugin.Plugin", () => {
-  it.live("bundles its skills with their files and offers Context7 and 명경 switched off on the jabisu channel", () =>
+  it.live("bundles its skills with their files, with 명경 on beside its skill and Context7 off, on the jabisu channel", () =>
     Effect.gen(function* () {
       const { skills, servers } = yield* run("jabisu", {})
       const byId = new Map(skills.map((skill) => [String(skill.id), skill]))
@@ -322,6 +322,7 @@ describe("JabisuPlugin.Plugin", () => {
         "craft-apps",
         "diagnosing-bugs",
         "docx",
+        "frontend-design",
         "grill-me",
         "grilling",
         "handoff",
@@ -345,14 +346,20 @@ describe("JabisuPlugin.Plugin", () => {
       expect(servers.myungkyung).toEqual({
         type: "remote",
         url: "https://myungkyung.sejong-nexus.ai.kr/api/mcp",
-        disabled: true,
+        disabled: false,
       })
-      // The saju skill is for fun: off until the user turns it on, and it names the tools the server promises.
-      expect(byId.get("myungkyung")?.autoinvoke).toBe(false)
+      // The saju skill is on from the start, like every bundled skill, and names the tools the server promises.
+      expect(byId.get("myungkyung")?.autoinvoke).not.toBe(false)
       for (const tool of ["saju_chart", "saju_reading", "saju_year"])
         expect(byId.get("myungkyung")?.content).toContain(tool)
-      // The drawing skill is off too, and its server is not there until its tool has downloaded it.
-      expect(byId.get("sketchy-explain")?.autoinvoke).toBe(false)
+      // The drawing skill is on too, and its server is not there until its tool has downloaded it.
+      expect(byId.get("sketchy-explain")?.autoinvoke).not.toBe(false)
+      // Anthropic's design skill comes with its licence beside it.
+      expect(
+        yield* Effect.promise(() =>
+          fs.readFile(path.join(path.dirname(byId.get("frontend-design")!.path), "LICENSE.txt"), "utf8"),
+        ),
+      ).toContain("Apache License")
       expect(byId.get("sketchy-explain")?.content).toContain("sketchy_turn_on")
       expect(servers.sketchy).toBeUndefined()
     }),
@@ -776,20 +783,27 @@ describe("JabisuPlugin work assistant", () => {
           ? list.find((item: { path: string }) => item.path === JabisuSkills.switches({ config }))
           : undefined
 
-      // Document skills stay on; a developer skill and the Craft apps one are installed but off.
+      // Every bundled skill is on from the start, so nothing is offered.
       expect(shown(first.skills, "hwpx")).toBe(true)
-      expect(shown(first.skills, "tdd")).toBe(false)
-      expect(shown(first.skills, "craft-apps")).toBe(false)
-      expect(first.skills.map((skill) => String(skill.name))).toContain("tdd")
+      expect(shown(first.skills, "tdd")).toBe(true)
+      expect(shown(first.skills, "craft-apps")).toBe(true)
       expect(first.tools).toContain("skill_turn_on")
-      expect(offered(first.instructions)?.content).toContain("craft-apps: PC에 깔린 Craft 앱으로")
-      expect(offered(first.instructions)?.content).not.toContain("- hwpx")
+      expect(offered(first.instructions)?.content ?? "").not.toContain("- tdd")
 
-      yield* JabisuSkills.turn({ fs: yield* FSUtil.Service, global: Global.make({ config }) }, "tdd", true)
+      // One the user turned off stays installed, leaves the model's list and is offered instead.
+      const deps = { fs: yield* FSUtil.Service, global: Global.make({ config }) }
+      yield* JabisuSkills.turn(deps, "craft-apps", false)
+      const off = yield* run("jabisu", {}, undefined, { config })
+
+      expect(shown(off.skills, "craft-apps")).toBe(false)
+      expect(off.skills.map((skill) => String(skill.name))).toContain("craft-apps")
+      expect(offered(off.instructions)?.content).toContain("craft-apps: PC에 깔린 Craft 앱으로")
+      expect(offered(off.instructions)?.content).not.toContain("- hwpx")
+
+      yield* JabisuSkills.turn(deps, "craft-apps", true)
       const second = yield* run("jabisu", {}, undefined, { config })
 
-      expect(shown(second.skills, "tdd")).toBe(true)
-      expect(offered(second.instructions)?.content).not.toContain("- tdd")
+      expect(shown(second.skills, "craft-apps")).toBe(true)
     }),
   )
 
