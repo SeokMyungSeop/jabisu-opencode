@@ -4,6 +4,8 @@ import type definition from "./index"
 
 const setup: Setup<typeof definition> = (ctx) => {
   if (!ctx.desktop) return
+  // 자비수 leaves device pairing out: no settings page and no command lead to it.
+  if (ctx.build.channel === "jabisu") return
   const layout = ctx.layout
   const servers = ctx.servers
   const pairing = ctx.uses.pairing
