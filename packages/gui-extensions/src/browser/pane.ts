@@ -7,6 +7,7 @@ import { Deferred, Effect, ManagedRuntime, Queue, Schedule, Schema, Stream } fro
 import { HttpClient, HttpClientRequest } from "effect/http"
 import type { Embeds, Persisted, ServerEndpoints, Storage, Windows } from "../sdk/main"
 import { createBrowserPage, type BrowserPage, type Shared } from "./chromium"
+import { copyCookies, jarPartition, mirrorCookies } from "./cookie-jar"
 import { browserFailure } from "./errors"
 import { createBrowserNetwork, type BrowserNetwork } from "./network"
 import { destinationOrigin, fileURLWithin, refusal } from "./policy"
@@ -160,6 +161,16 @@ export function createBrowserPane(input: {
             const options = {
               location: { directory: session.location.directory, workspace: session.location.workspaceID },
             }
+
+            // Logins made in another conversation of this folder are here before the first page loads, and the
+            // ones made here are kept for the next conversation.
+            const jar = electron.session.fromPartition(jarPartition(target.server, session.location.directory)).cookies
+            const cookies = electron.session.fromPartition(entry.partition).cookies
+            yield* Effect.promise(() => copyCookies(jar, cookies).catch(() => undefined))
+            yield* Effect.acquireRelease(
+              Effect.sync(() => mirrorCookies(cookies, jar)),
+              (stopMirror) => Effect.sync(stopMirror),
+            )
 
             const attachment = { sessionID, connectionID: crypto.randomUUID() }
             const rpc = client.rpc(Browser.Definition)
