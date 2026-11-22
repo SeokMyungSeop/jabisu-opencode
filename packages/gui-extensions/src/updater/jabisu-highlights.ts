@@ -5,6 +5,36 @@ export type JabisuHighlight = { readonly title: string; readonly description: st
 
 export const JABISU_HIGHLIGHTS: readonly { readonly version: string; readonly items: readonly JabisuHighlight[] }[] = [
   {
+    version: "1.5.10",
+    items: [
+      {
+        title: "대화를 내용으로 찾고, 이름을 바꿔요",
+        description:
+          "「대화 검색」(Ctrl+K)이 제목뿐 아니라 대화 안의 말까지 찾아요(두 글자부터). 대화의 ⋯ 메뉴에 「대화 이름 바꾸기」가 생겼고, 작업실의 ⋯ 메뉴에서 「상단 고정」을 누르면 그 작업실이 늘 맨 위에 있어요.",
+      },
+      {
+        title: "작업실을 옮기면 대화도 함께",
+        description:
+          "작업실의 ⋯ 메뉴에서 「대화 담기」를 누르면 그 작업실의 대화가 폴더 안(.jabisu)에 들어가요. 폴더를 압축해 다른 PC의 자비수에서 열면 대화도 따라와요. 누를 때만 담고, 그 폴더를 남에게 보내면 대화도 함께 가요.",
+      },
+      {
+        title: "다른 AI가 아는 나를 가져오기",
+        description:
+          "설정 → 환경 설정 → 가져오기에서 문장을 복사해 ChatGPT·Claude·Gemini에 보내고, 받은 답을 붙여 넣으세요. 내 PC의 파일 하나에 적어 두고 모든 대화에서 참고해요.",
+      },
+      {
+        title: "브라우저 로그인이 이어져요",
+        description:
+          "앱 안의 브라우저에서 한 번 로그인하면, 같은 작업실의 다른 대화에서도 로그인돼 있어요. 로그인은 작업실마다 따로 보관해요.",
+      },
+      {
+        title: "일머리가 처음부터 켜져 있어요",
+        description:
+          "기본 일머리 16개가 모두 켜진 채 시작해요. 웹 화면을 만들 때 쓰는 「화면 디자인」 일머리가 새로 들어왔고, 설정의 일머리 목록에 초록 「켜짐」 표시가 보여요. 쓰지 않는 일머리는 설정에서 끄면 돼요.",
+      },
+    ],
+  },
+  {
     version: "1.5.9",
     items: [
       {
