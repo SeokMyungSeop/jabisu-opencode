@@ -243,6 +243,8 @@ const OVERRIDES: Record<string, string> = {
   "project.settings.extensions.empty.plugins.description": "자비수에서 쓸 수 있는 일머리묶음이 여기에 표시됩니다",
   "project.settings.extensions.empty.skills.description": "자비수에서 쓸 수 있는 일머리가 여기에 표시됩니다",
   "settings.workspaces.empty.description": "자비수에서 만든 작업 트리가 여기에 표시됩니다",
+  // Shown while the AI answers; upstream's 「일하고 있는」 reads as half a sentence.
+  "session.timeline.working": "일하는 중",
 }
 
 /** The Korean dictionary as 자비수 shows it. */
