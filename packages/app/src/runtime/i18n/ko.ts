@@ -979,6 +979,12 @@ export const dict = {
   "jabisu.autoAccept.off.description":
     "끄면 AI가 파일을 만들거나 고치거나 명령을 실행하기 전에 매번 허락을 물어요. 모든 작업실에 적용돼요. 다시 켜려면 설정 → 환경 설정 → 「권한 자동 수락」을 켜세요.",
   "jabisu.autoAccept.off.confirm": "끄기",
+  "jabisu.conversation.rename": "대화 이름 바꾸기",
+  "jabisu.conversation.rename.title": "대화 이름 바꾸기",
+  "jabisu.conversation.failed.rename": "대화 이름을 바꾸지 못했어요",
+  "jabisu.room.pin": "상단 고정",
+  "jabisu.room.unpin": "고정 해제",
+  "jabisu.room.pinned": "상단에 고정됨",
   "jabisu.conversation.delete": "대화 삭제",
   "jabisu.conversation.delete.title": "「{{name}}」 대화를 삭제할까요?",
   "jabisu.conversation.delete.description":

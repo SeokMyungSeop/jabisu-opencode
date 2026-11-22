@@ -39,6 +39,17 @@ describe("groupWorkrooms", () => {
     expect(rooms[0]?.sessions.map((item) => item.id)).toEqual(["b"])
   })
 
+  test("puts pinned rooms first, each group still newest first", () => {
+    const rooms = groupWorkrooms(
+      [empty, budget, minutes],
+      [session("b1", budget.worktree, 10), session("m1", minutes.worktree, 30)],
+      (project) => project.id === "empty" || project.id === "budget",
+    )
+
+    expect(rooms.map((room) => room.project.id)).toEqual(["budget", "empty", "minutes"])
+    expect(rooms.map((room) => room.pinned)).toEqual([true, true, false])
+  })
+
   test("keeps rooms without conversations in their own order", () => {
     expect(groupWorkrooms([minutes, empty], []).map((room) => room.project.id)).toEqual(["minutes", "empty"])
   })

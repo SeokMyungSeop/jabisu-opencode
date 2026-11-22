@@ -8,15 +8,19 @@ export interface Workroom<P> {
   readonly sessions: readonly SessionInfo[]
   /** When its newest conversation last changed; absent while it has none. */
   readonly updated?: number
+  /** Whether the user fixed it to the top of the list. */
+  readonly pinned: boolean
 }
 
 /**
  * 자비수's 작업실 list: every added project with the conversations held in it, the most recently used first and rooms
- * without conversations last, in their own order. A conversation outside every added project is left out.
+ * without conversations last, in their own order. Rooms the user fixed to the top come first, in that same order. A
+ * conversation outside every added project is left out.
  */
 export function groupWorkrooms<P extends { id?: string; worktree: string; sandboxes?: readonly string[] }>(
   projects: readonly P[],
   sessions: readonly SessionInfo[],
+  pinned: (project: P) => boolean = () => false,
 ): Workroom<P>[] {
   const held = Map.groupBy(
     sessions.flatMap((session) => {
@@ -32,7 +36,12 @@ export function groupWorkrooms<P extends { id?: string; worktree: string; sandbo
       const list = (held.get(project) ?? []).map((entry) => entry.session).toSorted(compareSessionTime)
       const newest = list[0]
 
-      return { project, sessions: list, updated: newest ? (newest.time.updated ?? newest.time.created) : undefined }
+      return {
+        project,
+        sessions: list,
+        updated: newest ? (newest.time.updated ?? newest.time.created) : undefined,
+        pinned: pinned(project),
+      }
     })
-    .toSorted((a, b) => (b.updated ?? 0) - (a.updated ?? 0))
+    .toSorted((a, b) => Number(b.pinned) - Number(a.pinned) || (b.updated ?? 0) - (a.updated ?? 0))
 }

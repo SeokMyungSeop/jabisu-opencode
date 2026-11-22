@@ -304,6 +304,67 @@ export function useWorkroomActions(input: {
     )
   }
 
+  function RetitleDialog(props: { session: SessionInfo }) {
+    const [title, setTitle] = createSignal(sessionLabel(props.session))
+    const [saving, setSaving] = createSignal(false)
+
+    const save = async (event?: SubmitEvent) => {
+      event?.preventDefault()
+      const ctx = input.ctx()
+      const conn = input.server()
+      const next = title().trim()
+
+      if (!ctx || !conn || !next || next === sessionLabel(props.session)) return dialog.close()
+      setSaving(true)
+      await ctx.sdk.api.session
+        .update({ sessionID: props.session.id, title: next })
+        .then(() => {
+          ctx.data.session.remember({ ...(ctx.data.session.get(props.session.id) ?? props.session), title: next })
+          // Renaming advances the conversation's time on the server; read it again so the list keeps its order.
+          ctx.data.session.invalidate(props.session.id)
+          void ctx.data.session.sync(props.session.id).catch(() => {})
+          queryClient.setQueryData<SessionInfo[]>(["home-sessions", conn], (current) =>
+            current?.map((item) => (item.id === props.session.id ? { ...item, title: next } : item)),
+          )
+          dialog.close()
+        })
+        .catch((cause: unknown) => {
+          showToast({
+            variant: "error",
+            title: language.t("jabisu.conversation.failed.rename"),
+            description: cause instanceof Error ? cause.message : undefined,
+          })
+        })
+        .finally(() => setSaving(false))
+    }
+
+    return (
+      <Dialog fit>
+        <DialogHeader hideClose>
+          <DialogTitleGroup title={language.t("jabisu.conversation.rename.title")} />
+        </DialogHeader>
+        <form onSubmit={(event) => void save(event)}>
+          <DialogBody class="px-5 pb-2">
+            <TextField
+              autofocus
+              label={language.t("jabisu.room.rename.label")}
+              value={title()}
+              onChange={setTitle}
+            />
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => dialog.close()}>
+              {language.t("common.cancel")}
+            </Button>
+            <Button type="submit" variant="contrast" disabled={saving() || !title().trim()}>
+              {language.t("jabisu.room.rename.save")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+    )
+  }
+
   function ForgetDialog(props: { session: SessionInfo }) {
     const [busy, setBusy] = createSignal(false)
 
@@ -361,6 +422,8 @@ export function useWorkroomActions(input: {
       const made = await owned(project)
       void dialog.show(() => <DeleteDialog project={project} owned={made} sessions={sessions} />)
     },
+    /** 「대화 이름 바꾸기」 for one conversation in the list. */
+    retitle: (session: SessionInfo) => void dialog.show(() => <RetitleDialog session={session} />),
     /** 「대화 삭제」 for one conversation in the list; its 작업실 and files stay. */
     forget: (session: SessionInfo) => void dialog.show(() => <ForgetDialog session={session} />),
   }

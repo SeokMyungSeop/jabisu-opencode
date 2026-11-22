@@ -48,6 +48,32 @@ export function createWorkroomNavState() {
 
 export type WorkroomNavState = ReturnType<typeof createWorkroomNavState>
 
+// Rooms fixed to the top of the list, by folder.
+const PinSchema = Persistence.struct({
+  rooms: Persistence.record(Persistence.fallback(Schema.Boolean, () => false)),
+})
+
+/** The pin beside a 작업실 fixed to the top. */
+function PinMark(props: { label: string }) {
+  return (
+    <svg
+      role="img"
+      aria-label={props.label}
+      viewBox="0 0 16 16"
+      class="size-3 shrink-0 text-v2-icon-icon-base"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <title>{props.label}</title>
+      <path d="M6 2h4l-.6 4.2 2.1 2.3H4.5l2.1-2.3L6 2Z" />
+      <path d="M8 8.5V14" />
+    </svg>
+  )
+}
+
 function NavButton(props: { icon: IconProps["name"]; label: string; hint?: string; onClick: () => void }) {
   return (
     <button
@@ -119,18 +145,24 @@ export function WorkroomNav() {
   const ctx = useServerCtx(server)
   const load = useQuery(() => homeSessionQuery(ctx(), server()))
   const actions = useWorkroomActions({ server, ctx })
-  // The room whose 「이름 바꾸기·작업실 삭제」 menu is open, from its ⋯ button or a right click.
+  // The room whose 「상단 고정·이름 바꾸기·작업실 삭제」 menu is open, from its ⋯ button or a right click.
   const [menu, setMenu] = createSignal<string>()
-  // The conversation whose 「대화 삭제」 menu is open.
+  // The conversation whose 「대화 이름 바꾸기·대화 삭제」 menu is open.
   const [conversationMenu, setConversationMenu] = createSignal<string>()
   const working = (sessionID: string) => ctx()?.data.session.status(sessionID) === "running"
+  const [pins, setPins] = persisted(Persist.global("jabisu.pins"), PinSchema, { rooms: {} })
+  const pinned = (project: LocalProject) => pins.rooms[pathKey(project.worktree)] === true
 
   const rooms = createMemo(() => {
     const context = ctx()
 
     if (!context) return []
 
-    return groupWorkrooms(context.projects.list(), homeSessions(context, load.isPending ? [] : (load.data?.() ?? [])))
+    return groupWorkrooms(
+      context.projects.list(),
+      homeSessions(context, load.isPending ? [] : (load.data?.() ?? [])),
+      pinned,
+    )
   })
 
   // The room holding the tab on screen.
@@ -214,6 +246,9 @@ export function WorkroomNav() {
           >
             <Icon name="folder" size="small" class="shrink-0 text-v2-icon-icon-base" />
             <span class="min-w-0 truncate">{displayName(props.room.project)}</span>
+            <Show when={props.room.pinned}>
+              <PinMark label={language.t("jabisu.room.pinned")} />
+            </Show>
             {/* A closed room still shows that the AI is at work in one of its conversations. */}
             <Show when={!isOpen(props.room) && props.room.sessions.some((session) => working(session.id))}>
               <WorkingDot />
@@ -241,6 +276,9 @@ export function WorkroomNav() {
               />
               <Menu.Portal>
                 <Menu.Content>
+                  <Menu.Item onSelect={() => setPins("rooms", key(), !props.room.pinned)}>
+                    {language.t(props.room.pinned ? "jabisu.room.unpin" : "jabisu.room.pin")}
+                  </Menu.Item>
                   <Menu.Item onSelect={() => void actions.rename(props.room.project)}>
                     {language.t("jabisu.room.rename")}
                   </Menu.Item>
@@ -327,6 +365,10 @@ export function WorkroomNav() {
                         />
                         <Menu.Portal>
                           <Menu.Content>
+                            <Menu.Item onSelect={() => actions.retitle(session)}>
+                              {language.t("jabisu.conversation.rename")}
+                            </Menu.Item>
+                            <Menu.Separator />
                             <Menu.Item onSelect={() => actions.forget(session)}>
                               {language.t("jabisu.conversation.delete")}
                             </Menu.Item>

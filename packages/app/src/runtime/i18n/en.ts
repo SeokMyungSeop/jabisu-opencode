@@ -1134,6 +1134,12 @@ export const dict = {
   "jabisu.autoAccept.off.description":
     "The AI will ask before it creates or changes files or runs a command. This applies to every workroom. To turn it back on, go to Settings → Preferences → Auto-accept permissions.",
   "jabisu.autoAccept.off.confirm": "Turn off",
+  "jabisu.conversation.rename": "Rename conversation",
+  "jabisu.conversation.rename.title": "Rename conversation",
+  "jabisu.conversation.failed.rename": "Couldn't rename the conversation",
+  "jabisu.room.pin": "Pin to top",
+  "jabisu.room.unpin": "Unpin",
+  "jabisu.room.pinned": "Pinned to top",
   "jabisu.conversation.delete": "Delete conversation",
   "jabisu.conversation.delete.title": "Delete the conversation 「{{name}}」?",
   "jabisu.conversation.delete.description":
