@@ -7,6 +7,7 @@ export default {
   "status.default": "기본",
   "status.custom": "내 일머리 사용 중",
   "status.changed": "새 기본판 있음",
+  "status.on": "켜짐",
   "status.off": "꺼짐",
   "action.turnOn": "켜기",
   "action.turnOff": "끄기",

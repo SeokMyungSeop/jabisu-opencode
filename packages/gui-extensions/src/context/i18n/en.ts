@@ -29,6 +29,7 @@ export default {
   "skills.status.default": "Bundled",
   "skills.status.custom": "Using my copy",
   "skills.status.changed": "New bundled version",
+  "skills.turnedOn": "On",
   "skills.off": "Off",
   "skills.turnOn": "Turn on",
   "skills.turnOff": "Turn off",

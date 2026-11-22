@@ -13,6 +13,9 @@ const BADGE: Record<JabisuSkill["status"], string> = {
   changed: "bg-v2-state-bg-warning text-v2-state-fg-warning",
 }
 
+// 「켜짐」 beside a skill that is on, so pressing 「켜기」 shows what it did.
+const ON = "bg-v2-state-bg-success text-v2-state-fg-success"
+
 // Bundled skill descriptions list many trigger phrases; the row shows their start.
 const DESCRIPTION_CHARS = 140
 
@@ -112,10 +115,15 @@ export default function SkillsSection() {
                 >
                   {ctx.t(skill.on ? "action.turnOff" : "action.turnOn")}
                 </Button>
-                <Show when={!skill.on}>
-                  <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${BADGE.default}`}>
-                    {ctx.t("status.off")}
-                  </span>
+                <Show
+                  when={skill.on}
+                  fallback={
+                    <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${BADGE.default}`}>
+                      {ctx.t("status.off")}
+                    </span>
+                  }
+                >
+                  <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${ON}`}>{ctx.t("status.on")}</span>
                 </Show>
                 <span class={`rounded-[4px] px-1.5 py-0.5 text-12-medium ${BADGE[skill.status]}`}>
                   {ctx.t(`status.${skill.status}`)}

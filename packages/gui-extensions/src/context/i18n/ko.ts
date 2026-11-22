@@ -29,6 +29,7 @@ export default {
   "skills.status.default": "기본",
   "skills.status.custom": "내 일머리 사용 중",
   "skills.status.changed": "새 기본판 있음",
+  "skills.turnedOn": "켜짐",
   "skills.off": "꺼짐",
   "skills.turnOn": "켜기",
   "skills.turnOff": "끄기",

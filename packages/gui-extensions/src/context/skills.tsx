@@ -11,11 +11,12 @@ import { createSkillCatalog, type SkillGroup } from "./skill-catalog"
 
 const GROUPS: readonly SkillGroup[] = ["mine", "bundled", "other"]
 
-const BADGE: Record<JabisuSkill["status"] | "off", string> = {
+const BADGE: Record<JabisuSkill["status"] | "off" | "on", string> = {
   default: "bg-v2-background-bg-layer-04 text-v2-text-text-muted",
   custom: "bg-v2-state-bg-success text-v2-state-fg-success",
   changed: "bg-v2-state-bg-warning text-v2-state-fg-warning",
   off: "bg-v2-background-bg-layer-04 text-v2-text-text-faint",
+  on: "bg-v2-state-bg-success text-v2-state-fg-success",
 }
 
 /**
@@ -102,9 +103,16 @@ export function SkillList(props: ContextUsageProps & { tokens?: string }) {
                               <Show when={skill.known}>
                                 {(known) => (
                                   <>
-                                    <Show when={!known().on}>
-                                      <span class={`shrink-0 rounded-[4px] px-1.5 text-11-regular ${BADGE.off}`}>
-                                        {ctx.t("skills.off")}
+                                    <Show
+                                      when={known().on}
+                                      fallback={
+                                        <span class={`shrink-0 rounded-[4px] px-1.5 text-11-regular ${BADGE.off}`}>
+                                          {ctx.t("skills.off")}
+                                        </span>
+                                      }
+                                    >
+                                      <span class={`shrink-0 rounded-[4px] px-1.5 text-11-regular ${BADGE.on}`}>
+                                        {ctx.t("skills.turnedOn")}
                                       </span>
                                     </Show>
                                     <Show when={known().status !== "default"}>

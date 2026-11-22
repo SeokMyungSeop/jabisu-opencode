@@ -7,6 +7,7 @@ export default {
   "status.default": "Bundled",
   "status.custom": "Using yours",
   "status.changed": "New version available",
+  "status.on": "On",
   "status.off": "Off",
   "action.turnOn": "Turn on",
   "action.turnOff": "Turn off",
